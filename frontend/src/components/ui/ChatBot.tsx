@@ -90,9 +90,10 @@ export default function ChatBot({ requestId, userId, analysisType, analysisConte
               <div className="space-y-4 animate-fade-in">
                 <div className="chat-bubble-assistant">
                   <p>Hello! I'm your Chimertech cattle health assistant. I can help you understand your analysis results, recommend products, and answer questions about cattle health.</p>
-                  {analysisContext && (
+                  {Boolean(analysisContext) && (
                     <p className="mt-2 text-grey-400">I have your {analysisType === 'bcs' ? 'BCS' : 'disease screening'} results loaded as context.</p>
                   )}
+
                 </div>
                 {/* Quick suggestions */}
                 <div className="space-y-1.5">

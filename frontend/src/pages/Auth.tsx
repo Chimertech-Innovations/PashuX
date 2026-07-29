@@ -29,8 +29,10 @@ export default function Auth() {
         navigate('/');
       } else {
         await signUp(email, password, fullName);
-        setSuccess('Account created! Check your email to confirm your address.');
+        setSuccess('Account created! Logging you in...');
+        setTimeout(() => navigate('/'), 600);
       }
+
     } catch (err: any) {
       setError(err.message || 'Authentication failed.');
     } finally {

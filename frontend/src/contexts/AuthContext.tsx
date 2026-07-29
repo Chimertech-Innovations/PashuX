@@ -39,17 +39,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/auth` : undefined;
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: redirectTo,
       },
     });
     if (error) throw new Error(error.message);
+
+    // Auto sign-in immediately for direct email & password login (no email confirmation needed)
+    if (!data.session) {
+      await supabase.auth.signInWithPassword({ email, password }).catch(() => {});
+    }
   };
+
 
 
   const signOut = async () => {

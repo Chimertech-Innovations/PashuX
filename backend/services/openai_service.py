@@ -16,14 +16,22 @@ logger = logging.getLogger(__name__)
 
 _client: Optional[AsyncOpenAI] = None
 
-OPENAI_MODELS = [
-    "gpt-4.1-mini-2025-04-14",
-    "gpt-4.1",
-    "gpt-4.1-2025-04-14",
-    "gpt-4o-mini",
-    "gpt-4o",
-    "gpt-4",
-]
+
+def get_openai_models() -> List[str]:
+    """Dynamically prioritize model set in OPENAI_MODEL env var (e.g. gpt-5-mini, gpt-4o-mini)."""
+    env_model = os.getenv("OPENAI_MODEL")
+    default_models = [
+        "gpt-4.1-mini-2025-04-14",
+        "gpt-4.1",
+        "gpt-4o-mini",
+        "gpt-4o",
+        "gpt-4",
+    ]
+    if env_model and env_model.strip():
+        model_name = env_model.strip()
+        # Put env_model at top of list
+        return [model_name] + [m for m in default_models if m != model_name]
+    return default_models
 
 
 def _get_client() -> AsyncOpenAI:
@@ -166,7 +174,7 @@ async def _generate_openai_vision(
     frame_paths: List[str],
     system_instruction: str,
 ) -> str:
-    """Send image frames to OpenAI Vision models (gpt-4o-mini, gpt-4o, gpt-4.1)."""
+    """Send image frames to OpenAI Vision models (gpt-5-mini, gpt-4o-mini, gpt-4o)."""
     client = _get_client()
 
     image_contents = []
@@ -194,15 +202,26 @@ async def _generate_openai_vision(
     ]
 
     last_error = None
-    for model in OPENAI_MODELS:
+    models_to_try = get_openai_models()
+    for model in models_to_try:
         try:
             logger.info(f"Executing OpenAI Vision analysis using model: {model}")
-            res = await client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=0.2,
-                max_tokens=1024,
-            )
+            try:
+                res = await client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    max_completion_tokens=1024,
+                )
+            except Exception as param_err:
+                if "max_completion_tokens" in str(param_err) or "unsupported" in str(param_err).lower():
+                    res = await client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        max_tokens=1024,
+                    )
+                else:
+                    raise param_err
+
             content = res.choices[0].message.content
             if content:
                 return _strip_fences(content)
@@ -260,14 +279,25 @@ async def chat(
     messages.append({"role": "user", "content": message})
 
     last_error = None
-    for model in OPENAI_MODELS:
+    models_to_try = get_openai_models()
+    for model in models_to_try:
         try:
-            res = await client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=0.4,
-                max_tokens=600,
-            )
+            try:
+                res = await client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    max_completion_tokens=600,
+                )
+            except Exception as param_err:
+                if "max_completion_tokens" in str(param_err) or "unsupported" in str(param_err).lower():
+                    res = await client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        max_tokens=600,
+                    )
+                else:
+                    raise param_err
+
             content = res.choices[0].message.content
             if content:
                 return content

@@ -56,6 +56,7 @@ def _smart_fallback_bcs(frame_paths: List[str]) -> BCSResult:
     is_dark_coat = False
     edge_ratios = []
     std_devs = []
+    shadow_ratios = []
 
     for path in frame_paths or []:
         if os.path.exists(path):
@@ -67,52 +68,58 @@ def _smart_fallback_bcs(frame_paths: List[str]) -> BCSResult:
                 if mean_val < 85.0:
                     is_dark_coat = True
                 
-                # Analyze edge density in mid-body / rib region (middle 50% of frame)
+                # Analyze edge density in mid-body / rib region
                 h, w = gray.shape
-                mid_section = gray[int(h*0.25):int(h*0.75), int(w*0.2):int(w*0.8)]
-                edges = cv2.Canny(mid_section, 80, 200)
+                mid_section = gray[int(h*0.20):int(h*0.75), int(w*0.15):int(w*0.85)]
+                edges = cv2.Canny(mid_section, 30, 110)
                 edge_ratio = float(np.count_nonzero(edges)) / float(edges.size)
                 edge_ratios.append(edge_ratio)
                 std_devs.append(float(np.std(mid_section)))
 
+                # Analyze dark shadow pixels in flank cavity (upper-middle rear region)
+                flank_roi = gray[int(h*0.20):int(h*0.55), int(w*0.25):int(w*0.65)]
+                dark_count = np.count_nonzero(flank_roi < 70)
+                shadow_ratios.append(float(dark_count) / float(flank_roi.size))
+
     avg_blur = float(np.mean(blur_scores)) if blur_scores else 250.0
-    avg_edge = float(np.mean(edge_ratios)) if edge_ratios else 0.14
+    avg_edge = float(np.mean(edge_ratios)) if edge_ratios else 0.12
     avg_std = float(np.mean(std_devs)) if std_devs else 40.0
+    avg_shadow = float(np.mean(shadow_ratios)) if shadow_ratios else 0.15
     subject_type = "Female Water Buffalo (Solid Black coat)" if is_dark_coat else "Cattle (Dairy/Indigenous Breed)"
 
-    # Dynamic scaling based on surface edge density and texture variance:
-    if avg_edge > 0.22 and avg_std > 50.0:
+    # Deep flank shadow or high bone edge density -> Thin / Emaciated Cow (BCS 2.0)
+    if avg_shadow > 0.18 or avg_edge > 0.14 or (avg_std > 42.0 and avg_shadow > 0.12):
         score = 2.0
-        cond_label = "Thin Condition (BCS 2.0/5.0)"
-        obs_detail = "Individual ribs and spinous processes visible as prominent ridges with thin fat cover."
-        rec_detail = "Increase energy-dense concentrate and high-quality leguminous green fodder."
-    elif avg_edge > 0.17:
+        cond_label = "Thin Condition (BCS 2.0/5.0) - Severe Negative Energy Balance"
+        obs_detail = "Ribs clearly visible with prominent bone structure, deep flank pelvic cavity, and thin fat cover."
+        rec_detail = "Increase energy-dense concentrate, high-quality leguminous green fodder, and bypass fat supplementation."
+    elif avg_edge > 0.10 or avg_shadow > 0.10:
         score = 2.75
         cond_label = "Slightly Thin Condition (BCS 2.75/5.0)"
         obs_detail = "Short ribs and hip bones moderately visible with light subcutaneous fat cover."
         rec_detail = "Add high-energy mineral mixture and maintain good quality forage ratio."
-    elif avg_edge > 0.12:
+    elif avg_std > 32.0:
         score = 3.25
         cond_label = "Ideal Condition (BCS 3.25/5.0)"
         obs_detail = "Spinous processes and transverse processes covered with smooth, uniform fat cover."
         rec_detail = "Maintain current balanced green forage, dry fodder, and concentrate feeding."
-    elif avg_edge > 0.07:
-        score = 4.0
-        cond_label = "Overconditioned / Fat (BCS 4.0/5.0)"
-        obs_detail = "Hooks and pin bones are covered with heavy fat deposits with rounded contours."
-        rec_detail = "Gradually adjust energy intake by managing concentrate feeding portion."
-    else:
+    elif avg_edge < 0.05 and avg_shadow < 0.05:
         score = 4.75
         cond_label = "Heavy / Obese Condition (BCS 4.75/5.0)"
         obs_detail = "Tailhead area surrounded by thick, prominent patches of subcutaneous fat cover."
         rec_detail = "Ensure regular exercise and adequate dry fodder for proper digestion."
+    else:
+        score = 3.25
+        cond_label = "Ideal Condition (BCS 3.25/5.0)"
+        obs_detail = "Body condition is moderate with uniform subcutaneous fat cover."
+        rec_detail = "Maintain balanced feeding and clean drinking water."
 
     condition = f"{cond_label} - {subject_type}"
     obs = [
         f"Subject identified: {subject_type}.",
         obs_detail,
-        f"Computer vision feature analysis: surface edge density {round(avg_edge, 3)}, clarity {round(avg_blur, 1)}.",
-        "Cloud AI daily limit reached (429) — Computer vision feature estimation applied.",
+        f"Computer vision feature analysis: flank shadow ratio {round(avg_shadow, 2)}, rib edge ratio {round(avg_edge, 3)}.",
+        "Note: Cloud AI API quota limit reached (429). Computer vision feature estimation applied.",
         "Body fat reserves estimated based on subcutaneous fat smoothness and bone edge ratio."
     ]
     recs = [

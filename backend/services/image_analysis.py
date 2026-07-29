@@ -130,7 +130,7 @@ def _smart_fallback_bcs(frame_paths: List[str]) -> BCSResult:
             f"Subject identified: {subject_type}.",
             "Individual ribs and spinous processes visible as prominent ridges with thin fat cover.",
             "Hip and pin bones are prominent with visible pelvic hollow.",
-            f"Computer vision frame analysis verified (flank edge density: {round(avg_edge, 3)}).",
+            "Cloud AI daily limit reached (429) — Computer vision feature estimation applied.",
             "Shallow flank fill and tailhead cavity indicate low body fat reserves."
         ]
         recs = [
@@ -138,15 +138,15 @@ def _smart_fallback_bcs(frame_paths: List[str]) -> BCSResult:
             "Provide high-energy mineral mixture and free-choice fresh water.",
             "Monitor body condition weekly to track weight recovery."
         ]
-    # Low edge density + smooth uniform surface -> Fat / Obese Cow (BCS 4.25)
-    elif avg_edge < 0.10 and avg_std < 32.0:
-        score = 4.25
-        condition = f"Overconditioned / Fat (BCS 4.25/5.0) - {subject_type}"
+    # Low edge density + smooth uniform surface -> Heavy / Obese Cow (BCS 4.75 - 5.0)
+    elif avg_edge < 0.16:
+        score = 4.75
+        condition = f"Heavy / Obese Condition (BCS 4.75/5.0) - {subject_type}"
         obs = [
             f"Subject identified: {subject_type}.",
-            "Hooks and pin bones are covered with heavy fat deposits with rounded contours.",
-            "Tailhead area surrounded by prominent patches of subcutaneous fat cover.",
-            f"Computer vision frame analysis verified (surface smoothness index: {round(1.0 - avg_edge, 3)}).",
+            "Hooks and pin bones are buried in heavy subcutaneous fat deposits with rounded contours.",
+            "Tailhead area surrounded by thick, prominent patches of subcutaneous fat cover.",
+            "Cloud AI daily limit reached (429) — Computer vision feature estimation applied.",
             "Spinous processes and short ribs obscured by smooth, thick subcutaneous fat layer."
         ]
         recs = [
@@ -162,7 +162,7 @@ def _smart_fallback_bcs(frame_paths: List[str]) -> BCSResult:
             f"Subject identified: {subject_type}.",
             "Spinous processes and transverse processes covered with smooth, uniform fat cover.",
             "Hooks and pin bones are visible with smooth, rounded fat contours (U-shaped depression).",
-            f"Computer vision frame analysis verified (clarity score: {round(avg_blur, 1)}).",
+            "Cloud AI daily limit reached (429) — Computer vision feature estimation applied.",
             "Tailhead depression filled with adequate subcutaneous fat cover."
         ]
         recs = [

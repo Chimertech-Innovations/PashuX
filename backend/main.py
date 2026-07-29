@@ -44,18 +44,22 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
 
-allowed_origins = os.getenv(
+raw_origins = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:3000",
+    "http://localhost:5173,http://localhost:3000,https://bcs-nine.vercel.app",
 ).split(",")
+
+origins = [o.strip().rstrip("/") for o in raw_origins if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in allowed_origins],
+    allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 

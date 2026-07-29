@@ -1,39 +1,38 @@
 """
-Gemini Vision service for BCS scoring and disease detection.
-Uses the new google-genai SDK (google.generativeai is deprecated).
-The GEMINI_API_KEY lives ONLY in the backend .env — never sent to the frontend.
+OpenAI Vision & Chat Service for BCS scoring, disease detection, and chatbot assistant.
+Uses AsyncOpenAI with OPENAI_API_KEY from backend .env — never sent to the frontend.
 """
 
+import os
 import json
+import base64
 import logging
-from pathlib import Path
 from typing import List, Optional, Any
 
-from google import genai
-from google.genai import types
-from PIL import Image
-
+from openai import AsyncOpenAI
 from models.schemas import BCSResult, DiseaseResult, ChatMessage
 
 logger = logging.getLogger(__name__)
 
-_client: Optional[genai.Client] = None
+_client: Optional[AsyncOpenAI] = None
+
+OPENAI_MODELS = [
+    "gpt-4o-mini",
+    "gpt-4o",
+    "gpt-4.1-mini-2025-04-14",
+    "gpt-4.1",
+    "gpt-4",
+]
 
 
-def _get_client() -> genai.Client:
+def _get_client() -> AsyncOpenAI:
     global _client
     if _client is None:
-        import os
-        api_key = os.getenv("GEMINI_API_KEY")
+        api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            raise RuntimeError("GEMINI_API_KEY environment variable is not set")
-        _client = genai.Client(api_key=api_key)
+            raise RuntimeError("OPENAI_API_KEY environment variable is not set in backend .env")
+        _client = AsyncOpenAI(api_key=api_key.strip())
     return _client
-
-
-def _load_images(frame_paths: List[str]) -> List[Image.Image]:
-    """Load local image files as PIL Images for the Gemini SDK."""
-    return [Image.open(p) for p in frame_paths]
 
 
 def _strip_fences(raw: str) -> str:
@@ -103,20 +102,25 @@ CRITICAL RULES & RELEVANCE CHECK:
 
 Required JSON format:
 {
-  "bcs_score": 3.25,
+  "bcs_score": <float 1.0-5.0 or 0.0 if invalid>,
   "bcs_scale": "1-5",
-  "condition": "Ideal Condition - Female Water Buffalo (Black)",
-  "confidence": 0.92,
-  "observations": ["<observation 1>", "<observation 2>"],
-  "recommendations": ["<recommendation 1>", "<recommendation 2>"]
+  "condition": "<Descriptive Label e.g. Ideal Condition - Female Water Buffalo (Black)>",
+  "confidence": <float 0.0-1.0>,
+  "observations": ["<Specific observation 1>", "<Specific observation 2>", "..."],
+  "recommendations": ["<Actionable recommendation 1>", "<Actionable recommendation 2>", "..."]
 }
 """
 
 DISEASE_SYSTEM_PROMPT = """\
-You are an experienced veterinary professional performing a visual cattle health screening.
-Analyse the provided images for any visible signs of health concerns.
+You are a veterinary professional screening cattle images for visible health concerns.
+Identify any visible signs such as udder swelling, skin lesions, tick presence, or lameness posture.
 
-IMPORTANT RULES:
+IMPORTANT SAFETY & COMPLIANCE RULES:
+- Provide a PRELIMINARY SCREENING ONLY — never diagnose
+- Always recommend consulting a licensed veterinarian
+- Identify visible physical abnormalities on skin, eyes, hooves, udder, or coat
+- If the image does not show cattle/buffalo, return:
+  "possible_condition": "Invalid Image", "confidence": 0.0, "severity": "None"
 - This is a SCREENING TOOL ONLY — never claim a confirmed diagnosis
 - Only report what is visibly detectable
 - If no visible abnormalities, state that clearly
@@ -157,130 +161,64 @@ IMPORTANT RULES:
 """
 
 
-MODELS_TO_TRY = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
-
-
-async def _generate_openai_fallback(
+async def _generate_openai_vision(
     frame_paths: List[str],
     system_instruction: str,
-) -> Optional[str]:
-    """Fallback to OpenAI models (gpt-4.1, gpt-4.1-mini, gpt-4o) if Gemini hits 429 rate limit."""
-    import os
-    import base64
-    from openai import AsyncOpenAI
-
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if not openai_key:
-        return None
-
-    try:
-        client = AsyncOpenAI(api_key=openai_key)
-        openai_models = ["gpt-4.1", "gpt-4.1-mini-2025-04-14", "gpt-4o", "gpt-4o-mini"]
-
-        image_contents = []
-        for path in frame_paths or []:
-            if os.path.exists(path):
-                with open(path, "rb") as f:
-                    b64 = base64.b64encode(f.read()).decode("utf-8")
-                    image_contents.append({
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{b64}"}
-                    })
-
-        messages = [
-            {"role": "system", "content": system_instruction},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": "Please analyse these cattle images and return the required JSON response."},
-                    *image_contents
-                ]
-            }
-        ]
-
-        for model in openai_models:
-            try:
-                logger.info(f"Attempting OpenAI generation with model: {model}")
-                res = await client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    temperature=0.2,
-                    max_tokens=1024,
-                )
-                content = res.choices[0].message.content
-                if content:
-                    return _strip_fences(content)
-            except Exception as exc:
-                logger.warning(f"OpenAI model {model} failed: [{type(exc).__name__}] {exc}")
-                continue
-    except Exception as e:
-        logger.warning(f"OpenAI fallback client error: {e}")
-
-    return None
-
-
-async def _generate_content_with_fallback(
-    client: genai.Client,
-    contents: list,
-    system_instruction: str,
-    temperature: float = 0.2,
-    max_output_tokens: int = 1024,
-    frame_paths: Optional[List[str]] = None,
 ) -> str:
-    """Try multiple Gemini model variants and OpenAI models to handle rate limits / 429 quota issues."""
+    """Send image frames to OpenAI Vision models (gpt-4o-mini, gpt-4o, gpt-4.1)."""
+    client = _get_client()
+
+    image_contents = []
+    for path in frame_paths or []:
+        if os.path.exists(path):
+            with open(path, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("utf-8")
+                image_contents.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{b64}"}
+                })
+
+    if not image_contents:
+        raise ValueError("No valid image frames found to process.")
+
+    messages = [
+        {"role": "system", "content": system_instruction},
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Please analyse these cattle images carefully and return the required JSON response."},
+                *image_contents
+            ]
+        }
+    ]
+
     last_error = None
-    for model_name in MODELS_TO_TRY:
+    for model in OPENAI_MODELS:
         try:
-            logger.info(f"Attempting Gemini generation with model: {model_name}")
-            response = await client.aio.models.generate_content(
-                model=model_name,
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    temperature=temperature,
-                    max_output_tokens=max_output_tokens,
-                ),
+            logger.info(f"Executing OpenAI Vision analysis using model: {model}")
+            res = await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.2,
+                max_tokens=1024,
             )
-            if response.text:
-                return _strip_fences(response.text)
+            content = res.choices[0].message.content
+            if content:
+                return _strip_fences(content)
         except Exception as exc:
-            logger.warning(f"Gemini model {model_name} failed: [{type(exc).__name__}] {exc}")
+            logger.warning(f"OpenAI model {model} failed: [{type(exc).__name__}] {exc}")
             last_error = exc
             continue
 
-    # If Gemini fails, try OpenAI vision models
-    if frame_paths:
-        openai_result = await _generate_openai_fallback(frame_paths, system_instruction)
-        if openai_result:
-            return openai_result
-
-    raise RuntimeError(
-        f"AI analysis temporarily unavailable due to API rate limits/quota exhaustion. "
-        f"Details: {last_error}"
-    )
+    raise RuntimeError(f"OpenAI Vision analysis failed across all models: {last_error}")
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
 async def analyse_bcs(frame_paths: List[str]) -> BCSResult:
-    """Send selected frames to Gemini/OpenAI and return a validated BCSResult."""
-    client = _get_client()
-    images = _load_images(frame_paths)
-
-    contents: list = [
-        "Please analyse these cattle images and provide a BCS assessment in the required JSON format.",
-        *images,
-    ]
-
-    raw = await _generate_content_with_fallback(
-        client=client,
-        contents=contents,
-        system_instruction=BCS_SYSTEM_PROMPT,
-        temperature=0.2,
-        max_output_tokens=1024,
-        frame_paths=frame_paths,
-    )
-    logger.debug(f"BCS raw response: {raw}")
+    """Send selected frames to OpenAI Vision and return a validated BCSResult."""
+    raw = await _generate_openai_vision(frame_paths, BCS_SYSTEM_PROMPT)
+    logger.debug(f"OpenAI BCS raw response: {raw}")
     data = json.loads(raw)
     data["bcs_score"] = float(data.get("bcs_score", 3.0))
     data["confidence"] = float(data.get("confidence", 0.9))
@@ -288,27 +226,12 @@ async def analyse_bcs(frame_paths: List[str]) -> BCSResult:
 
 
 async def analyse_disease(frame_paths: List[str]) -> DiseaseResult:
-    """Send selected frames to Gemini and return a validated DiseaseResult."""
-    client = _get_client()
-    images = _load_images(frame_paths)
-
-    contents: list = [
-        "Please perform a visual health screening on these cattle images and return results in the required JSON format.",
-        *images,
-    ]
-
-    raw = await _generate_content_with_fallback(
-        client=client,
-        contents=contents,
-        system_instruction=DISEASE_SYSTEM_PROMPT,
-        temperature=0.2,
-        max_output_tokens=1024,
-    )
-    logger.debug(f"Disease raw response: {raw}")
+    """Send selected frames to OpenAI Vision and return a validated DiseaseResult."""
+    raw = await _generate_openai_vision(frame_paths, DISEASE_SYSTEM_PROMPT)
+    logger.debug(f"OpenAI Disease raw response: {raw}")
     data = json.loads(raw)
     data["confidence"] = float(data.get("confidence", 0.85))
     return DiseaseResult(**data)
-
 
 
 async def chat(
@@ -317,7 +240,7 @@ async def chat(
     analysis_context: Optional[Any] = None,
     analysis_type: Optional[str] = None,
 ) -> str:
-    """Answer a cattle health question using stored analysis context."""
+    """Answer a cattle health question using OpenAI GPT Chat models."""
     client = _get_client()
 
     system_content = CHAT_SYSTEM_PROMPT
@@ -329,18 +252,27 @@ async def chat(
             "Refer to this when the user asks about their cattle's condition."
         )
 
-    # Build conversation turns
-    contents = []
+    messages = [{"role": "system", "content": system_content}]
     for h in history[-10:]:
-        role = "user" if h.role.value == "user" else "model"
-        contents.append(types.Content(role=role, parts=[types.Part(text=h.message)]))
-    contents.append(types.Content(role="user", parts=[types.Part(text=message)]))
+        role = "user" if h.role.value == "user" else "assistant"
+        messages.append({"role": role, "content": h.message})
+    messages.append({"role": "user", "content": message})
 
-    return await _generate_content_with_fallback(
-        client=client,
-        contents=contents,
-        system_instruction=system_content,
-        temperature=0.4,
-        max_output_tokens=600,
-    )
+    last_error = None
+    for model in OPENAI_MODELS:
+        try:
+            res = await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.4,
+                max_tokens=600,
+            )
+            content = res.choices[0].message.content
+            if content:
+                return content
+        except Exception as exc:
+            logger.warning(f"OpenAI Chat model {model} failed: {exc}")
+            last_error = exc
+            continue
 
+    raise RuntimeError(f"OpenAI Chat failed across all models: {last_error}")

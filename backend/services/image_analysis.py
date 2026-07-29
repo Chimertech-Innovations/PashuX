@@ -1,6 +1,6 @@
 """
-Image Analysis Service with Dual Provider (OpenAI + Gemini) & Smart Local Fallback.
-Guarantees reliable BCS scoring and Disease screening even when API keys are restricted or hit quota limits.
+Dedicated OpenAI Image Analysis & Health Service.
+Powered by OpenAI GPT Vision Models (gpt-4o-mini, gpt-4o, gpt-4.1) for accurate BCS scoring and Disease screening.
 """
 
 import os
@@ -13,59 +13,17 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 import cv2
-
-import openai
-from openai import AsyncOpenAI
 from dotenv import load_dotenv
 
 from models.schemas import BCSResult, DiseaseResult, ChatMessage
-import services.openai_service as gemini_service
+import services.openai_service as openai_service
 
 # Load .env explicitly from backend directory
 env_path = Path(__file__).resolve().parent.parent / ".env"
 if env_path.exists():
     load_dotenv(env_path)
 
-import time
-
 logger = logging.getLogger(__name__)
-
-_openai_client: Optional[AsyncOpenAI] = None
-_openai_disabled_until: float = 0.0
-_gemini_disabled_until: float = 0.0
-
-
-def get_openai_client() -> Optional[AsyncOpenAI]:
-    global _openai_client, _openai_disabled_until
-    if time.time() < _openai_disabled_until:
-        return None
-
-    api_key = os.getenv("OPENAI_API_KEY")
-    if api_key and api_key.strip() and not api_key.startswith("your_"):
-        if _openai_client is None:
-            _openai_client = AsyncOpenAI(api_key=api_key.strip())
-        return _openai_client
-    return None
-
-
-def mark_openai_failed(exc: Exception):
-    global _openai_disabled_until
-    err_str = str(exc)
-    if "403" in err_str or "PermissionDenied" in type(exc).__name__ or "401" in err_str or "quota" in err_str.lower():
-        logger.warning(f"OpenAI API key unavailable ({type(exc).__name__}). Short-circuiting OpenAI for 10 minutes.")
-        _openai_disabled_until = time.time() + 600
-
-
-def mark_gemini_failed(exc: Exception):
-    global _gemini_disabled_until
-    err_str = str(exc)
-    if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "quota" in err_str.lower() or "404" in err_str:
-        logger.warning(f"Gemini API unavailable ({type(exc).__name__}). Short-circuiting Gemini for 60 seconds.")
-        _gemini_disabled_until = time.time() + 60
-
-
-def is_gemini_active() -> bool:
-    return time.time() >= _gemini_disabled_until
 
 
 def encode_image_compressed(image_path: str, max_dim: int = 600) -> str:
@@ -287,98 +245,24 @@ Return ONLY valid JSON matching this exact structure:
 
 
 async def analyse_bcs(frame_paths: List[str]) -> BCSResult:
-    """
-    Analyse cattle images for BCS Score with instant short-circuiting.
-    Tries OpenAI -> Gemini -> Smart Fast Estimator.
-    """
-    client = get_openai_client()
-
-    if client:
-        try:
-            logger.info("Analyzing BCS using OpenAI Vision (gpt-4o-mini)...")
-            content_parts: List[Any] = [{"type": "text", "text": BCS_PROMPT}]
-
-            for p in frame_paths:
-                b64 = encode_image_compressed(p, max_dim=600)
-                content_parts.append({
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{b64}", "detail": "low"}
-                })
-
-            response = await client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": content_parts}],
-                temperature=0.2,
-                max_tokens=800,
-            )
-
-            raw_text = response.choices[0].message.content or ""
-            cleaned = _clean_json_string(raw_text)
-            data = json.loads(cleaned)
-            data["bcs_score"] = float(data.get("bcs_score", 3.0))
-            data["confidence"] = float(data.get("confidence", 0.9))
-            return BCSResult(**data)
-
-        except Exception as exc:
-            mark_openai_failed(exc)
-
-    # Try Gemini Fallback if active
-    if is_gemini_active():
-        try:
-            logger.info("Attempting Gemini Vision fallback for BCS analysis...")
-            return await gemini_service.analyse_bcs(frame_paths)
-        except Exception as exc:
-            mark_gemini_failed(exc)
-
-    # Instant Smart Fallback
-    return _smart_fallback_bcs(frame_paths)
+async def analyse_bcs(frame_paths: List[str]) -> BCSResult:
+    """Analyse cattle images for BCS Score using dedicated OpenAI Vision engine with local CV fallback."""
+    try:
+        logger.info("Executing BCS assessment via OpenAI Vision service...")
+        return await openai_service.analyse_bcs(frame_paths)
+    except Exception as exc:
+        logger.warning(f"OpenAI Vision BCS analysis encountered error: [{type(exc).__name__}] {exc}")
+        return _smart_fallback_bcs(frame_paths)
 
 
 async def analyse_disease(frame_paths: List[str]) -> DiseaseResult:
-    """
-    Screen cattle images for health conditions with instant short-circuiting.
-    Tries OpenAI -> Gemini -> Smart Fast Estimator.
-    """
-    client = get_openai_client()
-
-    if client:
-        try:
-            logger.info("Screening disease using OpenAI Vision (gpt-4o-mini)...")
-            content_parts: List[Any] = [{"type": "text", "text": DISEASE_PROMPT}]
-
-            for p in frame_paths:
-                b64 = encode_image_compressed(p, max_dim=600)
-                content_parts.append({
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{b64}", "detail": "low"}
-                })
-
-            response = await client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": content_parts}],
-                temperature=0.2,
-                max_tokens=800,
-            )
-
-            raw_text = response.choices[0].message.content or ""
-            cleaned = _clean_json_string(raw_text)
-            data = json.loads(cleaned)
-            data["confidence"] = float(data.get("confidence", 0.85))
-            return DiseaseResult(**data)
-
-        except Exception as exc:
-            mark_openai_failed(exc)
-
-    # Try Gemini Fallback if active
-    if is_gemini_active():
-        try:
-            logger.info("Attempting Gemini Vision fallback for Disease screening...")
-            return await gemini_service.analyse_disease(frame_paths)
-        except Exception as exc:
-            mark_gemini_failed(exc)
-
-    # Instant Smart Fallback
-    return _smart_fallback_disease(frame_paths)
+    """Screen cattle images for health conditions using dedicated OpenAI Vision engine with local CV fallback."""
+    try:
+        logger.info("Executing Disease screening via OpenAI Vision service...")
+        return await openai_service.analyse_disease(frame_paths)
+    except Exception as exc:
+        logger.warning(f"OpenAI Vision Disease analysis encountered error: [{type(exc).__name__}] {exc}")
+        return _smart_fallback_disease(frame_paths)
 
 
 async def chat(
@@ -387,43 +271,14 @@ async def chat(
     analysis_context: Optional[Any] = None,
     analysis_type: Optional[str] = None,
 ) -> str:
-    """Cattle health AI chat assistant with instant short-circuiting."""
-    client = get_openai_client()
-
-    if client:
-        try:
-            system_msg = (
-                "You are an expert cattle health assistant for Chimertech. "
-                "Help farmers with BCS scoring, disease prevention, and product recommendations."
-            )
-            if analysis_context:
-                system_msg += f"\n\nContext:\n{json.dumps(analysis_context)}"
-
-            messages = [{"role": "system", "content": system_msg}]
-            for h in (history or [])[-10:]:
-                role = "user" if h.role.value == "user" else "assistant"
-                messages.append({"role": role, "content": h.message})
-            messages.append({"role": "user", "content": message})
-
-            response = await client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=messages, # type: ignore
-                temperature=0.4,
-                max_tokens=600,
-            )
-            return response.choices[0].message.content or "No response generated."
-        except Exception as exc:
-            mark_openai_failed(exc)
-
-    if is_gemini_active():
-        try:
-            return await gemini_service.chat(message, history, analysis_context, analysis_type)
-        except Exception as exc:
-            mark_gemini_failed(exc)
-
-    return (
-        "I'm here to assist with your cattle's health and nutrition! "
-        "Based on the analysis, ensure balanced feeding with essential minerals, fresh water, "
-        "and routine veterinary monitoring for optimal health."
-    )
+    """Cattle health AI chat assistant powered by OpenAI Chat models."""
+    try:
+        return await openai_service.chat(message, history, analysis_context, analysis_type)
+    except Exception as exc:
+        logger.warning(f"OpenAI Chat service error: [{type(exc).__name__}] {exc}")
+        return (
+            "I'm here to assist with your cattle's health and nutrition! "
+            "Based on the analysis, ensure balanced feeding with essential minerals, fresh water, "
+            "and routine veterinary monitoring for optimal health."
+        )
 

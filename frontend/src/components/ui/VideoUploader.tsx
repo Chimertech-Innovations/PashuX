@@ -57,7 +57,11 @@ export default function VideoUploader({ onFile, disabled, maxDurationSeconds = 6
       };
       video.onerror = () => {
         URL.revokeObjectURL(url);
-        setError('Could not read video file. Please try a different file.');
+        // Browser cannot decode codec (e.g. iPhone HEVC / H.265 / MOV), but backend OpenCV will process it cleanly!
+        setIsVideo(true);
+        setPreview(null);
+        setFileName(file.name);
+        onFile(file);
       };
       video.src = url;
       return;
@@ -88,32 +92,44 @@ export default function VideoUploader({ onFile, disabled, maxDurationSeconds = 6
     disabled,
   });
 
-  if (preview && fileName) {
+  if (fileName) {
     return (
-      <div className="glass-card p-6 space-y-4 animate-fade-in">
-        {isVideo ? (
+      <div className="glass-card p-6 space-y-4 animate-fade-in border border-white/10">
+        {isVideo && preview ? (
           <video
             src={preview}
             controls
             className="w-full rounded-xl max-h-64 object-contain bg-black"
           />
-        ) : (
+        ) : !isVideo && preview ? (
           <img
             src={preview}
             alt="Cattle preview"
             className="w-full rounded-xl max-h-64 object-contain bg-black"
           />
+        ) : (
+          <div className="w-full p-8 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col items-center justify-center gap-3 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-extrabold text-white">{fileName}</p>
+              <p className="text-xs text-emerald-400 mt-1 font-medium">Video File Ready (Server OpenCV will extract frames)</p>
+            </div>
+          </div>
         )}
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-white truncate">{fileName}</p>
-            <p className="text-xs text-grey-500 mt-0.5">
+            <p className="text-xs text-grey-400 mt-0.5 font-medium">
               {isVideo ? 'Video ready for frame extraction & analysis' : 'Photo ready for clarity check & analysis'}
             </p>
           </div>
           <button
             onClick={() => { setPreview(null); setFileName(null); setError(null); }}
-            className="btn-ghost text-xs text-red-400 hover:text-red-300"
+            className="btn-ghost text-xs text-rose-400 hover:text-rose-300 font-semibold"
             disabled={disabled}
           >
             Remove

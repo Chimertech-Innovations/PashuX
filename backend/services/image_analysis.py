@@ -245,7 +245,6 @@ Return ONLY valid JSON matching this exact structure:
 
 
 async def analyse_bcs(frame_paths: List[str]) -> BCSResult:
-async def analyse_bcs(frame_paths: List[str]) -> BCSResult:
     """Analyse cattle images for BCS Score using dedicated OpenAI Vision engine with local CV fallback."""
     try:
         logger.info("Executing BCS assessment via OpenAI Vision service...")

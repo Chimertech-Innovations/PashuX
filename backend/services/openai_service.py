@@ -17,10 +17,11 @@ logger = logging.getLogger(__name__)
 _client: Optional[AsyncOpenAI] = None
 
 OPENAI_MODELS = [
-    "gpt-4o-mini",
-    "gpt-4o",
     "gpt-4.1-mini-2025-04-14",
     "gpt-4.1",
+    "gpt-4.1-2025-04-14",
+    "gpt-4o-mini",
+    "gpt-4o",
     "gpt-4",
 ]
 

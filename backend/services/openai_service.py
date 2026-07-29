@@ -160,6 +160,64 @@ IMPORTANT RULES:
 MODELS_TO_TRY = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
 
 
+async def _generate_openai_fallback(
+    frame_paths: List[str],
+    system_instruction: str,
+) -> Optional[str]:
+    """Fallback to OpenAI models (gpt-4.1, gpt-4.1-mini, gpt-4o) if Gemini hits 429 rate limit."""
+    import os
+    import base64
+    from openai import AsyncOpenAI
+
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if not openai_key:
+        return None
+
+    try:
+        client = AsyncOpenAI(api_key=openai_key)
+        openai_models = ["gpt-4.1", "gpt-4.1-mini-2025-04-14", "gpt-4o", "gpt-4o-mini"]
+
+        image_contents = []
+        for path in frame_paths or []:
+            if os.path.exists(path):
+                with open(path, "rb") as f:
+                    b64 = base64.b64encode(f.read()).decode("utf-8")
+                    image_contents.append({
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{b64}"}
+                    })
+
+        messages = [
+            {"role": "system", "content": system_instruction},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Please analyse these cattle images and return the required JSON response."},
+                    *image_contents
+                ]
+            }
+        ]
+
+        for model in openai_models:
+            try:
+                logger.info(f"Attempting OpenAI generation with model: {model}")
+                res = await client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    temperature=0.2,
+                    max_tokens=1024,
+                )
+                content = res.choices[0].message.content
+                if content:
+                    return _strip_fences(content)
+            except Exception as exc:
+                logger.warning(f"OpenAI model {model} failed: [{type(exc).__name__}] {exc}")
+                continue
+    except Exception as e:
+        logger.warning(f"OpenAI fallback client error: {e}")
+
+    return None
+
 
 async def _generate_content_with_fallback(
     client: genai.Client,
@@ -167,8 +225,9 @@ async def _generate_content_with_fallback(
     system_instruction: str,
     temperature: float = 0.2,
     max_output_tokens: int = 1024,
+    frame_paths: Optional[List[str]] = None,
 ) -> str:
-    """Try multiple Gemini model variants to handle rate limits / 429 quota issues."""
+    """Try multiple Gemini model variants and OpenAI models to handle rate limits / 429 quota issues."""
     last_error = None
     for model_name in MODELS_TO_TRY:
         try:
@@ -187,10 +246,13 @@ async def _generate_content_with_fallback(
         except Exception as exc:
             logger.warning(f"Gemini model {model_name} failed: [{type(exc).__name__}] {exc}")
             last_error = exc
-            if "429" in str(exc) or "RESOURCE_EXHAUSTED" in str(exc) or "quota" in str(exc).lower():
-                continue
-            # If it's a non-429 error, still try fallback models before raising
             continue
+
+    # If Gemini fails, try OpenAI vision models
+    if frame_paths:
+        openai_result = await _generate_openai_fallback(frame_paths, system_instruction)
+        if openai_result:
+            return openai_result
 
     raise RuntimeError(
         f"AI analysis temporarily unavailable due to API rate limits/quota exhaustion. "
@@ -201,7 +263,7 @@ async def _generate_content_with_fallback(
 # ── Public API ────────────────────────────────────────────────────────────────
 
 async def analyse_bcs(frame_paths: List[str]) -> BCSResult:
-    """Send selected frames to Gemini and return a validated BCSResult."""
+    """Send selected frames to Gemini/OpenAI and return a validated BCSResult."""
     client = _get_client()
     images = _load_images(frame_paths)
 
@@ -216,6 +278,7 @@ async def analyse_bcs(frame_paths: List[str]) -> BCSResult:
         system_instruction=BCS_SYSTEM_PROMPT,
         temperature=0.2,
         max_output_tokens=1024,
+        frame_paths=frame_paths,
     )
     logger.debug(f"BCS raw response: {raw}")
     data = json.loads(raw)

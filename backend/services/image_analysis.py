@@ -122,54 +122,46 @@ def _smart_fallback_bcs(frame_paths: List[str]) -> BCSResult:
     avg_std = float(np.mean(std_devs)) if std_devs else 40.0
     subject_type = "Female Water Buffalo (Solid Black coat)" if is_dark_coat else "Cattle (Dairy/Indigenous Breed)"
 
-    # Very high edge density + high contrast std dev -> Thin Cow (BCS 2.0)
-    if avg_edge > 0.22 and avg_std > 55.0:
+    # Dynamic scaling based on surface edge density and texture variance:
+    if avg_edge > 0.22 and avg_std > 50.0:
         score = 2.0
-        condition = f"Thin Condition (BCS 2.0/5.0) - {subject_type}"
-        obs = [
-            f"Subject identified: {subject_type}.",
-            "Individual ribs and spinous processes visible as prominent ridges with thin fat cover.",
-            "Hip and pin bones are prominent with visible pelvic hollow.",
-            "Cloud AI daily limit reached (429) — Computer vision feature estimation applied.",
-            "Shallow flank fill and tailhead cavity indicate low body fat reserves."
-        ]
-        recs = [
-            "Increase energy-dense concentrate and high-quality leguminous green fodder.",
-            "Provide high-energy mineral mixture and free-choice fresh water.",
-            "Monitor body condition weekly to track weight recovery."
-        ]
-    # Low edge density + smooth uniform surface -> Heavy / Obese Cow (BCS 4.75 - 5.0)
-    elif avg_edge < 0.16:
-        score = 4.75
-        condition = f"Heavy / Obese Condition (BCS 4.75/5.0) - {subject_type}"
-        obs = [
-            f"Subject identified: {subject_type}.",
-            "Hooks and pin bones are buried in heavy subcutaneous fat deposits with rounded contours.",
-            "Tailhead area surrounded by thick, prominent patches of subcutaneous fat cover.",
-            "Cloud AI daily limit reached (429) — Computer vision feature estimation applied.",
-            "Spinous processes and short ribs obscured by smooth, thick subcutaneous fat layer."
-        ]
-        recs = [
-            "Gradually adjust energy intake by managing concentrate feeding portion.",
-            "Ensure regular exercise and adequate dry fodder for proper digestion.",
-            "Monitor body condition to prevent post-calving metabolic complications."
-        ]
-    # Balanced edge density & contrast -> Ideal Condition (BCS 3.25)
-    else:
+        cond_label = "Thin Condition (BCS 2.0/5.0)"
+        obs_detail = "Individual ribs and spinous processes visible as prominent ridges with thin fat cover."
+        rec_detail = "Increase energy-dense concentrate and high-quality leguminous green fodder."
+    elif avg_edge > 0.17:
+        score = 2.75
+        cond_label = "Slightly Thin Condition (BCS 2.75/5.0)"
+        obs_detail = "Short ribs and hip bones moderately visible with light subcutaneous fat cover."
+        rec_detail = "Add high-energy mineral mixture and maintain good quality forage ratio."
+    elif avg_edge > 0.12:
         score = 3.25
-        condition = f"Ideal Condition (BCS 3.25/5.0) - {subject_type}"
-        obs = [
-            f"Subject identified: {subject_type}.",
-            "Spinous processes and transverse processes covered with smooth, uniform fat cover.",
-            "Hooks and pin bones are visible with smooth, rounded fat contours (U-shaped depression).",
-            "Cloud AI daily limit reached (429) — Computer vision feature estimation applied.",
-            "Tailhead depression filled with adequate subcutaneous fat cover."
-        ]
-        recs = [
-            "Maintain current balanced green forage, dry fodder, and concentrate feeding.",
-            "Provide clean, cool drinking water ad libitum and essential mineral mixture supplementation.",
-            "Monitor body condition score monthly during early and mid-lactation."
-        ]
+        cond_label = "Ideal Condition (BCS 3.25/5.0)"
+        obs_detail = "Spinous processes and transverse processes covered with smooth, uniform fat cover."
+        rec_detail = "Maintain current balanced green forage, dry fodder, and concentrate feeding."
+    elif avg_edge > 0.07:
+        score = 4.0
+        cond_label = "Overconditioned / Fat (BCS 4.0/5.0)"
+        obs_detail = "Hooks and pin bones are covered with heavy fat deposits with rounded contours."
+        rec_detail = "Gradually adjust energy intake by managing concentrate feeding portion."
+    else:
+        score = 4.75
+        cond_label = "Heavy / Obese Condition (BCS 4.75/5.0)"
+        obs_detail = "Tailhead area surrounded by thick, prominent patches of subcutaneous fat cover."
+        rec_detail = "Ensure regular exercise and adequate dry fodder for proper digestion."
+
+    condition = f"{cond_label} - {subject_type}"
+    obs = [
+        f"Subject identified: {subject_type}.",
+        obs_detail,
+        f"Computer vision feature analysis: surface edge density {round(avg_edge, 3)}, clarity {round(avg_blur, 1)}.",
+        "Cloud AI daily limit reached (429) — Computer vision feature estimation applied.",
+        "Body fat reserves estimated based on subcutaneous fat smoothness and bone edge ratio."
+    ]
+    recs = [
+        rec_detail,
+        "Provide clean, cool drinking water ad libitum and essential mineral mixture supplementation.",
+        "Consult a certified veterinarian for comprehensive herd nutritional planning."
+    ]
 
     return BCSResult(
         bcs_score=score,

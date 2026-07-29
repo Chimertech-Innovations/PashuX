@@ -1,0 +1,23 @@
+# Environment & Secrets
+.env
+*.env
+!.env.example
+
+# Node / Frontend
+node_modules/
+dist/
+.output/
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.log
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

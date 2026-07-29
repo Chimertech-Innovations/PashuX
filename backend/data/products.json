@@ -1,0 +1,132 @@
+[
+  {
+    "id": "cmt-kit",
+    "name": "Chimertech CMT Kit",
+    "category": "Detection and Diagnostics",
+    "description": "On-farm screening kit for detecting subclinical mastitis. Quick, reliable and easy to use in any farm setting.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=CMT+Kit",
+    "price": 499,
+    "product_page_url": "https://chimertech.com/products/cmt-kit",
+    "recommended_for": ["mastitis", "udder health", "milk quality", "subclinical mastitis", "quarter screening"]
+  },
+  {
+    "id": "quadmastest",
+    "name": "QuadMastest",
+    "category": "Detection and Diagnostics",
+    "description": "Four-quarter mastitis test paddle for rapid on-farm detection of mastitis using CMT reagent. Designed for accuracy and ease.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=QuadMastest",
+    "price": 299,
+    "product_page_url": "https://chimertech.com/products/quadmastest",
+    "recommended_for": ["mastitis", "udder health", "quarter testing", "subclinical mastitis"]
+  },
+  {
+    "id": "finekine",
+    "name": "FineKine",
+    "category": "Udder Hygiene",
+    "description": "Premium pre- and post-milking teat dip for optimal udder hygiene. Protects against environmental pathogens and promotes teat skin health.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=FineKine",
+    "price": 650,
+    "product_page_url": "https://chimertech.com/products/finekine",
+    "recommended_for": ["udder hygiene", "teat dip", "mastitis prevention", "milking hygiene", "teat health"]
+  },
+  {
+    "id": "iogiene",
+    "name": "Iogiene",
+    "category": "Udder Hygiene",
+    "description": "Iodine-based teat sanitiser for use in pre- and post-milking routines. Effective broad-spectrum antimicrobial action.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=Iogiene",
+    "price": 550,
+    "product_page_url": "https://chimertech.com/products/iogiene",
+    "recommended_for": ["udder hygiene", "iodine teat dip", "mastitis prevention", "milking hygiene", "sanitiser"]
+  },
+  {
+    "id": "moofoam",
+    "name": "MooFoam",
+    "category": "Udder Hygiene",
+    "description": "Foaming pre-milking teat cleanser for effective removal of dirt, bacteria and debris before milking. Gentle on skin.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=MooFoam",
+    "price": 480,
+    "product_page_url": "https://chimertech.com/products/moofoam",
+    "recommended_for": ["udder hygiene", "pre-milking", "mastitis prevention", "teat cleaning", "foam cleanser"]
+  },
+  {
+    "id": "pregnancy-kit",
+    "name": "Chimertech Pregnancy Detection Kit",
+    "category": "Reproductive Management",
+    "description": "Rapid on-farm pregnancy detection kit for cattle. Accurate results within minutes, reducing the need for veterinary visits.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=Pregnancy+Kit",
+    "price": 799,
+    "product_page_url": "https://chimertech.com/products/pregnancy-kit",
+    "recommended_for": ["pregnancy detection", "reproductive management", "breeding", "fertility"]
+  },
+  {
+    "id": "tic-tick-tic",
+    "name": "TIC-TICK-TIC",
+    "category": "Parasite Control",
+    "description": "Effective tick and external parasite control solution for cattle. Broad-spectrum coverage for common cattle parasites.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=TIC-TICK-TIC",
+    "price": 420,
+    "product_page_url": "https://chimertech.com/products/tic-tick-tic",
+    "recommended_for": ["tick control", "parasite control", "external parasites", "skin condition", "tick infestation"]
+  },
+  {
+    "id": "mbrt-test",
+    "name": "MBRT Milk Quality Test",
+    "category": "Milk Quality Testing",
+    "description": "Methylene Blue Reduction Test (MBRT) kit for assessing raw milk quality and microbial contamination levels.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=MBRT+Test",
+    "price": 350,
+    "product_page_url": "https://chimertech.com/products/mbrt",
+    "recommended_for": ["milk quality", "milk testing", "microbial testing", "raw milk assessment", "milk hygiene"]
+  },
+  {
+    "id": "resazurin-test",
+    "name": "Resazurin Milk Test Kit",
+    "category": "Milk Quality Testing",
+    "description": "Resazurin dye reduction test for rapid assessment of milk bacteriological quality. Widely used in quality control.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=Resazurin",
+    "price": 320,
+    "product_page_url": "https://chimertech.com/products/resazurin",
+    "recommended_for": ["milk quality", "milk testing", "bacteriological quality", "milk hygiene", "dairy quality"]
+  },
+  {
+    "id": "adulteration-test",
+    "name": "Milk Adulteration Test Kit",
+    "category": "Milk Quality Testing",
+    "description": "Comprehensive kit for detecting common adulterants in milk including water, detergents and preservatives.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=Adulteration+Test",
+    "price": 450,
+    "product_page_url": "https://chimertech.com/products/adulteration-test",
+    "recommended_for": ["milk adulteration", "milk testing", "milk quality", "fraud detection", "dairy safety"]
+  },
+  {
+    "id": "cattle-supplement",
+    "name": "Chimertech BoostBCS Supplement",
+    "category": "Nutrition and Supplements",
+    "description": "Energy-dense nutritional supplement to improve cattle body condition score. Formulated for low BCS cattle during transition and lactation periods.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=BoostBCS",
+    "price": 890,
+    "product_page_url": "https://chimertech.com/products/boostbcs",
+    "recommended_for": ["low bcs", "body condition", "nutrition", "supplement", "weight gain", "lactation support"]
+  },
+  {
+    "id": "mineral-lick",
+    "name": "Chimertech MineralPro Lick Block",
+    "category": "Nutrition and Supplements",
+    "description": "Balanced mineral and vitamin supplement block for free-access feeding. Supports immune function, reproduction and overall cattle health.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=MineralPro",
+    "price": 360,
+    "product_page_url": "https://chimertech.com/products/mineralpro",
+    "recommended_for": ["mineral deficiency", "nutrition", "supplement", "immune support", "herd health"]
+  },
+  {
+    "id": "bcp-test",
+    "name": "BCP Milk Acidity Test",
+    "category": "Milk Quality Testing",
+    "description": "Bromocresol Purple (BCP) based milk freshness and acidity test. Detects abnormal milk quickly during quality screening.",
+    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=BCP+Test",
+    "price": 280,
+    "product_page_url": "https://chimertech.com/products/bcp",
+    "recommended_for": ["milk acidity", "milk quality", "freshness test", "abnormal milk", "dairy testing"]
+  }
+]

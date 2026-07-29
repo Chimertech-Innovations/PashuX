@@ -1,0 +1,262 @@
+"""
+Video processing service.
+Extracts frames from a cattle video, removes blurry/duplicate frames,
+ranks by clarity, and returns the top N frame paths.
+All temporary files are cleaned up after processing.
+"""
+
+import os
+import shutil
+import tempfile
+import logging
+from pathlib import Path
+from typing import List, Tuple
+
+import cv2
+import numpy as np
+import imagehash
+from PIL import Image
+
+logger = logging.getLogger(__name__)
+
+BLUR_THRESHOLD: float = float(os.getenv("BLUR_THRESHOLD", "100.0"))
+HASH_SIMILARITY_THRESHOLD: int = int(os.getenv("HASH_SIMILARITY_THRESHOLD", "10"))
+TOP_FRAMES_COUNT: int = int(os.getenv("TOP_FRAMES_COUNT", "10"))
+
+
+def compute_blur_score(frame: np.ndarray) -> float:
+    """Return Laplacian variance — higher means sharper."""
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    return float(cv2.Laplacian(gray, cv2.CV_64F).var())
+
+
+def compute_image_fingerprints(img: np.ndarray) -> dict:
+    """Compute multi-spectral fingerprints (pHash, dHash, & normalized thumbnail MAE) for strict dedup."""
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    pil_img = Image.fromarray(rgb)
+    phash = imagehash.phash(pil_img)
+    dhash = imagehash.dhash(pil_img)
+
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    thumb = cv2.resize(gray, (64, 64), interpolation=cv2.INTER_AREA).astype(np.float32) / 255.0
+
+    return {
+        "phash": phash,
+        "dhash": dhash,
+        "thumb": thumb,
+    }
+
+
+def is_near_duplicate(fp1: dict, fp2: dict) -> bool:
+    """
+    Check if two frame fingerprints are near-duplicates.
+    Returns True if frames represent the same cattle pose or scene shot.
+    """
+    phash_diff = abs(fp1["phash"] - fp2["phash"])
+    dhash_diff = abs(fp1["dhash"] - fp2["dhash"])
+    mae = float(np.mean(np.abs(fp1["thumb"] - fp2["thumb"])))
+
+    # Frame is duplicate if:
+    # 1. pHash difference <= 16 (perceptual similarity)
+    # 2. dHash difference <= 14 (structural edge similarity)
+    # 3. Grayscale thumbnail MAE < 0.15 (visual layout similarity)
+    return phash_diff <= 16 or dhash_diff <= 14 or mae < 0.15
+
+
+def extract_frames(video_path: str, output_dir: str) -> List[Tuple[str, float]]:
+    """
+    Extract one frame per second from the video.
+    Returns list of (frame_path, blur_score) tuples sorted by timestamp.
+    """
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise ValueError(f"Cannot open video file: {video_path}")
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    duration_sec = total_frames / fps if fps > 0 else 0
+
+    logger.info(f"Video: {duration_sec:.1f}s, {fps:.1f} fps, {total_frames} total frames")
+
+    frames: List[Tuple[str, float]] = []
+    second = 0
+
+    while True:
+        frame_pos = int(second * fps)
+        if frame_pos >= total_frames:
+            break
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_pos)
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        blur = compute_blur_score(frame)
+        frame_path = os.path.join(output_dir, f"frame_{second:04d}.jpg")
+        cv2.imwrite(frame_path, frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        frames.append((frame_path, blur))
+
+        second += 1
+
+    cap.release()
+    logger.info(f"Extracted {len(frames)} frames (1 per second)")
+    return frames
+
+
+def remove_blurry_frames(
+    frames: List[Tuple[str, float]],
+    threshold: float = BLUR_THRESHOLD,
+) -> List[Tuple[str, float]]:
+    """
+    Remove frames that fall below absolute threshold OR below 35% of max video clarity.
+    """
+    if not frames:
+        return []
+
+    max_clarity = max(s for _, s in frames)
+    # Dynamic relative threshold: at least 35% of max clarity, and at least 120
+    effective_threshold = max(threshold, max_clarity * 0.35)
+
+    sharp = [(p, s) for p, s in frames if s >= effective_threshold]
+
+    # Fallback if strict threshold removed everything
+    if not sharp:
+        sorted_all = sorted(frames, key=lambda x: x[1], reverse=True)
+        sharp = sorted_all[:max(1, len(frames) // 3)]
+
+    logger.info(f"Blur filter: kept {len(sharp)} sharp frame(s), removed {len(frames) - len(sharp)}")
+    return sharp
+
+
+def remove_duplicate_frames(
+    frames: List[Tuple[str, float]],
+) -> List[Tuple[str, float]]:
+    """
+    Remove near-duplicate frames using multi-spectral fingerprints (pHash, dHash, & MAE).
+    Input frames must be pre-sorted by clarity descending so the sharpest
+    representative of each unique pose/angle is preserved.
+    """
+    unique: List[Tuple[str, float]] = []
+    seen_fingerprints: List[dict] = []
+
+    for path, score in frames:
+        img = cv2.imread(path)
+        if img is None:
+            continue
+
+        fp = compute_image_fingerprints(img)
+        is_dup = any(is_near_duplicate(fp, seen) for seen in seen_fingerprints)
+
+        if not is_dup:
+            unique.append((path, score))
+            seen_fingerprints.append(fp)
+
+    removed = len(frames) - len(unique)
+    logger.info(f"Dedup filter: kept {len(unique)} unique frame(s), removed {removed} duplicate(s)")
+    return unique
+
+
+def select_top_frames(
+    frames: List[Tuple[str, float]],
+    top_n: int = TOP_FRAMES_COUNT,
+) -> List[Tuple[str, float]]:
+    """Rank clean unique frames by clarity (blur score) and return up to top N (1 to 10)."""
+    ranked = sorted(frames, key=lambda x: x[1], reverse=True)
+    selected = ranked[:top_n]
+    logger.info(f"Selected {len(selected)} best clean frame(s) by clarity")
+    return selected
+
+
+def process_video(video_path: str, work_dir: str) -> dict:
+    """
+    Full pipeline:
+      1. Extract 1 frame/sec
+      2. Remove blurry frames (strict relative & absolute blur filter)
+      3. Remove near-duplicates using multi-spectral pHash + dHash + MAE similarity
+      4. Return ONLY unique best clean frames (from minimum 1 up to maximum 10 clean frames)
+      5. Clean up / erase discarded blurry & duplicate frame files
+    """
+    frames_dir = os.path.join(work_dir, "frames")
+    os.makedirs(frames_dir, exist_ok=True)
+
+    # Step 1 – Extract
+    all_frames = extract_frames(video_path, frames_dir)
+    if not all_frames:
+        raise ValueError("Could not extract frames from the video. Please check the video file.")
+
+    # Step 2 – Blur filter
+    sharp_frames = remove_blurry_frames(all_frames)
+
+    # Step 3 – Sort sharp frames by clarity DESCENDING before deduplication
+    # This guarantees we keep the absolute sharpest image for each unique angle/pose
+    sharp_frames_sorted = sorted(sharp_frames, key=lambda x: x[1], reverse=True)
+    unique_frames = remove_duplicate_frames(sharp_frames_sorted)
+
+    # Fallback: If deduplication emptied the list, keep the single sharpest frame
+    if not unique_frames:
+        unique_frames = [sharp_frames_sorted[0]]
+
+    # Step 4 – Select best clean frames (up to TOP_FRAMES_COUNT max, e.g. 10, but returns whatever clean unique count exists e.g. 2, 3, or 4)
+    top_frames = select_top_frames(unique_frames, top_n=TOP_FRAMES_COUNT)
+
+    # Step 5 – Erase/delete all unselected, blurry, and duplicate frame files from disk
+    selected_paths = {p for p, _ in top_frames}
+    for path, _ in all_frames:
+        if path not in selected_paths and os.path.exists(path):
+            try:
+                os.remove(path)
+            except Exception as exc:
+                logger.warning(f"Could not remove unselected frame {path}: {exc}")
+
+    return {
+        "frames_extracted": len(all_frames),
+        "frames_after_blur_filter": len(sharp_frames),
+        "frames_after_dedup": len(unique_frames),
+        "top_frames_selected": len(top_frames),
+        "frame_data": [
+            {"path": p, "clarity_score": round(s, 2), "frame_number": i + 1}
+            for i, (p, s) in enumerate(top_frames)
+        ],
+    }
+
+
+
+def process_image(image_path: str, work_dir: str) -> dict:
+    """
+    Process an uploaded single image/photo:
+      1. Load image and compute blur score (Laplacian variance)
+      2. Save clean image into work_dir/frames/frame_0001.jpg
+      3. Return dictionary with frame data matching the video processing schema.
+    """
+    frames_dir = os.path.join(work_dir, "frames")
+    os.makedirs(frames_dir, exist_ok=True)
+
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Could not read image file: {image_path}")
+
+    blur_score = compute_blur_score(img)
+    target_frame_path = os.path.join(frames_dir, "frame_0001.jpg")
+    cv2.imwrite(target_frame_path, img, [cv2.IMWRITE_JPEG_QUALITY, 95])
+
+    return {
+        "frames_extracted": 1,
+        "frames_after_blur_filter": 1,
+        "frames_after_dedup": 1,
+        "top_frames_selected": 1,
+        "frame_data": [
+            {"path": target_frame_path, "clarity_score": round(blur_score, 2), "frame_number": 1}
+        ],
+    }
+
+
+
+def cleanup(path: str) -> None:
+    """Delete a file or directory tree silently."""
+    try:
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        elif os.path.isfile(path):
+            os.remove(path)
+    except Exception as exc:
+        logger.warning(f"Cleanup failed for {path}: {exc}")

@@ -17,6 +17,34 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+async def _resolve_frame_paths(request_id: str, frame_paths: list[str]) -> list[str]:
+    import os, tempfile, httpx
+    valid_paths = [p for p in frame_paths if os.path.exists(p)]
+    if valid_paths:
+        return valid_paths
+
+    # Local frames missing on server instance — download from Supabase Storage
+    logger.info(f"Local frame files missing for request {request_id}. Downloading from Supabase Storage...")
+    try:
+        frames_db = await db.get_frames_for_request(request_id)
+        if frames_db:
+            temp_dir = tempfile.mkdtemp(prefix=f"bcs_frames_{request_id}_")
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                for idx, record in enumerate(frames_db):
+                    url = record.get("frame_url")
+                    if url:
+                        res = await client.get(url)
+                        if res.status_code == 200:
+                            fpath = os.path.join(temp_dir, f"frame_{idx+1:04d}.jpg")
+                            with open(fpath, "wb") as f:
+                                f.write(res.content)
+                            valid_paths.append(fpath)
+    except Exception as exc:
+        logger.warning(f"Could not download frames from Supabase: {exc}")
+
+    return valid_paths
+
+
 @router.post("/analyse-bcs")
 async def analyse_bcs(body: AnalyseRequest):
     if not body.frame_paths:
@@ -25,16 +53,15 @@ async def analyse_bcs(body: AnalyseRequest):
             detail="No frame paths provided.",
         )
 
-    # Verify frames exist locally
-    missing = [p for p in body.frame_paths if not __import__("os").path.exists(p)]
-    if missing:
+    resolved_paths = await _resolve_frame_paths(body.request_id, body.frame_paths)
+    if not resolved_paths:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"{len(missing)} frame file(s) not found on server.",
+            detail="Frame files not found on server or storage.",
         )
 
     try:
-        result = await ai.analyse_bcs(body.frame_paths)
+        result = await ai.analyse_bcs(resolved_paths)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     except Exception as exc:
@@ -52,8 +79,8 @@ async def analyse_bcs(body: AnalyseRequest):
     except Exception as exc:
         logger.warning(f"DB save failed: {exc}")
 
-    # Cleanup local frames (already uploaded to storage)
-    for path in body.frame_paths:
+    # Cleanup local frames
+    for path in resolved_paths:
         cleanup(path)
 
     return {
@@ -71,15 +98,15 @@ async def analyse_disease(body: AnalyseRequest):
             detail="No frame paths provided.",
         )
 
-    missing = [p for p in body.frame_paths if not __import__("os").path.exists(p)]
-    if missing:
+    resolved_paths = await _resolve_frame_paths(body.request_id, body.frame_paths)
+    if not resolved_paths:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"{len(missing)} frame file(s) not found on server.",
+            detail="Frame files not found on server or storage.",
         )
 
     try:
-        result = await ai.analyse_disease(body.frame_paths)
+        result = await ai.analyse_disease(resolved_paths)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     except Exception as exc:
@@ -96,7 +123,7 @@ async def analyse_disease(body: AnalyseRequest):
     except Exception as exc:
         logger.warning(f"DB save failed: {exc}")
 
-    for path in body.frame_paths:
+    for path in resolved_paths:
         cleanup(path)
 
     return {

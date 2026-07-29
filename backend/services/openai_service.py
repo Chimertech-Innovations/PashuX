@@ -88,16 +88,18 @@ CRITICAL RULES & RELEVANCE CHECK:
      - Distinctly identify each animal by coat color and position (e.g., "Animal 1 (Left, Black & White Holstein): BCS 3.25 - Ideal condition", "Animal 2 (Right, Brown Cow): BCS 2.75 - Slightly thin").
      - Set the primary `bcs_score` to the main/center animal in the frame, and describe all animals in `observations`.
 
-4. ANATOMICAL VIEW & ACCURATE BCS SCORING:
-   - Verify if key BCS anatomical landmarks are visible (back/loin, spine, hooks, pin bones, tailhead cavity, ribs).
+4. ANATOMICAL VIEW & ACCURATE FULL-RANGE BCS SCORING (1.0 - 5.0):
+   - Evaluate fat cover across the entire 1.0 to 5.0 scale without defaulting to 2.0 or 3.0:
+     * BCS 1.0 - 2.0 (Thin): Ribs & spine clearly visible as sharp ridges, deep pelvic hollow, sharp pin/hook bones.
+     * BCS 2.75 - 3.25 (Ideal): Smooth fat cover, rounded hooks & pins, U-shaped depression at tailhead.
+     * BCS 3.75 - 4.25 (Overconditioned / Fat): Ribs completely covered & smooth, thick fat patches around tailhead, heavy fat pads on pin bones.
+     * BCS 4.5 - 5.0 (Obese / Heavy): Tailhead buried in thick fat folds, spinous processes undetectable, heavy fat rolls over hips and ribs.
    - If view is inadequate (e.g., face close-up, ear tag only, hoof only):
      - Set "bcs_score": 0.0
      - Set "condition": "Inadequate View for BCS"
      - Set "confidence": 0.25
      - In "observations": ["Subject identified as [Cattle/Buffalo color], but key BCS anatomical views (back, hips, tailhead) are obscured or missing."]
      - In "recommendations": ["Capture images/video from a rear-three-quarters or top view showing the hips, back, and tailhead."]
-   - If a valid view is present:
-     - Score on a standard 1-5 scale (1=emaciated, 3=ideal, 5=obese) with decimal precision based on visible fat deposits over spine, hooks, pins, and tailhead.
 
 Required JSON format:
 {

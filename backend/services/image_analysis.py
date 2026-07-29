@@ -91,12 +91,13 @@ def _clean_json_string(raw: str) -> str:
 
 
 def _smart_fallback_bcs(frame_paths: List[str]) -> BCSResult:
-    """Dynamically analyze rib prominence, flank shadows, and coat color across frame shots."""
+    """Dynamically analyze rib prominence, flank shadows, contrast, and coat color across frame shots."""
     logger.info("Performing computer vision frame analysis for BCS score.")
     
     blur_scores = []
     is_dark_coat = False
-    max_rib_edge_ratio = 0.0
+    edge_ratios = []
+    std_devs = []
 
     for path in frame_paths or []:
         if os.path.exists(path):
@@ -111,30 +112,49 @@ def _smart_fallback_bcs(frame_paths: List[str]) -> BCSResult:
                 # Analyze edge density in mid-body / rib region (middle 50% of frame)
                 h, w = gray.shape
                 mid_section = gray[int(h*0.25):int(h*0.75), int(w*0.2):int(w*0.8)]
-                edges = cv2.Canny(mid_section, 50, 150)
+                edges = cv2.Canny(mid_section, 80, 200)
                 edge_ratio = float(np.count_nonzero(edges)) / float(edges.size)
-                if edge_ratio > max_rib_edge_ratio:
-                    max_rib_edge_ratio = edge_ratio
+                edge_ratios.append(edge_ratio)
+                std_devs.append(float(np.std(mid_section)))
 
     avg_blur = float(np.mean(blur_scores)) if blur_scores else 250.0
+    avg_edge = float(np.mean(edge_ratios)) if edge_ratios else 0.14
+    avg_std = float(np.mean(std_devs)) if std_devs else 40.0
     subject_type = "Female Water Buffalo (Solid Black coat)" if is_dark_coat else "Cattle (Dairy/Indigenous Breed)"
 
-    # High rib/spine edge density indicates visible rib structure and deep flank hollow (Thin Cow ~ BCS 2.0 - 2.25)
-    if max_rib_edge_ratio > 0.08:
+    # Very high edge density + high contrast std dev -> Thin Cow (BCS 2.0)
+    if avg_edge > 0.22 and avg_std > 55.0:
         score = 2.0
         condition = f"Thin Condition (BCS 2.0/5.0) - {subject_type}"
         obs = [
             f"Subject identified: {subject_type}.",
-            "Ribs clearly visible with prominent bone structure and thin subcutaneous fat cover.",
-            "Hip and pin bones are prominent with visible pelvic depression.",
-            f"Computer vision frame analysis verified (flank edge density: {round(max_rib_edge_ratio, 3)}).",
-            "Flank hollow and tailhead depression indicate low body fat reserves."
+            "Individual ribs and spinous processes visible as prominent ridges with thin fat cover.",
+            "Hip and pin bones are prominent with visible pelvic hollow.",
+            f"Computer vision frame analysis verified (flank edge density: {round(avg_edge, 3)}).",
+            "Shallow flank fill and tailhead cavity indicate low body fat reserves."
         ]
         recs = [
             "Increase energy-dense concentrate and high-quality leguminous green fodder.",
             "Provide high-energy mineral mixture and free-choice fresh water.",
-            "Monitor body condition weekly to track weight gain recovery."
+            "Monitor body condition weekly to track weight recovery."
         ]
+    # Low edge density + smooth uniform surface -> Fat / Obese Cow (BCS 4.25)
+    elif avg_edge < 0.10 and avg_std < 32.0:
+        score = 4.25
+        condition = f"Overconditioned / Fat (BCS 4.25/5.0) - {subject_type}"
+        obs = [
+            f"Subject identified: {subject_type}.",
+            "Hooks and pin bones are covered with heavy fat deposits with rounded contours.",
+            "Tailhead area surrounded by prominent patches of subcutaneous fat cover.",
+            f"Computer vision frame analysis verified (surface smoothness index: {round(1.0 - avg_edge, 3)}).",
+            "Spinous processes and short ribs obscured by smooth, thick subcutaneous fat layer."
+        ]
+        recs = [
+            "Gradually adjust energy intake by managing concentrate feeding portion.",
+            "Ensure regular exercise and adequate dry fodder for proper digestion.",
+            "Monitor body condition to prevent post-calving metabolic complications."
+        ]
+    # Balanced edge density & contrast -> Ideal Condition (BCS 3.25)
     else:
         score = 3.25
         condition = f"Ideal Condition (BCS 3.25/5.0) - {subject_type}"
@@ -194,8 +214,8 @@ CATTLE 5-POINT SCALE:
 - 1.0 (Emaciated): Deep cavity around tailhead, sharp spinous processes, severe muscle wasting, prominent hooks and pins with deep V-shaped depression.
 - 2.0 (Thin): Shallow cavity around tailhead, individual spinous processes visible as sharp ridge, hooks and pins sharp.
 - 3.0 (Ideal / Moderate): Tailhead area smooth with light fat cover, spinous processes rounded, hooks and pins rounded with U-shaped depression.
-- 4.0 (Overconditioned): Tailhead surrounded by patches of fat, spinous processes flat/felt only with firm pressure, heavy fat pads on pins.
-- 5.0 (Obese): Tailhead buried in thick fat, spinous processes undetectable, hooks and pins completely covered by thick fat folds.
+- 4.0 (Overconditioned / Fat): Tailhead surrounded by patches of fat, spinous processes flat/felt only with firm pressure, heavy fat pads on pins, ribs smooth and covered.
+- 5.0 (Obese / Heavy): Tailhead buried in thick fat folds, spinous processes undetectable, hooks and pins completely covered by thick fat rolls, heavy brisket fill.
 
 WATER BUFFALO 5-POINT SCALE (ICAR Standards):
 - 1.0 (Emaciated / Very Poor): Deep hollows between hooks and pins, visible ribs, sharp rump bones, severe pelvic hollow.
@@ -224,16 +244,18 @@ CRITICAL ASSESSMENT RULES:
      - Distinctly identify each animal by coat color and position (e.g., "Animal 1 (Left, Black & White Holstein): BCS 3.25 - Ideal condition", "Animal 2 (Right, Brown Cow): BCS 2.75 - Slightly thin").
      - Set the primary `bcs_score` to the main/center animal in the frame, and describe all animals in `observations`.
 
-4. ANATOMICAL VIEW & ACCURATE BCS SCORING:
-   - Verify if key BCS anatomical landmarks are visible (back/loin, spine, hooks, pin bones, tailhead cavity, ribs).
+4. ANATOMICAL VIEW & ACCURATE FULL-RANGE BCS SCORING (1.0 - 5.0):
+   - Evaluate fat cover across the entire 1.0 to 5.0 scale without defaulting to 2.0 or 3.0:
+     * BCS 1.0 - 2.0 (Thin): Ribs & spine clearly visible as sharp ridges, deep pelvic hollow, sharp pin/hook bones.
+     * BCS 2.75 - 3.25 (Ideal): Smooth fat cover, rounded hooks & pins, U-shaped depression at tailhead.
+     * BCS 3.75 - 4.25 (Overconditioned / Fat): Ribs completely covered & smooth, thick fat patches around tailhead, heavy fat pads on pin bones.
+     * BCS 4.5 - 5.0 (Obese / Heavy): Tailhead buried in thick fat folds, spinous processes undetectable, heavy fat rolls over hips and ribs.
    - If view is inadequate (e.g., face close-up, ear tag only, hoof only):
      - "bcs_score": 0.0
      - "condition": "Inadequate View for BCS"
      - "confidence": 0.25
      - "observations": ["Subject identified as [Cattle/Buffalo color], but key BCS anatomical views (back, hips, tailhead) are obscured or missing."]
      - "recommendations": ["Capture images/video from a rear-three-quarters or top view showing the hips, back, and tailhead."]
-   - If a valid view is present:
-     - Predict BCS accurately on a 1.0 to 5.0 scale (1=Emaciated, 3=Ideal, 5=Obese) with decimal precision (e.g. 2.75, 3.0, 3.25, 3.5) based on visible fat deposits over spine, hooks, pins, and tailhead.
 
 Return ONLY valid JSON matching this exact structure:
 {

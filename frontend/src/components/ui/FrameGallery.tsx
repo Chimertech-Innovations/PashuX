@@ -72,49 +72,51 @@ export default function FrameGallery({ frames, label = 'Selected Frames', isLoad
       )}
 
       {/* Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {frames.map(frame => (
           <button
             key={frame.frameNumber}
             onClick={() => setSelected(frame)}
-            className="relative group rounded-xl overflow-hidden aspect-[4/3] bg-grey-900 cursor-pointer border border-white/[0.06] hover:border-white/20 transition-all duration-200"
+            className="relative group rounded-xl overflow-hidden aspect-[4/3] bg-zinc-950 cursor-pointer border border-white/10 hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all duration-300 transform hover:-translate-y-1"
           >
             {frame.url ? (
               <img
                 src={frame.url}
                 alt={`Frame ${frame.frameNumber}`}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-grey-900">
-                <span className="text-xs text-grey-600">Frame {frame.frameNumber}</span>
+              <div className="w-full h-full flex items-center justify-center bg-zinc-950">
+                <span className="text-xs text-grey-500">Frame {frame.frameNumber}</span>
               </div>
             )}
 
             {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
-                className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
-              </svg>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-300 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/80 backdrop-blur-md flex items-center justify-center scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300 shadow-[0_0_12px_rgba(34,197,94,0.6)]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
+                  className="w-4 h-4 text-black">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
+                </svg>
+              </div>
             </div>
 
             {/* Frame number badge */}
-            <div className="absolute bottom-1.5 left-1.5">
-              <span className="text-[9px] font-medium bg-black/60 text-grey-300 px-1.5 py-0.5 rounded-md">
+            <div className="absolute bottom-2 left-2 z-10">
+              <span className="text-[10px] font-extrabold bg-black/70 backdrop-blur-md text-white px-2 py-0.5 rounded-md border border-white/10 shadow-sm">
                 #{frame.frameNumber}
               </span>
             </div>
 
             {/* Clarity score badge */}
             {frame.clarityScore !== undefined && (
-              <div className="absolute top-1.5 right-1.5">
+              <div className="absolute top-2 right-2 z-10">
                 <span
-                  className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
+                  className="text-[10px] font-extrabold px-2 py-0.5 rounded-md backdrop-blur-md shadow-md"
                   style={{
-                    backgroundColor: frame.clarityScore >= 300 ? 'rgba(34,197,94,0.85)' :
-                                     frame.clarityScore >= 150 ? 'rgba(234,179,8,0.85)'  :
-                                                                 'rgba(239,68,68,0.85)',
+                    backgroundColor: frame.clarityScore >= 300 ? 'rgba(16, 185, 129, 0.9)' :
+                                     frame.clarityScore >= 150 ? 'rgba(245, 158, 11, 0.9)'  :
+                                                                 'rgba(239, 68, 68, 0.9)',
                     color: '#fff',
                   }}
                 >

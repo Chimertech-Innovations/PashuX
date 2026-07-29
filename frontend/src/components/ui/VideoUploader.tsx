@@ -124,28 +124,32 @@ export default function VideoUploader({ onFile, disabled, maxDurationSeconds = 6
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div
         {...getRootProps()}
         className={`
-          relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer
-          transition-all duration-300 group
+          relative border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer
+          transition-all duration-300 group overflow-hidden glass-card
           ${isDragActive
-            ? 'border-green-500/60 bg-green-500/[0.04]'
-            : 'border-white/[0.08] hover:border-white/20 hover:bg-white/[0.02]'
+            ? 'border-emerald-500/80 bg-emerald-500/[0.08] shadow-[0_0_30px_rgba(34,197,94,0.2)]'
+            : 'border-white/10 hover:border-emerald-500/40 hover:bg-white/[0.04]'
           }
           ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
         <input {...getInputProps()} />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full filter blur-2xl pointer-events-none group-hover:bg-emerald-500/10 transition-all" />
 
         {/* Icon */}
         <div className={`
-          w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center transition-all duration-300
-          ${isDragActive ? 'bg-green-500/20 scale-110' : 'bg-white/[0.06] group-hover:bg-white/[0.1]'}
+          w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center transition-all duration-300
+          ${isDragActive
+            ? 'bg-emerald-500/20 scale-110 shadow-[0_0_20px_rgba(34,197,94,0.4)]'
+            : 'bg-white/[0.06] group-hover:bg-emerald-500/15 group-hover:scale-105'
+          }
         `}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}
-            className={`w-7 h-7 transition-colors ${isDragActive ? 'text-green-400' : 'text-grey-400 group-hover:text-grey-200'}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}
+            className={`w-8 h-8 transition-colors ${isDragActive ? 'text-emerald-400' : 'text-grey-400 group-hover:text-emerald-400'}`}>
             <path strokeLinecap="round" strokeLinejoin="round"
               d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0c-.698.04-1.344.42-1.736 1.039l-.822 1.316z" />
             <path strokeLinecap="round" strokeLinejoin="round"
@@ -154,29 +158,29 @@ export default function VideoUploader({ onFile, disabled, maxDurationSeconds = 6
         </div>
 
         {isDragActive ? (
-          <p className="text-green-400 font-medium text-sm">Drop your photo or video here</p>
+          <p className="text-emerald-400 font-bold text-base">Drop your photo or video here to analyze</p>
         ) : (
           <>
-            <p className="text-white font-medium text-sm mb-1">
-              Drag & drop photo or video of cattle
+            <p className="text-white font-extrabold text-base mb-1 tracking-tight">
+              Drag & drop cattle photo or video
             </p>
-            <p className="text-grey-500 text-xs">or click to select file</p>
+            <p className="text-grey-400 text-xs font-medium">or click anywhere to browse from your device</p>
           </>
         )}
 
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
-          <span className="badge-grey text-[10px]">📷 JPG / PNG / WEBP</span>
-          <span className="badge-grey text-[10px]">🎥 MP4 / MOV / AVI</span>
-          <span className="badge-grey text-[10px]">Max 60s Video</span>
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
+          <span className="badge-grey text-[10px] uppercase font-bold tracking-wider">📷 JPG / PNG / WEBP</span>
+          <span className="badge-grey text-[10px] uppercase font-bold tracking-wider">🎥 MP4 / MOV / AVI</span>
+          <span className="badge-green text-[10px] uppercase font-bold tracking-wider">⚡ Up to 60s</span>
         </div>
       </div>
 
       {error && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 animate-fade-in">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 animate-fade-in shadow-[0_0_16px_rgba(244,63,94,0.15)]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-rose-400 mt-0.5 flex-shrink-0">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
           </svg>
-          <p className="text-sm text-red-400">{error}</p>
+          <p className="text-sm font-medium text-rose-400">{error}</p>
         </div>
       )}
     </div>

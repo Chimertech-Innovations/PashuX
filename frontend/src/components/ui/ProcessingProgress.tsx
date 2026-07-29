@@ -47,58 +47,77 @@ export default function ProcessingProgress({ status }: Props) {
   if (status === 'idle' || status === 'error') return null;
 
   return (
-    <div className="glass-card p-6 space-y-2 animate-fade-in">
-      <h3 className="text-sm font-semibold text-white mb-5">
-        {status === 'completed' ? 'Analysis complete' :
-         status === 'frames_ready' ? '✅ Frames Extracted & Cleaned' :
-         'Processing video…'}
-      </h3>
+    <div className="glass-card p-6 space-y-3 animate-fade-in border border-white/10 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full filter blur-2xl pointer-events-none" />
+      
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+        <h3 className="text-sm font-extrabold text-white tracking-tight flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
+          {status === 'completed' ? 'Analysis Complete' :
+           status === 'frames_ready' ? 'Frames Cleaned & Stored' :
+           'Processing Video Pipeline…'}
+        </h3>
+        <span className="badge-green text-[10px] uppercase font-bold tracking-wider">AI Pipeline</span>
+      </div>
 
-      {STEPS.map(step => {
-        const state = getStepState(step, status);
-        return (
-          <div key={step.id} className={`step-item ${state}`}>
-            {/* Dot */}
-            <div className={`step-dot ${state}`}>
-              {state === 'done' ? (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="w-3.5 h-3.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-              ) : state === 'active' ? (
-                <span className="w-2 h-2 rounded-full bg-black animate-ping" />
-              ) : (
-                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-30" />
-              )}
-            </div>
-
-            {/* Text */}
-            <div className="flex-1 min-w-0">
-              <p className={`text-sm font-medium ${
-                state === 'done'   ? 'text-grey-300' :
-                state === 'active' ? 'text-green-400' : 'text-grey-600'
+      <div className="space-y-1.5">
+        {STEPS.map(step => {
+          const state = getStepState(step, status);
+          return (
+            <div
+              key={step.id}
+              className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-300 ${
+                state === 'active' ? 'bg-emerald-500/10 border border-emerald-500/30 shadow-[0_0_15px_rgba(34,197,94,0.15)]' :
+                state === 'done'   ? 'bg-white/[0.02] border border-transparent' :
+                'opacity-40 border border-transparent'
+              }`}
+            >
+              {/* Dot */}
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${
+                state === 'done'   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' :
+                state === 'active' ? 'bg-emerald-500 text-black shadow-[0_0_12px_rgba(34,197,94,0.8)] animate-pulse' :
+                'bg-white/[0.06] text-grey-600'
               }`}>
-                {step.label}
-              </p>
+                {state === 'done' ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="w-3.5 h-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                ) : state === 'active' ? (
+                  <span className="w-2 h-2 rounded-full bg-black animate-ping" />
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
+                )}
+              </div>
+
+              {/* Text */}
+              <div className="flex-1 min-w-0">
+                <p className={`text-xs font-bold tracking-tight ${
+                  state === 'done'   ? 'text-grey-300' :
+                  state === 'active' ? 'text-emerald-400' : 'text-grey-500'
+                }`}>
+                  {step.label}
+                </p>
+                {state === 'active' && (
+                  <p className="text-[11px] text-grey-400 mt-0.5 animate-fade-in font-medium">{step.description}</p>
+                )}
+              </div>
+
+              {/* Active loader */}
               {state === 'active' && (
-                <p className="text-xs text-grey-500 mt-0.5 animate-fade-in">{step.description}</p>
+                <div className="flex gap-1.5">
+                  {[0,1,2].map(i => (
+                    <span
+                      key={i}
+                      className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"
+                      style={{ animation: `pulse-soft 1.2s ease-in-out ${i * 0.25}s infinite` }}
+                    />
+                  ))}
+                </div>
               )}
             </div>
-
-            {/* Active loader */}
-            {state === 'active' && (
-              <div className="flex gap-1">
-                {[0,1,2].map(i => (
-                  <span
-                    key={i}
-                    className="w-1 h-1 rounded-full bg-green-500"
-                    style={{ animation: `pulse-soft 1.2s ease-in-out ${i * 0.2}s infinite` }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

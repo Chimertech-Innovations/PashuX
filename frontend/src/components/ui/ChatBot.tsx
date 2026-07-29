@@ -49,10 +49,12 @@ export default function ChatBot({ requestId, userId, analysisType, analysisConte
         <button
           id="chatbot-toggle"
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-white text-black shadow-lg flex items-center justify-center hover:bg-grey-100 transition-all duration-200 hover:scale-110"
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black shadow-[0_0_24px_rgba(34,197,94,0.5)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 group border border-emerald-300/40"
           aria-label="Open AI assistant"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
+          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-[#07080a] animate-ping" />
+          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-[#07080a]" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-6 h-6 text-black group-hover:rotate-6 transition-transform">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
           </svg>
         </button>
@@ -60,14 +62,14 @@ export default function ChatBot({ requestId, userId, analysisType, analysisConte
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-6 right-6 z-40 w-[380px] max-w-[calc(100vw-3rem)] flex flex-col rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl animate-slide-in-right"
-          style={{ height: '520px', background: '#111111' }}
+        <div className="fixed bottom-6 right-6 z-40 w-[400px] max-w-[calc(100vw-3rem)] flex flex-col rounded-2xl overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl animate-fade-in"
+          style={{ height: '540px', background: 'rgba(12, 14, 20, 0.95)' }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.06]">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-green-500 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-3.5 h-3.5 text-black">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-white/[0.02]">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-[0_0_12px_rgba(34,197,94,0.4)]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4 text-black">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                 </svg>
               </div>

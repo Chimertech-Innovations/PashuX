@@ -4,7 +4,8 @@ interface Props {
   result: BCSResult;
 }
 
-function scoreColor(score: number): string {
+function scoreColor(score: number, isInvalid: boolean): string {
+  if (isInvalid || score <= 0) return '#ef4444'; // red
   if (score <= 1.5) return '#ef4444'; // red
   if (score <= 2.0) return '#f59e0b'; // amber
   if (score <= 3.5) return '#22c55e'; // green
@@ -12,7 +13,8 @@ function scoreColor(score: number): string {
   return '#ef4444';                   // red (obese)
 }
 
-function scoreConditionBadge(score: number) {
+function scoreConditionBadge(score: number, isInvalid: boolean) {
+  if (isInvalid || score <= 0) return 'badge-red';
   if (score <= 1.5) return 'badge-red';
   if (score <= 2.0) return 'badge-amber';
   if (score <= 3.5) return 'badge-green';
@@ -21,11 +23,12 @@ function scoreConditionBadge(score: number) {
 }
 
 export default function BCSResultCard({ result }: Props) {
-  const color  = scoreColor(result.bcs_score);
+  const isInvalid = result.confidence === 0 || result.bcs_score <= 0 || result.condition.toLowerCase().includes('invalid') || result.condition.toLowerCase().includes('inadequate');
+  const color  = scoreColor(result.bcs_score, isInvalid);
   const radius = 45;
   const circ   = 2 * Math.PI * radius;
-  const pct    = ((result.bcs_score - 1) / 4);  // 1-5 → 0-1
-  const dash   = circ * pct;
+  const pct    = isInvalid || result.bcs_score <= 0 ? 0 : ((result.bcs_score - 1) / 4);  // 1-5 → 0-1
+  const dash   = circ * Math.max(0, Math.min(1, pct));
 
   return (
     <div className="space-y-5 animate-fade-up">
@@ -46,8 +49,12 @@ export default function BCSResultCard({ result }: Props) {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-black text-white" style={{ color }}>{result.bcs_score.toFixed(1)}</span>
-              <span className="text-[10px] text-grey-500 font-medium tracking-widest uppercase">of 5</span>
+              <span className="text-3xl font-black text-white" style={{ color }}>
+                {isInvalid || result.bcs_score <= 0 ? 'N/A' : result.bcs_score.toFixed(1)}
+              </span>
+              <span className="text-[10px] text-grey-500 font-medium tracking-widest uppercase">
+                {isInvalid ? 'Invalid' : 'of 5'}
+              </span>
             </div>
           </div>
 
@@ -55,7 +62,7 @@ export default function BCSResultCard({ result }: Props) {
           <div className="flex-1 text-center sm:text-left">
             <p className="section-label mb-2">BCS Result</p>
             <h2 className="text-heading-xl font-bold text-white mb-2">{result.condition}</h2>
-            <span className={scoreConditionBadge(result.bcs_score)}>{result.condition}</span>
+            <span className={scoreConditionBadge(result.bcs_score, isInvalid)}>{result.condition}</span>
 
             {/* Confidence */}
             <div className="mt-5">

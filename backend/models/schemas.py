@@ -18,7 +18,7 @@ class ProcessingStatus(str, Enum):
 # ── BCS ──────────────────────────────────────────────────────────────────────
 
 class BCSResult(BaseModel):
-    bcs_score: float = Field(..., ge=1.0, le=5.0)
+    bcs_score: float = Field(..., ge=0.0, le=5.0)
     bcs_scale: str = "1-5"
     condition: str
     confidence: float = Field(..., ge=0.0, le=1.0)

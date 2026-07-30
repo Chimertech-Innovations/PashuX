@@ -6,6 +6,7 @@ import Landing from '@/pages/Landing';
 import Auth from '@/pages/Auth';
 import BCSDetection from '@/pages/BCSDetection';
 import DiseaseDetection from '@/pages/DiseaseDetection';
+import LiveDetection from '@/pages/LiveDetection';
 import AnalysisHistory from '@/pages/AnalysisHistory';
 import Products from '@/pages/Products';
 import Profile from '@/pages/Profile';
@@ -20,11 +21,13 @@ export default function App() {
             <Routes>
               <Route path="/"        element={<Landing />} />
               <Route path="/auth"    element={<Auth />} />
+              <Route path="/live"    element={<LiveDetection />} />
               <Route path="/bcs"     element={<BCSDetection />} />
               <Route path="/disease" element={<DiseaseDetection />} />
               <Route path="/history" element={<AnalysisHistory />} />
               <Route path="/products" element={<Products />} />
               <Route path="/profile"  element={<Profile />} />
+
               {/* 404 fallback */}
               <Route path="*" element={
                 <div className="min-h-screen flex items-center justify-center">

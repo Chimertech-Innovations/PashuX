@@ -13,6 +13,18 @@ const BENEFITS = [
 
 const ACTION_CARDS = [
   {
+    title: '⚡ Live 10s BCS & Disease Scan',
+    desc: 'Turn on camera for 10 seconds. Auto-stops stream and delivers instant dual BCS scoring & disease screening results.',
+    to: '/live',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+      </svg>
+    ),
+    tag: 'Live 10s Camera',
+    color: 'green',
+  },
+  {
     title: 'Cattle BCS Score Detection',
     desc: 'Analyse body condition on the 1-5 scale. Get feeding and management recommendations tailored to your cattle.',
     to: '/bcs',
@@ -22,7 +34,7 @@ const ACTION_CARDS = [
       </svg>
     ),
     tag: 'BCS Analysis',
-    color: 'green',
+    color: 'teal',
   },
   {
     title: 'Cattle Disease Detection',
@@ -37,6 +49,7 @@ const ACTION_CARDS = [
     color: 'amber',
   },
 ];
+
 
 export default function Landing() {
   return (
@@ -68,17 +81,21 @@ export default function Landing() {
 
           {/* CTA buttons */}
           <div className="flex flex-wrap items-center justify-center gap-3 mb-16 animate-fade-up" style={{ animationDelay: '0.3s' }}>
-            <Link to="/bcs" className="btn-primary px-8 py-3.5">
-              Start BCS Analysis
+            <Link to="/live" className="btn-primary px-8 py-3.5 flex items-center gap-2 font-black shadow-[0_0_20px_rgba(34,197,94,0.4)]">
+              <span className="w-2.5 h-2.5 rounded-full bg-black animate-ping" />
+              ⚡ Start Live 10s Scan
             </Link>
-            <Link to="/disease" className="btn-secondary px-8 py-3.5">
-              Disease Detection
+            <Link to="/bcs" className="btn-secondary px-6 py-3.5">
+              BCS Score
+            </Link>
+            <Link to="/disease" className="btn-secondary px-6 py-3.5">
+              Disease Screening
             </Link>
           </div>
 
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-px bg-white/[0.05] rounded-2xl overflow-hidden max-w-lg mx-auto animate-fade-up" style={{ animationDelay: '0.4s' }}>
-            {[['1-5 BCS', 'Score scale'], ['Top 10', 'Frames selected'], ['GPT-4o', 'Vision model']].map(([val, label]) => (
+            {[['10s Auto', 'Camera limit'], ['1-5 BCS', 'Score scale'], ['Dual AI', 'BCS + Health']].map(([val, label]) => (
               <div key={label} className="bg-[#0a0a0a] py-5 px-4 text-center">
                 <p className="text-lg font-black text-white mb-1">{val}</p>
                 <p className="text-[11px] text-grey-600">{label}</p>
@@ -92,7 +109,8 @@ export default function Landing() {
       <section className="px-6 pb-24">
         <div className="max-w-5xl mx-auto">
           <p className="section-label text-center mb-12">Choose Your Analysis</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
             {ACTION_CARDS.map(card => (
               <Link
                 key={card.to}

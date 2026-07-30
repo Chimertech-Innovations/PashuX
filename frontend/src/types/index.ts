@@ -23,7 +23,8 @@ export interface DiseaseResult {
 
 // ── Analysis ──────────────────────────────────────────────────────────────────
 
-export type AnalysisType = 'bcs' | 'disease';
+export type AnalysisType = 'bcs' | 'disease' | 'combined';
+
 
 export type ProcessingStatus = 'idle' | 'uploading' | 'extracting' | 'filtering_blur' |
   'removing_duplicates' | 'ranking' | 'frames_ready' | 'sending_ai' | 'analysing' | 'completed' | 'error';
@@ -106,3 +107,11 @@ export interface AnalyseResponse {
   analysis_type: AnalysisType;
   result: BCSResult | DiseaseResult;
 }
+
+export interface CombinedAnalyseResponse {
+  request_id: string;
+  analysis_type: 'combined';
+  bcs_result: BCSResult;
+  disease_result: DiseaseResult;
+}
+

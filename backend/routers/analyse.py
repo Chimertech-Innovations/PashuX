@@ -5,12 +5,14 @@ POST /api/analyse-disease
 """
 
 import logging
+import asyncio
 from fastapi import APIRouter, HTTPException, status
 
-from models.schemas import AnalyseRequest, AnalysisResultResponse
+from models.schemas import AnalyseRequest, CombinedAnalyseRequest, AnalysisResultResponse
 import services.image_analysis as ai
 import services.supabase_service as db
 from services.video_processor import cleanup
+
 
 
 router = APIRouter()
@@ -131,3 +133,55 @@ async def analyse_disease(body: AnalyseRequest):
         "analysis_type": "disease",
         "result": result.model_dump(),
     }
+
+
+@router.post("/analyse-combined")
+async def analyse_combined(body: CombinedAnalyseRequest):
+    if not body.frame_paths:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No frame paths provided.",
+        )
+
+    resolved_paths = await _resolve_frame_paths(body.request_id, body.frame_paths)
+    if not resolved_paths:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Frame files not found on server or storage.",
+        )
+
+    try:
+        bcs_task = ai.analyse_bcs(resolved_paths)
+        disease_task = ai.analyse_disease(resolved_paths)
+        bcs_result, disease_result = await asyncio.gather(bcs_task, disease_task)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Combined analysis failed")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="AI combined analysis failed. Please try again.")
+
+    try:
+        await db.save_analysis_result(
+            request_id=body.request_id,
+            analysis_type="bcs",
+            result_json=bcs_result.model_dump(),
+        )
+        await db.save_analysis_result(
+            request_id=body.request_id,
+            analysis_type="disease",
+            result_json=disease_result.model_dump(),
+        )
+        await db.update_request_status(body.request_id, "completed")
+    except Exception as exc:
+        logger.warning(f"DB save failed: {exc}")
+
+    for path in resolved_paths:
+        cleanup(path)
+
+    return {
+        "request_id": body.request_id,
+        "analysis_type": "combined",
+        "bcs_result": bcs_result.model_dump(),
+        "disease_result": disease_result.model_dump(),
+    }
+

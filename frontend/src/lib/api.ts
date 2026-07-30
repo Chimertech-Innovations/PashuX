@@ -2,10 +2,12 @@ import type {
   UploadResponse,
   ProcessResponse,
   AnalyseResponse,
+  CombinedAnalyseResponse,
   Product,
   ChatMessage,
   AnalysisType,
 } from '@/types';
+
 
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const BASE_URL = rawBaseUrl.replace(/\/+$/, '');
@@ -95,6 +97,24 @@ export async function analyseDisease(
     }),
   });
 }
+
+export async function analyseCombined(
+  requestId: string,
+  framePaths: string[],
+  userId?: string
+): Promise<CombinedAnalyseResponse> {
+  return request<CombinedAnalyseResponse>('/api/analyse-combined', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      request_id: requestId,
+      analysis_type: 'combined',
+      frame_paths: framePaths,
+      user_id: userId,
+    }),
+  });
+}
+
 
 // ── Chat ──────────────────────────────────────────────────────────────────────
 

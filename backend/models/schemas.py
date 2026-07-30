@@ -6,6 +6,8 @@ from enum import Enum
 class AnalysisType(str, Enum):
     bcs = "bcs"
     disease = "disease"
+    combined = "combined"
+
 
 
 class ProcessingStatus(str, Enum):
@@ -89,6 +91,14 @@ class AnalyseRequest(BaseModel):
     analysis_type: AnalysisType
     frame_paths: List[str]
     user_id: Optional[str] = None
+
+
+class CombinedAnalyseRequest(BaseModel):
+    request_id: str
+    analysis_type: Optional[str] = "combined"
+    frame_paths: List[str]
+    user_id: Optional[str] = None
+
 
 
 class AnalysisResultResponse(BaseModel):

@@ -4,11 +4,13 @@ import { useState } from 'react';
 
 const NAV_LINKS = [
   { to: '/',           label: 'Home' },
+  { to: '/live',       label: 'Live 10s Scan', isLive: true },
   { to: '/bcs',        label: 'BCS Detection' },
   { to: '/disease',    label: 'Disease Detection' },
   { to: '/history',    label: 'History' },
   { to: '/products',   label: 'Products' },
 ];
+
 
 export default function Navbar() {
   const { pathname } = useLocation();
@@ -38,22 +40,24 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-1.5 bg-white/[0.03] p-1.5 rounded-2xl border border-white/[0.06] backdrop-blur-md">
-          {NAV_LINKS.map(({ to, label }) => {
+          {NAV_LINKS.map(({ to, label, isLive }) => {
             const active = pathname === to || (to !== '/' && pathname.startsWith(to));
             return (
               <Link
                 key={to}
                 to={to}
-                className={`relative px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
+                className={`relative px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 ${
                   active
                     ? 'text-white bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 shadow-[0_0_12px_rgba(34,197,94,0.2)]'
                     : 'text-grey-400 hover:text-white hover:bg-white/[0.05]'
                 }`}
               >
+                {isLive && <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />}
                 {label}
               </Link>
             );
           })}
+
         </div>
 
         {/* Auth area */}

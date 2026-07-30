@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { uploadVideo, processVideo, analyseBCS, analyseDisease } from '@/lib/api';
+import { uploadVideo, processVideo, analyseBCS, analyseDisease, analyseCombined } from '@/lib/api';
 import type { AnalysisType, AnalysisState } from '@/types';
 
 const INITIAL: AnalysisState = {
@@ -62,13 +62,19 @@ export function useVideoAnalysis(analysisType: AnalysisType) {
     update({ status: 'sending_ai', error: null });
 
     try {
-      let analysisRes;
-      if (analysisType === 'bcs') {
-        analysisRes = await analyseBCS(state.requestId, state.framePaths, userId);
-        update({ bcsResult: analysisRes.result as any, status: 'completed' });
+      if (analysisType === 'combined') {
+        const res = await analyseCombined(state.requestId, state.framePaths, userId);
+        update({
+          bcsResult: res.bcs_result,
+          diseaseResult: res.disease_result,
+          status: 'completed',
+        });
+      } else if (analysisType === 'bcs') {
+        const res = await analyseBCS(state.requestId, state.framePaths, userId);
+        update({ bcsResult: res.result as any, status: 'completed' });
       } else {
-        analysisRes = await analyseDisease(state.requestId, state.framePaths, userId);
-        update({ diseaseResult: analysisRes.result as any, status: 'completed' });
+        const res = await analyseDisease(state.requestId, state.framePaths, userId);
+        update({ diseaseResult: res.result as any, status: 'completed' });
       }
     } catch (err: any) {
       // Don't wipe framePaths or frameUrls on AI error — allow user to see frames and retry!
@@ -78,6 +84,7 @@ export function useVideoAnalysis(analysisType: AnalysisType) {
       });
     }
   }, [analysisType, state.requestId, state.framePaths, update]);
+
 
   return { state, run, startAnalysis, reset };
 }

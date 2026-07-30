@@ -216,15 +216,15 @@ export default function LiveDetection() {
 
             {/* Captured Snapshot Frame Preview */}
             {capturedFrames.length > 0 && (
-              <div className="glass-card p-4 space-y-2 border border-white/10">
-                <p className="text-xs font-bold text-white">Live Captured Snapshot</p>
+              <div className="glass-card p-4 space-y-2.5 bg-white border border-slate-200 shadow-sm rounded-2xl">
+                <p className="text-xs font-black text-slate-900">Live Captured Snapshot</p>
                 <div className="flex gap-3 overflow-x-auto pb-2">
                   {capturedFrames.map((url, idx) => (
                     <img
                       key={idx}
                       src={url}
                       alt={`Live frame ${idx + 1}`}
-                      className="h-24 rounded-lg object-cover bg-black border border-white/10"
+                      className="h-24 rounded-xl object-cover bg-slate-900 border border-slate-200 shadow-sm"
                     />
                   ))}
                 </div>
@@ -236,7 +236,7 @@ export default function LiveDetection() {
             {/* Combined Recommended Products */}
             {combinedRecs.length > 0 && (
               <div>
-                <h3 className="text-sm font-bold text-white mb-4">Recommended Products for Identified Live Status</h3>
+                <h3 className="text-sm font-black text-slate-900 mb-4">Recommended Products for Identified Live Status</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {combinedRecs.map(p => (
                     <ProductCard

@@ -214,9 +214,9 @@ const DEMO_REPORTS: ReportRecord[] = [
 export default function Admin() {
   const { isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState<'reports' | 'users' | 'testing'>('reports');
-  const [users, setUsers] = useState<UserRecord[]>([]);
-  const [reports, setReports] = useState<ReportRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<UserRecord[]>(DEMO_USERS);
+  const [reports, setReports] = useState<ReportRecord[]>(DEMO_REPORTS);
+  const [loading, setLoading] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportRecord | null>(null);
   const [collapsedReports, setCollapsedReports] = useState<Set<string>>(new Set());
 
@@ -225,13 +225,15 @@ export default function Admin() {
   const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
   useEffect(() => {
+    let isMounted = true;
     async function loadAdminData() {
-      setLoading(true);
       try {
         const [usersRes, reportsRes] = await Promise.all([
           fetch(`${apiBase}/api/admin/users`).then(r => r.ok ? r.json() : { users: [] }).catch(() => ({ users: [] })),
           fetch(`${apiBase}/api/admin/reports`).then(r => r.ok ? r.json() : { reports: [] }).catch(() => ({ reports: [] })),
         ]);
+
+        if (!isMounted) return;
 
         const fetchedUsers: UserRecord[] = (usersRes.users || []).map((u: any) => ({
           id: u.id,
@@ -281,29 +283,25 @@ export default function Admin() {
 
         if (fetchedUsers.length > 0) {
           setUsers(fetchedUsers);
-        } else {
-          setUsers(DEMO_USERS);
         }
 
         if (fetchedReports.length > 0) {
           setReports(fetchedReports);
-        } else {
-          setReports(DEMO_REPORTS);
         }
       } catch (err) {
-        console.warn('Backend admin fetch failed, serving testing data:', err);
-        setUsers(DEMO_USERS);
-        setReports(DEMO_REPORTS);
+        console.warn('Backend admin fetch failed, retaining active demo dataset:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
 
     loadAdminData();
+    return () => { isMounted = false; };
   }, [apiBase]);
 
-  const activeReportsList = useTestingData ? DEMO_REPORTS : reports;
-  const activeUsersList = useTestingData ? DEMO_USERS : users;
+  const activeReportsList = useTestingData || reports.length === 0 ? DEMO_REPORTS : reports;
+  const activeUsersList = useTestingData || users.length === 0 ? DEMO_USERS : users;
+
 
   const totalScans = activeReportsList.length;
   const bcsCount = activeReportsList.filter(r => r.analysis_type === 'bcs' || r.bcs_score !== undefined).length;

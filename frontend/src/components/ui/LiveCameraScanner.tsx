@@ -159,10 +159,6 @@ export default function LiveCameraScanner({ onFile, onInstantSnapshot, disabled 
     setTimeLeft(10.0);
     setIsRecording(true);
 
-    // Trigger instant snapshot capture 500ms into live stream
-    setTimeout(() => {
-      captureSnapshot();
-    }, 500);
 
     try {
       const options = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')

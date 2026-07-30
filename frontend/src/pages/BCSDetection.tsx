@@ -51,12 +51,12 @@ export default function BCSDetection() {
         {/* Header */}
         <div className="mb-10 animate-fade-up">
           <p className="section-label mb-3">Cattle Analysis</p>
-          <h1 className="text-display font-black text-white mb-3">BCS Score Detection</h1>
-          <p className="text-grey-400 text-sm max-w-xl leading-relaxed">
+          <h1 className="text-display font-black text-slate-900 mb-3">BCS Score Detection</h1>
+          <p className="text-slate-600 text-sm max-w-xl leading-relaxed font-medium">
             Upload cattle photo or video (up to 60s). Our algorithm extracts, de-blurs, and de-duplicates frames into high-clarity shots before AI assessment.
           </p>
-
         </div>
+
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left column */}
@@ -88,18 +88,21 @@ export default function BCSDetection() {
 
                 {/* Step to trigger AI analysis explicitly */}
                 {state.status === 'frames_ready' && (
-                  <div className="glass-card p-5 border-emerald-500/30 bg-emerald-500/[0.04] text-center space-y-3 animate-fade-in">
+                  <div className="glass-card p-5 border-emerald-300 bg-emerald-50 text-center space-y-3 animate-fade-in">
                     <div>
-                      <p className="text-sm font-bold text-emerald-400">✨ Frames successfully cleaned & stored!</p>
-                      <p className="text-xs text-grey-400 mt-1">
+                      <p className="text-sm font-bold text-emerald-800">Frames successfully cleaned & stored</p>
+                      <p className="text-xs text-slate-600 font-medium mt-1">
                         Review your {frames.length} high-clarity frames above. Click below to start AI BCS scoring.
                       </p>
                     </div>
                     <button
                       onClick={() => startAnalysis(user?.id)}
-                      className="btn-primary text-sm py-2.5 px-6 font-semibold bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg"
+                      className="btn-primary text-sm py-2.5 px-6 font-bold shadow-md flex items-center justify-center gap-2 mx-auto"
                     >
-                      🤖 Analyse Frames with AI
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                      </svg>
+                      Analyse Frames with AI
                     </button>
                   </div>
                 )}
@@ -108,21 +111,26 @@ export default function BCSDetection() {
 
             {/* Error Message with Retry */}
             {state.status === 'error' && (
-              <div className="glass-card p-6 border-red-500/20 animate-fade-in space-y-3">
+              <div className="glass-card p-6 border-rose-200 bg-rose-50 animate-fade-in space-y-3">
                 <div className="flex items-start gap-3">
-                  <span className="text-xl">⚠️</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
                   <div>
-                    <p className="text-sm font-semibold text-red-400 mb-1">Analysis Issue</p>
-                    <p className="text-xs text-grey-400">{state.error}</p>
+                    <p className="text-sm font-bold text-rose-700 mb-1">Analysis Issue</p>
+                    <p className="text-xs text-slate-600">{state.error}</p>
                   </div>
                 </div>
                 <div className="flex gap-3 pt-2">
                   {state.framePaths.length > 0 && (
                     <button
                       onClick={() => startAnalysis(user?.id)}
-                      className="btn-primary text-xs py-2 px-4 bg-emerald-500 text-black font-semibold"
+                      className="btn-primary text-xs py-2 px-4 font-bold flex items-center gap-1.5"
                     >
-                      🔄 Retry AI Analysis
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                      </svg>
+                      Retry AI Analysis
                     </button>
                   )}
                   <button onClick={reset} className="btn-secondary text-xs py-2 px-4">
@@ -139,7 +147,7 @@ export default function BCSDetection() {
                 <Disclaimer type="ai" />
                 {recProducts.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-white mb-4">Recommended Products</h3>
+                    <h3 className="text-sm font-black text-slate-900 mb-4">Recommended Products</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {recProducts.map(p => (
                         <ProductCard
@@ -151,7 +159,7 @@ export default function BCSDetection() {
                     </div>
                   </div>
                 )}
-                <button onClick={reset} className="btn-ghost text-xs text-grey-500">
+                <button onClick={reset} className="btn-ghost text-xs text-slate-500 font-bold">
                   ← Analyse another video
                 </button>
               </>
@@ -163,20 +171,20 @@ export default function BCSDetection() {
           {/* Right column: info panel */}
           {state.status === 'idle' && (
             <div className="lg:col-span-2 space-y-4 animate-fade-in">
-              <div className="glass-card p-5">
-                <h3 className="text-xs font-semibold text-white mb-4">Processing Pipeline</h3>
+              <div className="glass-card p-5 bg-white border border-slate-200 shadow-sm">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 mb-4">Processing Pipeline</h3>
                 <ol className="space-y-3">
                   {[
-                    'Video uploaded to Supabase',
+                    'Video uploaded securely',
                     'Extract 1 frame per second',
-                    'Remove blurry frames (Laplacian filter)',
+                    'Remove blurry frames (edge sharpness filter)',
                     'Remove duplicate frames (pHash filter)',
-                    'Select top 10 frames by clarity score',
+                    'Select top 10 frames by clarity',
                     'Review cleaned frames in UI',
-                    'Send to Gemini AI Vision for BCS score',
+                    'Send to Chimertech AI Vision Engine for BCS score',
                   ].map((step, i) => (
-                    <li key={i} className="flex items-start gap-3 text-xs text-grey-500">
-                      <span className="w-5 h-5 rounded-full bg-white/[0.06] flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-grey-400">
+                    <li key={i} className="flex items-start gap-3 text-xs text-slate-600 font-medium">
+                      <span className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
                         {i + 1}
                       </span>
                       {step}
@@ -186,26 +194,27 @@ export default function BCSDetection() {
               </div>
 
               {/* BCS scale */}
-              <div className="glass-card p-5">
-                <h3 className="text-xs font-semibold text-white mb-4">BCS Scale Reference</h3>
-                <div className="space-y-2">
+              <div className="glass-card p-5 bg-white border border-slate-200 shadow-sm">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 mb-4">BCS Scale Reference</h3>
+                <div className="space-y-2.5">
                   {[
                     [1, 'Emaciated', '#ef4444'],
                     [2, 'Thin', '#f59e0b'],
-                    [3, 'Ideal', '#22c55e'],
+                    [3, 'Ideal', '#10b981'],
                     [4, 'Fat', '#f59e0b'],
                     [5, 'Obese', '#ef4444'],
                   ].map(([score, label, color]) => (
                     <div key={String(score)} className="flex items-center gap-3">
                       <span className="text-sm font-black" style={{ color: color as string }}>{score}</span>
-                      <span className="text-xs text-grey-500 flex-1">{label}</span>
-                      <div className="h-1 w-16 rounded-full bg-white/[0.06]">
+                      <span className="text-xs font-bold text-slate-600 flex-1">{label}</span>
+                      <div className="h-1.5 w-20 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
                         <div className="h-full rounded-full" style={{ width: `${(Number(score)/5)*100}%`, backgroundColor: color as string }} />
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
+
 
               <Disclaimer type="ai" />
             </div>

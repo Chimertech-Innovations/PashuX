@@ -1,132 +1,1838 @@
 [
   {
-    "id": "cmt-kit",
-    "name": "Chimertech CMT Kit",
+    "id": "VDD1-101-A01-500M",
+    "name": "Chimertech CMT Kit 500 ml",
     "category": "Detection and Diagnostics",
-    "description": "On-farm screening kit for detecting subclinical mastitis. Quick, reliable and easy to use in any farm setting.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=CMT+Kit",
+    "description": "The California Mastitis Test (CMT) is a diagnostic tool designed to aid in the quick and simple diagnosis of mastitis in various...",
+    "image_url": "https://drive.google.com/file/d/1JuqKucNLnmqZOtn6I2o1yBBz2oKbT90S/view?usp=drive_link",
     "price": 499,
-    "product_page_url": "https://chimertech.com/products/cmt-kit",
-    "recommended_for": ["mastitis", "udder health", "milk quality", "subclinical mastitis", "quarter screening"]
+    "product_page_url": "https://chimertech.shop/products/chimertech-cmt-kit-500-ml",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "prevents milk loss",
+      "early mastitis detection",
+      "accurate results",
+      "fast-acting"
+    ]
   },
   {
-    "id": "quadmastest",
-    "name": "QuadMastest",
+    "id": "VDD1-101-B01-500M",
+    "name": "Chimertech CMT Kit 500 ml with paddle",
     "category": "Detection and Diagnostics",
-    "description": "Four-quarter mastitis test paddle for rapid on-farm detection of mastitis using CMT reagent. Designed for accuracy and ease.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=QuadMastest",
-    "price": 299,
-    "product_page_url": "https://chimertech.com/products/quadmastest",
-    "recommended_for": ["mastitis", "udder health", "quarter testing", "subclinical mastitis"]
+    "description": "The California Mastitis Test (CMT) is a diagnostic tool designed to aid in the quick and simple diagnosis of mastitis in various...",
+    "image_url": "https://drive.google.com/file/d/1z0IA8C4kaYAD4OO6R2s5EueMMd1Yus-B/view?usp=drive_link",
+    "price": 549,
+    "product_page_url": "https://chimertech.shop/products/chimertech-cmt-kit-500-ml-with-paddle",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "prevents milk loss",
+      "early mastitis detection",
+      "accurate results",
+      "fast-acting"
+    ]
   },
   {
-    "id": "finekine",
-    "name": "FineKine",
-    "category": "Udder Hygiene",
-    "description": "Premium pre- and post-milking teat dip for optimal udder hygiene. Protects against environmental pathogens and promotes teat skin health.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=FineKine",
-    "price": 650,
-    "product_page_url": "https://chimertech.com/products/finekine",
-    "recommended_for": ["udder hygiene", "teat dip", "mastitis prevention", "milking hygiene", "teat health"]
+    "id": "VDD1-101-A01-001L",
+    "name": "Chimertech CMT Kit 1 litre",
+    "category": "Detection and Diagnostics",
+    "description": "The California Mastitis Test (CMT) is a diagnostic tool designed to aid in the quick and simple diagnosis of mastitis in various...",
+    "image_url": "https://drive.google.com/file/d/1q39_b_LeH6a48yGsj5XgsOmaxFLftInb/view?usp=drive_link",
+    "price": 899,
+    "product_page_url": "https://chimertech.shop/products/chimertech-cmt-kit-1-litre",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "prevents milk loss",
+      "early mastitis detection",
+      "accurate results",
+      "fast-acting"
+    ]
   },
   {
-    "id": "iogiene",
-    "name": "Iogiene",
-    "category": "Udder Hygiene",
-    "description": "Iodine-based teat sanitiser for use in pre- and post-milking routines. Effective broad-spectrum antimicrobial action.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=Iogiene",
-    "price": 550,
-    "product_page_url": "https://chimertech.com/products/iogiene",
-    "recommended_for": ["udder hygiene", "iodine teat dip", "mastitis prevention", "milking hygiene", "sanitiser"]
+    "id": "VDD1-101-B01-001L",
+    "name": "Chimertech CMT Kit 1 Litre with Paddle and dispenser",
+    "category": "Detection and Diagnostics",
+    "description": "The California Mastitis Test (CMT) is a diagnostic tool designed to aid in the quick and simple diagnosis of mastitis in various...",
+    "image_url": "https://drive.google.com/file/d/10NQHPdHHHXjQnViGLr5WFG014fn62DqK/view?usp=drive_link",
+    "price": 999,
+    "product_page_url": "https://chimertech.shop/products/chimertech-cmt-kit-1-litre-with-paddle-and-dispenser",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "prevents milk loss",
+      "early mastitis detection",
+      "accurate results",
+      "fast-acting"
+    ]
   },
   {
-    "id": "moofoam",
-    "name": "MooFoam",
-    "category": "Udder Hygiene",
-    "description": "Foaming pre-milking teat cleanser for effective removal of dirt, bacteria and debris before milking. Gentle on skin.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=MooFoam",
-    "price": 480,
-    "product_page_url": "https://chimertech.com/products/moofoam",
-    "recommended_for": ["udder hygiene", "pre-milking", "mastitis prevention", "teat cleaning", "foam cleanser"]
+    "id": "VDD1-101-A01-005L",
+    "name": "Chimertech CMT Kit 5 litre",
+    "category": "Detection and Diagnostics",
+    "description": "The California Mastitis Test (CMT) is a diagnostic tool designed to aid in the quick and simple diagnosis of mastitis in various...",
+    "image_url": "https://drive.google.com/file/d/1TVOToOWb09kYVgg-STCsgOdkraew7OkQ/view?usp=drive_link",
+    "price": 3800,
+    "product_page_url": "https://chimertech.shop/products/chimertech-cmt-kit-5-litre",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "prevents milk loss",
+      "early mastitis detection",
+      "accurate results",
+      "fast-acting"
+    ]
   },
   {
-    "id": "pregnancy-kit",
-    "name": "Chimertech Pregnancy Detection Kit",
-    "category": "Reproductive Management",
-    "description": "Rapid on-farm pregnancy detection kit for cattle. Accurate results within minutes, reducing the need for veterinary visits.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=Pregnancy+Kit",
-    "price": 799,
-    "product_page_url": "https://chimertech.com/products/pregnancy-kit",
-    "recommended_for": ["pregnancy detection", "reproductive management", "breeding", "fertility"]
+    "id": "VDD1-101-A01-020L",
+    "name": "Chimertech CMT Kit 20 litre",
+    "category": "Detection and Diagnostics",
+    "description": "The California Mastitis Test (CMT) is a diagnostic tool designed to aid in the quick and simple diagnosis of mastitis in various...",
+    "image_url": "https://drive.google.com/file/d/1b5IgHu0YoCoFJUZkAqe_pNVSsxiXBrdT/view?usp=drive_link",
+    "price": 10500,
+    "product_page_url": "https://chimertech.shop/products/chimertech-cmt-kit-20-litre",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "prevents milk loss",
+      "early mastitis detection",
+      "accurate results",
+      "fast-acting"
+    ]
   },
   {
-    "id": "tic-tick-tic",
-    "name": "TIC-TICK-TIC",
-    "category": "Parasite Control",
-    "description": "Effective tick and external parasite control solution for cattle. Broad-spectrum coverage for common cattle parasites.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=TIC-TICK-TIC",
-    "price": 420,
-    "product_page_url": "https://chimertech.com/products/tic-tick-tic",
-    "recommended_for": ["tick control", "parasite control", "external parasites", "skin condition", "tick infestation"]
+    "id": "VDD1-102-A01-1UNT",
+    "name": "CMT Paddle 1 unit",
+    "category": "Detection and Diagnostics",
+    "description": "The CMT Paddle is a durable, user-friendly tool designed to facilitate quick and accurate mastitis testing in dairy animals. Ideal for...",
+    "image_url": "https://drive.google.com/file/d/1D3hy23jQ4hdnOPV67HMl7V0LR_iQd15l/view?usp=drive_link",
+    "price": 100,
+    "product_page_url": "https://chimertech.shop/products/cmt-paddle-1-unit",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "quarter-specific testing",
+      "durable design",
+      "lightweight and portable",
+      "cost-effective"
+    ]
   },
   {
-    "id": "mbrt-test",
-    "name": "MBRT Milk Quality Test",
-    "category": "Milk Quality Testing",
-    "description": "Methylene Blue Reduction Test (MBRT) kit for assessing raw milk quality and microbial contamination levels.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=MBRT+Test",
+    "id": "VDD3-201-A01-001K",
+    "name": "FineKine 1 kg",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "The FineKine Teat Sealant is an all-natural solution designed to maintain optimal post-milking udder hygiene in various animals,...",
+    "image_url": "https://drive.google.com/file/d/1oEcsIyA7soUqqfoL0jcITxdgqfM5whah/view?usp=drive_link",
+    "price": 640,
+    "product_page_url": "https://chimertech.shop/products/finekine-1-kg",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "defends against common mastitis pathogens",
+      "provides long lasting barrier protection",
+      "features an all natural formulation good for the environment and leaves no residue in milk"
+    ]
+  },
+  {
+    "id": "VDD3-201-B01-001K",
+    "name": "FineKine 1 kg with dip cup",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "The FineKine Teat Sealant is an all-natural solution designed to maintain optimal post-milking udder hygiene in various animals,...",
+    "image_url": "https://drive.google.com/file/d/16lKuz6C8JK0keAYfcitVQa7kztzFr5aX/view?usp=drive_link",
+    "price": 740,
+    "product_page_url": "https://chimertech.shop/products/finekine-1-kg-with-dip-cup",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "defends against common mastitis pathogens",
+      "provides long lasting barrier protection",
+      "features an all natural formulation good for the environment and leaves no residue in milk"
+    ]
+  },
+  {
+    "id": "VDD3-201-B01-005K",
+    "name": "FineKine 5Kg with Dip Cup Combo",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "The FineKine Teat Sealant is an all-natural solution designed to maintain optimal post-milking udder hygiene in various animals,...",
+    "image_url": "https://drive.google.com/file/d/1Qkeufeh22SlDk2UsKWYD4ysVjVY5Rme6/view?usp=drive_link",
+    "price": 3400,
+    "product_page_url": "https://chimertech.shop/products/finekine-5kg-with-dip-cup-combo",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "defends against common mastitis pathogens",
+      "provides long lasting barrier protection",
+      "features an all natural formulation good for the environment and leaves no residue in milk"
+    ]
+  },
+  {
+    "id": "VDD3-201-A01-005K",
+    "name": "FineKine 5 kg",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "The FineKine Teat Sealant is an all-natural solution designed to maintain optimal post-milking udder hygiene in various animals,...",
+    "image_url": "https://drive.google.com/file/d/1ncwijPXH--ZElWjd9UrrYrPrvHOm6D5U/view?usp=drive_link",
+    "price": 3200,
+    "product_page_url": "https://chimertech.shop/products/finekine-5-kg",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "defends against common mastitis pathogens",
+      "provides long lasting barrier protection",
+      "features an all natural formulation good for the environment and leaves no residue in milk"
+    ]
+  },
+  {
+    "id": "VDD3-201-A01-020K",
+    "name": "FineKine 20 kg",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "The FineKine Teat Sealant is an all-natural solution designed to maintain optimal post-milking udder hygiene in various animals,...",
+    "image_url": "https://drive.google.com/file/d/1RXAmSU3A4xpK9-TsHQovu_ahzq3_WdxY/view?usp=drive_link",
+    "price": 9500,
+    "product_page_url": "https://chimertech.shop/products/finekine-20-kg",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "defends against common mastitis pathogens",
+      "provides long lasting barrier protection",
+      "features an all natural formulation good for the environment and leaves no residue in milk"
+    ]
+  },
+  {
+    "id": "VDD3-202-A01-001K",
+    "name": "Iogiene 1Kg",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "Iogiene is an iodine-based teat sealant designed for post-milking udder hygiene. It effectively prevents bacterial growth and mastitis...",
+    "image_url": "https://drive.google.com/file/d/1yzVGfRmiGuswNVP73pRdg_KmD-EYRxru/view?usp=drive_link",
+    "price": 600,
+    "product_page_url": "https://chimertech.shop/products/iogiene-1kg",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "reduces bacterial load on the udder, minimizing the risk of infections",
+      "keeps teats clean and healthy before and after milking.",
+      "natural fromulation",
+      "promotes better milk hygiene, ensuring higher quality and safety."
+    ]
+  },
+  {
+    "id": "VDD3-202-B01-001K",
+    "name": "Iogiene 1Kg with Dip Cup Combo",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "Iogiene is an iodine-based teat sealant designed for post-milking udder hygiene. It effectively prevents bacterial growth and mastitis...",
+    "image_url": "https://drive.google.com/file/d/1uqo-SUH8mkJXj-fUGB4EWicRNa0iAE8Y/view?usp=drive_link",
+    "price": 700,
+    "product_page_url": "https://chimertech.shop/products/iogiene-1kg-with-dip-cup-combo",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "reduces bacterial load on the udder, minimizing the risk of infections",
+      "keeps teats clean and healthy before and after milking.",
+      "natural fromulation",
+      "promotes better milk hygiene, ensuring higher quality and safety."
+    ]
+  },
+  {
+    "id": "VDD3-202-B01-005K",
+    "name": "Iogiene 5Kg with Dip Cup Combo",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "Iogiene is an iodine-based teat sealant designed for post-milking udder hygiene. It effectively prevents bacterial growth and mastitis...",
+    "image_url": "https://drive.google.com/file/d/12uHT2R1Hx68rOW5zS928rmHooQd9ODF7/view?usp=drive_link",
+    "price": 3200,
+    "product_page_url": "https://chimertech.shop/products/iogiene-5kg-with-dip-cup-combo",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "reduces bacterial load on the udder, minimizing the risk of infections",
+      "keeps teats clean and healthy before and after milking.",
+      "natural fromulation",
+      "promotes better milk hygiene, ensuring higher quality and safety."
+    ]
+  },
+  {
+    "id": "VDD3-202-A01-005K",
+    "name": "Iogiene 5 Kg",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "Iogiene is an iodine-based teat sealant designed for post-milking udder hygiene. It effectively prevents bacterial growth and mastitis...",
+    "image_url": "https://drive.google.com/file/d/1Lv6q-_pJKomCEBnPPlZEYHIvF0OgrYfE/view?usp=drive_link",
+    "price": 3000,
+    "product_page_url": "https://chimertech.shop/products/iogiene-5-kg",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "reduces bacterial load on the udder, minimizing the risk of infections",
+      "keeps teats clean and healthy before and after milking.",
+      "natural fromulation",
+      "promotes better milk hygiene, ensuring higher quality and safety."
+    ]
+  },
+  {
+    "id": "VDD3-202-A01-020K",
+    "name": "Iogiene 20 Kg",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "Iogiene is an iodine-based teat sealant designed for post-milking udder hygiene. It effectively prevents bacterial growth and mastitis...",
+    "image_url": "https://drive.google.com/file/d/1RlMuEwrp3geSVptuaVYhio8_eQIgG--F/view?usp=drive_link",
+    "price": 9000,
+    "product_page_url": "https://chimertech.shop/products/iogiene-20-kg",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "reduces bacterial load on the udder, minimizing the risk of infections",
+      "keeps teats clean and healthy before and after milking.",
+      "natural fromulation",
+      "promotes better milk hygiene, ensuring higher quality and safety."
+    ]
+  },
+  {
+    "id": "VDD3-203-A01-001K",
+    "name": "MooFoam 1Kg",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "MooFoam is a teat wash designed for the prevention of mastitis in cattle, sheep, goats, donkeys, and camels. It effectively cleans and...",
+    "image_url": "https://drive.google.com/file/d/1IBjkpkcNeyspgb7fzNDYVgViKhJKsyhG/view?usp=drive_link",
+    "price": 500,
+    "product_page_url": "https://chimertech.shop/products/moofoam-1kg",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "thick, high-quality foam",
+      "cleaner teats, fewer bacteria",
+      "maintains healthy teat skin",
+      "gentle and effective"
+    ]
+  },
+  {
+    "id": "VDD3-203-B01-001K",
+    "name": "MooFoam 1Kg with Dip Cup Combo",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "MooFoam is a teat wash designed for the prevention of mastitis in cattle, sheep, goats, donkeys, and camels. It effectively cleans and...",
+    "image_url": "https://drive.google.com/file/d/1n2LW5r1JfZ6QvtDl4uvTwZQ5R3S6CydZ/view?usp=drive_link",
+    "price": 600,
+    "product_page_url": "https://chimertech.shop/products/moofoam-1kg-with-dip-cup-combo",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "thick, high-quality foam",
+      "cleaner teats, fewer bacteria",
+      "maintains healthy teat skin",
+      "gentle and effective"
+    ]
+  },
+  {
+    "id": "VDD3-203-B01-005K",
+    "name": "MooFoam 5Kg with Dip Cup Combo",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "MooFoam is a teat wash designed for the prevention of mastitis in cattle, sheep, goats, donkeys, and camels. It effectively cleans and...",
+    "image_url": "https://drive.google.com/file/d/11k4v5r0IiEjtyf0n9znXR31JENdfiktr/view?usp=drive_link",
+    "price": 2800,
+    "product_page_url": "https://chimertech.shop/products/moofoam-5kg-with-dip-cup-combo",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "thick, high-quality foam",
+      "cleaner teats, fewer bacteria",
+      "maintains healthy teat skin",
+      "gentle and effective"
+    ]
+  },
+  {
+    "id": "VDD3-203-A01-005K",
+    "name": "MooFoam 5 Kg",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "MooFoam is a teat wash designed for the prevention of mastitis in cattle, sheep, goats, donkeys, and camels. It effectively cleans and...",
+    "image_url": "https://drive.google.com/file/d/18m_8zNUkH7JfXzy_6cmJ6Aw3VhjXe-Pc/view?usp=drive_link",
+    "price": 2600,
+    "product_page_url": "https://chimertech.shop/products/moofoam-5-kg",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "thick, high-quality foam",
+      "cleaner teats, fewer bacteria",
+      "maintains healthy teat skin",
+      "gentle and effective"
+    ]
+  },
+  {
+    "id": "VDD3-203-A01-020K",
+    "name": "MooFoam 20 Kg",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "MooFoam is a teat wash designed for the prevention of mastitis in cattle, sheep, goats, donkeys, and camels. It effectively cleans and...",
+    "image_url": "https://drive.google.com/file/d/1CDWnCuUwgsFHJM-iU8nHqkOfV82wlj5d/view?usp=drive_link",
+    "price": 7800,
+    "product_page_url": "https://chimertech.shop/products/moofoam-20-kg",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "thick, high-quality foam",
+      "cleaner teats, fewer bacteria",
+      "maintains healthy teat skin",
+      "gentle and effective"
+    ]
+  },
+  {
+    "id": "VDD3-204-A01-1UNT",
+    "name": "Dip Cup 1 unit",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "The Teat Dip Cup is a practical tool designed for the efficient application of teat dip solutions, ensuring thorough teat coverage and...",
+    "image_url": "https://drive.google.com/file/d/1IbYvUT0X7ghevcbEPWN-PEorFaGA0gdd/view?usp=drive_link",
+    "price": 105,
+    "product_page_url": "https://chimertech.shop/products/dip-cup-1-unit",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "effective teat coverage",
+      "ergonomic design",
+      "durable material",
+      "spill-proof"
+    ]
+  },
+  {
+    "id": "VDD2-301-A01-0200M",
+    "name": "Mastoveda Spray 200 ml",
+    "category": "Ethnoveterinary Medicine",
+    "description": "Polyherbal anti-inflammatory formulation for faster recovery in Mastitis. Enhances the immune power of animal to fight against...",
+    "image_url": "https://drive.google.com/file/d/1ZO3S11ORDKPrf5MrJ6K-WHH6ICczyTAF/view?usp=drive_link",
+    "price": 489,
+    "product_page_url": "https://chimertech.shop/products/mastoveda-spray-200-ml",
+    "recommended_for": [
+      "ethnoveterinary medicine",
+      "disease management",
+      "reduces pain and inflammation.",
+      "exerts antibacterial, anti-inflammatory, analgesic properties.",
+      "reduces bio burden on udder and teat.",
+      "provides instant relief due to quick transdermal absorption."
+    ]
+  },
+  {
+    "id": "VDD2-302-A01-200M",
+    "name": "Tic Tick Tic 200ml Spray",
+    "category": "Ethnoveterinary Medicine",
+    "description": "Powerful Tick Elimination: Quickly removes and controls tick infestations on livestock. Long-Lasting Protection: Provides extended...",
+    "image_url": "https://drive.google.com/file/d/1cQ8jKA1KEYNogQFWVfBkGrl1JMnaU4fj/view?usp=drive_link",
+    "price": 349,
+    "product_page_url": "https://chimertech.shop/products/tic-tick-tic-200ml-spray",
+    "recommended_for": [
+      "ethnoveterinary medicine",
+      "disease management",
+      "powerful tick elimination",
+      "long-lasting protection",
+      "safe for livestock",
+      "prevents disease"
+    ]
+  },
+  {
+    "id": "VDD2-303-A01-500G",
+    "name": "Tick Talc 500 g",
+    "category": "Ethnoveterinary Medicine",
+    "description": "Targets and eliminates ticks, lice, and other external parasites effectively while remaining gentle and safe on animal skin. Reduces...",
+    "image_url": "https://drive.google.com/file/d/16UkvMD2mjc0w6iikOsSZrhTLwpQArl4w/view?usp=drive_link",
+    "price": 174,
+    "product_page_url": "https://chimertech.shop/products/tick-talc-500-g",
+    "recommended_for": [
+      "ethnoveterinary medicine",
+      "disease management",
+      "powerful tick elimination",
+      "long-lasting protection",
+      "safe for livestock",
+      "prevents disease"
+    ]
+  },
+  {
+    "id": "VDG1-601-A01-1UNT",
+    "name": "Quadmastest Device",
+    "category": "Detection and Diagnostics",
+    "description": "Quadmastest: Advanced Mastitis Detection Device. The Quadmastest is a state-of-the-art diagnostic tool designed for dairy farmers and...",
+    "image_url": "https://drive.google.com/file/d/1UPPYsiK44Q-6xuRNOtATXVnnus72pyhZ/view?usp=drive_link",
+    "price": 19500,
+    "product_page_url": "https://chimertech.shop/products/quadmastest-device",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "early detection",
+      "quarter-specific testing",
+      "quick results",
+      "portable and durable"
+    ]
+  },
+  {
+    "id": "VDG1-601-B01-1UNT",
+    "name": "Quadmastest Pro Portable Wireless Thermal Printer",
+    "category": "Detection and Diagnostics",
+    "description": "Quadmastest: Advanced Mastitis Detection Device. The Quadmastest is a state-of-the-art diagnostic tool designed for dairy farmers and...",
+    "image_url": "https://drive.google.com/file/d/1hcOSZjaEMtMi6RF4pLqT7jNnMqvOIUGv/view?usp=drive_link",
+    "price": 22500,
+    "product_page_url": "https://chimertech.shop/products/quadmastest-pro-portable-wireless-thermal-printer",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "early detection",
+      "quarter-specific testing",
+      "quick results",
+      "portable and durable"
+    ]
+  },
+  {
+    "id": "VDD1-401-A01-01TK",
+    "name": "Bovine Anthrax Antibody Rapid Test Kit 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Fast on-site detection of anthrax antibodies in cattle. Helps prevent sudden disease outbreaks and reduces mortality risks.",
+    "image_url": "https://drive.google.com/file/d/1Fs2iR_kXQEuzkXYOTPdftT2enMY-OHKm/view?usp=drive_link",
+    "price": 340,
+    "product_page_url": "https://chimertech.shop/products/bovine-anthrax-antibody-rapid-test-kit-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "quick, easy-to-use strip format — no lab setup required.",
+      "early intervention ensures herd safety and farmer profit."
+    ]
+  },
+  {
+    "id": "VDD1-401-A01-20TK",
+    "name": "Bovine Anthrax Antibody Rapid Test Kit 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Fast on-site detection of anthrax antibodies in cattle. Helps prevent sudden disease outbreaks and reduces mortality risks.",
+    "image_url": "https://drive.google.com/file/d/1Fs2iR_kXQEuzkXYOTPdftT2enMY-OHKm/view?usp=drive_link",
+    "price": 5988,
+    "product_page_url": "https://chimertech.shop/products/bovine-anthrax-antibody-rapid-test-kit-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "quick, easy-to-use strip format — no lab setup required.",
+      "early intervention ensures herd safety and farmer profit."
+    ]
+  },
+  {
+    "id": "VDD1-402-A01-01TK",
+    "name": "Bovine Leptospira IgG/IgM Antibody Rapid Test Kit 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Detects Leptospirosis, a major cause of abortion and infertility. Early diagnosis reduces spread and supports timely treatment.",
+    "image_url": "https://drive.google.com/file/d/1TKvwEaAwNbV-bSjmfSE3tTAPwjc3rHXm/view?usp=drive_link",
+    "price": 336,
+    "product_page_url": "https://chimertech.shop/products/bovine-leptospira-igg-igm-antibody-rapid-test-kit-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "field-friendly kit with quick results.",
+      "supports better herd health planning."
+    ]
+  },
+  {
+    "id": "VDD1-402-A01-20TK",
+    "name": "Bovine Leptospira IgG/IgM Antibody Rapid Test Kit 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Detects Leptospirosis, a major cause of abortion and infertility. Early diagnosis reduces spread and supports timely treatment.",
+    "image_url": "https://drive.google.com/file/d/1TKvwEaAwNbV-bSjmfSE3tTAPwjc3rHXm/view?usp=drive_link",
+    "price": 5760,
+    "product_page_url": "https://chimertech.shop/products/bovine-leptospira-igg-igm-antibody-rapid-test-kit-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "field-friendly kit with quick results.",
+      "supports better herd health planning."
+    ]
+  },
+  {
+    "id": "VDD1-403-A01-01TK",
+    "name": "Bovine Tuberculosis Antibody Rapid Test Kit 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Rapid screening of TB in cattle herds to avoid disease spread. Helps meet biosecurity norms and ensures healthier livestock.",
+    "image_url": "https://drive.google.com/file/d/1gDdSRsuzpOpeaVk_3Nq6lOFKoRvkIhDL/view?usp=drive_link",
     "price": 350,
-    "product_page_url": "https://chimertech.com/products/mbrt",
-    "recommended_for": ["milk quality", "milk testing", "microbial testing", "raw milk assessment", "milk hygiene"]
+    "product_page_url": "https://chimertech.shop/products/bovine-tuberculosis-antibody-rapid-test-kit-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "simple procedure with easy result interpretation.",
+      "reduces economic loss due to tb-related issues"
+    ]
   },
   {
-    "id": "resazurin-test",
-    "name": "Resazurin Milk Test Kit",
-    "category": "Milk Quality Testing",
-    "description": "Resazurin dye reduction test for rapid assessment of milk bacteriological quality. Widely used in quality control.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=Resazurin",
-    "price": 320,
-    "product_page_url": "https://chimertech.com/products/resazurin",
-    "recommended_for": ["milk quality", "milk testing", "bacteriological quality", "milk hygiene", "dairy quality"]
+    "id": "VDD1-403-A01-20TK",
+    "name": "Bovine Tuberculosis Antibody Rapid Test Kit 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Rapid screening of TB in cattle herds to avoid disease spread. Helps meet biosecurity norms and ensures healthier livestock.",
+    "image_url": "https://drive.google.com/file/d/1gDdSRsuzpOpeaVk_3Nq6lOFKoRvkIhDL/view?usp=drive_link",
+    "price": 5999,
+    "product_page_url": "https://chimertech.shop/products/bovine-tuberculosis-antibody-rapid-test-kit-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "simple procedure with easy result interpretation.",
+      "reduces economic loss due to tb-related issues"
+    ]
   },
   {
-    "id": "adulteration-test",
-    "name": "Milk Adulteration Test Kit",
-    "category": "Milk Quality Testing",
-    "description": "Comprehensive kit for detecting common adulterants in milk including water, detergents and preservatives.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=Adulteration+Test",
-    "price": 450,
-    "product_page_url": "https://chimertech.com/products/adulteration-test",
-    "recommended_for": ["milk adulteration", "milk testing", "milk quality", "fraud detection", "dairy safety"]
+    "id": "VDD1-404-A01-01TK",
+    "name": "Bovine Brucella Antibody Rapid Test Kit 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Detects brucellosis, a key cause of abortion and infertility in cattle. Quick on-farm testing for early disease identification.",
+    "image_url": "https://drive.google.com/file/d/1aWxX99GmPDjpQTFEolW1XFTKoP1L9KwQ/view?usp=drive_link",
+    "price": 336,
+    "product_page_url": "https://chimertech.shop/products/bovine-brucella-antibody-rapid-test-kit-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "helps avoid contamination of milk and meat products.",
+      "enables timely vaccination and control measures."
+    ]
   },
   {
-    "id": "cattle-supplement",
-    "name": "Chimertech BoostBCS Supplement",
-    "category": "Nutrition and Supplements",
-    "description": "Energy-dense nutritional supplement to improve cattle body condition score. Formulated for low BCS cattle during transition and lactation periods.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=BoostBCS",
-    "price": 890,
-    "product_page_url": "https://chimertech.com/products/boostbcs",
-    "recommended_for": ["low bcs", "body condition", "nutrition", "supplement", "weight gain", "lactation support"]
+    "id": "VDD1-404-A01-20TK",
+    "name": "Bovine Brucella Antibody Rapid Test Kit 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Detects brucellosis, a key cause of abortion and infertility in cattle. Quick on-farm testing for early disease identification.",
+    "image_url": "https://drive.google.com/file/d/1aWxX99GmPDjpQTFEolW1XFTKoP1L9KwQ/view?usp=drive_link",
+    "price": 5760,
+    "product_page_url": "https://chimertech.shop/products/bovine-brucella-antibody-rapid-test-kit-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "helps avoid contamination of milk and meat products.",
+      "enables timely vaccination and control measures."
+    ]
   },
   {
-    "id": "mineral-lick",
-    "name": "Chimertech MineralPro Lick Block",
-    "category": "Nutrition and Supplements",
-    "description": "Balanced mineral and vitamin supplement block for free-access feeding. Supports immune function, reproduction and overall cattle health.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=MineralPro",
-    "price": 360,
-    "product_page_url": "https://chimertech.com/products/mineralpro",
-    "recommended_for": ["mineral deficiency", "nutrition", "supplement", "immune support", "herd health"]
+    "id": "VDD1-405-A01-01TK",
+    "name": "Bovine Brucella Milk Antibody Rapid Test Strip 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Direct detection of Brucella antibodies in milk samples. Non-invasive, milk-based test for easy screening.",
+    "image_url": "https://drive.google.com/file/d/1YcBiBbcGrDmhJZxWN1IvJylhKPaoaa-t/view?usp=drive_link",
+    "price": 385,
+    "product_page_url": "https://chimertech.shop/products/bovine-brucella-milk-antibody-rapid-test-strip-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "saves time and allows bulk testing without blood collection.",
+      "ensures milk safety and supports better disease control."
+    ]
   },
   {
-    "id": "bcp-test",
-    "name": "BCP Milk Acidity Test",
-    "category": "Milk Quality Testing",
-    "description": "Bromocresol Purple (BCP) based milk freshness and acidity test. Detects abnormal milk quickly during quality screening.",
-    "image_url": "https://placehold.co/400x300/1a1a1a/4ade80?text=BCP+Test",
+    "id": "VDD1-405-A01-20TK",
+    "name": "Bovine Brucella Milk Antibody Rapid Test Strip 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Direct detection of Brucella antibodies in milk samples. Non-invasive, milk-based test for easy screening.",
+    "image_url": "https://drive.google.com/file/d/1YcBiBbcGrDmhJZxWN1IvJylhKPaoaa-t/view?usp=drive_link",
+    "price": 6599,
+    "product_page_url": "https://chimertech.shop/products/bovine-brucella-milk-antibody-rapid-test-strip-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "saves time and allows bulk testing without blood collection.",
+      "ensures milk safety and supports better disease control."
+    ]
+  },
+  {
+    "id": "VDD1-406-A01-01TK",
+    "name": "Bovine Foot and Mouth Disease Antibody Rapid Test Kit 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Detects FMD antibodies, ensuring early detection and management. Supports disease surveillance programs.",
+    "image_url": "https://drive.google.com/file/d/1fVnl80dFq6RXS3JuPQodmTEyMW1kCx_G/view?usp=drive_link",
     "price": 280,
-    "product_page_url": "https://chimertech.com/products/bcp",
-    "recommended_for": ["milk acidity", "milk quality", "freshness test", "abnormal milk", "dairy testing"]
+    "product_page_url": "https://chimertech.shop/products/bovine-foot-and-mouth-disease-antibody-rapid-test-kit-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "helps reduce economic losses from fmd outbreaks.",
+      "easy-to-use rapid strip with accurate results"
+    ]
+  },
+  {
+    "id": "VDD1-406-A01-20TK",
+    "name": "Bovine Foot and Mouth Disease Antibody Rapid Test Kit 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Detects FMD antibodies, ensuring early detection and management. Supports disease surveillance programs.",
+    "image_url": "https://drive.google.com/file/d/1fVnl80dFq6RXS3JuPQodmTEyMW1kCx_G/view?usp=drive_link",
+    "price": 4799,
+    "product_page_url": "https://chimertech.shop/products/bovine-foot-and-mouth-disease-antibody-rapid-test-kit-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "helps reduce economic losses from fmd outbreaks.",
+      "easy-to-use rapid strip with accurate results"
+    ]
+  },
+  {
+    "id": "VDD1-407-A01-01TK",
+    "name": "Bovine Foot and Mouth Disease DIVA Antibody Rapid Test Kit 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Differentiates infected from vaccinated animals (DIVA principle). Supports smart vaccination programs and monitoring.",
+    "image_url": "https://drive.google.com/file/d/1C28FWWxeMun92dXpsMeR-rm8cbOQfolh/view?usp=drive_link",
+    "price": 315,
+    "product_page_url": "https://chimertech.shop/products/bovine-foot-and-mouth-disease-diva-antibody-rapid-test-kit-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "aids in fmd eradication and control strategies.",
+      "fast, reliable on-site diagnosis"
+    ]
+  },
+  {
+    "id": "VDD1-407-A01-20TK",
+    "name": "Bovine Foot and Mouth Disease DIVA Antibody Rapid Test Kit 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Differentiates infected from vaccinated animals (DIVA principle). Supports smart vaccination programs and monitoring.",
+    "image_url": "https://drive.google.com/file/d/1C28FWWxeMun92dXpsMeR-rm8cbOQfolh/view?usp=drive_link",
+    "price": 5399,
+    "product_page_url": "https://chimertech.shop/products/bovine-foot-and-mouth-disease-diva-antibody-rapid-test-kit-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "aids in fmd eradication and control strategies.",
+      "fast, reliable on-site diagnosis"
+    ]
+  },
+  {
+    "id": "VDD1-408-A01-01TK",
+    "name": "Bovine Hemorrhagic Septicemia Antibody Rapid Test Kit 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Early detection of Pasteurella multocida infection. Reduces sudden death risk during outbreaks.",
+    "image_url": "https://drive.google.com/file/d/1-FZRLKrYiQF-Fdiw0_mBw_Gjx8F6867H/view?usp=drive_link",
+    "price": 364,
+    "product_page_url": "https://chimertech.shop/products/bovine-hemorrhagic-septicemia-antibody-rapid-test-kit-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "simple field-testing method, quick interpretation.",
+      "supports timely antibiotic and vaccination decisions."
+    ]
+  },
+  {
+    "id": "VDD1-408-A01-20TK",
+    "name": "Bovine Hemorrhagic Septicemia Antibody Rapid Test Kit 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Early detection of Pasteurella multocida infection. Reduces sudden death risk during outbreaks.",
+    "image_url": "https://drive.google.com/file/d/1-FZRLKrYiQF-Fdiw0_mBw_Gjx8F6867H/view?usp=drive_link",
+    "price": 6240,
+    "product_page_url": "https://chimertech.shop/products/bovine-hemorrhagic-septicemia-antibody-rapid-test-kit-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "simple field-testing method, quick interpretation.",
+      "supports timely antibiotic and vaccination decisions."
+    ]
+  },
+  {
+    "id": "VDD1-409-A01-01TK",
+    "name": "Bovine IBR Antibody Rapid Test Kit 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Detects Infectious Bovine Rhinotracheitis (IBR) antibodies. Helps control respiratory disease outbreaks in dairy herds.",
+    "image_url": "https://drive.google.com/file/d/1NaAWVQLr_KPe0Tjgh0VY4aesvrm8-Naj/view?usp=drive_link",
+    "price": 315,
+    "product_page_url": "https://chimertech.shop/products/bovine-ibr-antibody-rapid-test-kit-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "quick test procedure, suitable for field conditions.",
+      "improves herd immunity through timely vaccination decisions"
+    ]
+  },
+  {
+    "id": "VDD1-409-A01-20TK",
+    "name": "Bovine IBR Antibody Rapid Test Kit 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Detects Infectious Bovine Rhinotracheitis (IBR) antibodies. Helps control respiratory disease outbreaks in dairy herds.",
+    "image_url": "https://drive.google.com/file/d/1NaAWVQLr_KPe0Tjgh0VY4aesvrm8-Naj/view?usp=drive_link",
+    "price": 5399,
+    "product_page_url": "https://chimertech.shop/products/bovine-ibr-antibody-rapid-test-kit-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "quick test procedure, suitable for field conditions.",
+      "improves herd immunity through timely vaccination decisions"
+    ]
+  },
+  {
+    "id": "VDD1-410-A01-01TK",
+    "name": "Bovine Listeria Antibody Rapid Test Kit 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Screens for Listeria infections, preventing reproductive losses. Protects both animal and public health (zoonotic concern)....",
+    "image_url": "https://drive.google.com/file/d/1OdwnIFFjc7PDRg1gG805h57tqKSudUve/view?usp=drive_link",
+    "price": 350,
+    "product_page_url": "https://chimertech.shop/products/bovine-listeria-antibody-rapid-test-kit-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "protects both animal and public health (zoonotic concern)."
+    ]
+  },
+  {
+    "id": "VDD1-410-A01-20TK",
+    "name": "Bovine Listeria Antibody Rapid Test Kit 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Screens for Listeria infections, preventing reproductive losses. Protects both animal and public health (zoonotic concern)....",
+    "image_url": "https://drive.google.com/file/d/1OdwnIFFjc7PDRg1gG805h57tqKSudUve/view?usp=drive_link",
+    "price": 5999,
+    "product_page_url": "https://chimertech.shop/products/bovine-listeria-antibody-rapid-test-kit-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "protects both animal and public health (zoonotic concern)."
+    ]
+  },
+  {
+    "id": "VDD1-411-A01-01TK",
+    "name": "Bovine Salmonella Antibody Rapid Test Kit 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Early detection of Salmonella infections in cattle. Prevents digestive disturbances and milk contamination",
+    "image_url": "https://drive.google.com/file/d/1uROZ4FBEKk0s6CMWtMlyVOKSmtW1hm4j/view?usp=drive_link",
+    "price": 385,
+    "product_page_url": "https://chimertech.shop/products/bovine-salmonella-antibody-rapid-test-kit-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "simple strip-based test with quick results.",
+      "helps safeguard animal health and consumer safety."
+    ]
+  },
+  {
+    "id": "VDD1-411-A01-20TK",
+    "name": "Bovine Salmonella Antibody Rapid Test Kit 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Early detection of Salmonella infections in cattle. Prevents digestive disturbances and milk contamination",
+    "image_url": "https://drive.google.com/file/d/1uROZ4FBEKk0s6CMWtMlyVOKSmtW1hm4j/view?usp=drive_link",
+    "price": 6599,
+    "product_page_url": "https://chimertech.shop/products/bovine-salmonella-antibody-rapid-test-kit-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "simple strip-based test with quick results.",
+      "helps safeguard animal health and consumer safety."
+    ]
+  },
+  {
+    "id": "VDD1-412-A01-01TK",
+    "name": "Bovine Scrub Typhus Antibody Rapid Test Kit 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Detects scrub typhus infection, often overlooked in livestock. Supports faster treatment decisions and reduces losses. Simple kit...",
+    "image_url": "https://drive.google.com/file/d/1-GaRc_ihmOOwpVWW-Owaj55mg5IXMcJe/view?usp=drive_link",
+    "price": 364,
+    "product_page_url": "https://chimertech.shop/products/bovine-scrub-typhus-antibody-rapid-test-kit-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "ensures early intervention and recovery."
+    ]
+  },
+  {
+    "id": "VDD1-412-A01-20TK",
+    "name": "Bovine Scrub Typhus Antibody Rapid Test Kit 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Detects scrub typhus infection, often overlooked in livestock. Supports faster treatment decisions and reduces losses. Simple kit...",
+    "image_url": "https://drive.google.com/file/d/1-GaRc_ihmOOwpVWW-Owaj55mg5IXMcJe/view?usp=drive_link",
+    "price": 6240,
+    "product_page_url": "https://chimertech.shop/products/bovine-scrub-typhus-antibody-rapid-test-kit-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "ensures early intervention and recovery."
+    ]
+  },
+  {
+    "id": "VDD1-413-A01-01TK",
+    "name": "Bovine Theileria Ta/To Antibody Rapid Test Kit 1 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Rapid detection of Theileria annulata and T. orientalis infection. Prevents severe blood parasitic diseases and anemia.",
+    "image_url": "https://drive.google.com/file/d/13gv3-WAtU_8OUYI6dH6QixSLpuv-uwfp/view?usp=drive_link",
+    "price": 336,
+    "product_page_url": "https://chimertech.shop/products/bovine-theileria-ta-to-antibody-rapid-test-kit-1-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "quick, field-deployable diagnosis for effective control.",
+      "reduces animal stress and supports timely treatment."
+    ]
+  },
+  {
+    "id": "VDD1-413-A01-20TK",
+    "name": "Bovine Theileria Ta/To Antibody Rapid Test Kit 20 Test",
+    "category": "Detection and Diagnostics",
+    "description": "Rapid detection of Theileria annulata and T. orientalis infection. Prevents severe blood parasitic diseases and anemia.",
+    "image_url": "https://drive.google.com/file/d/13gv3-WAtU_8OUYI6dH6QixSLpuv-uwfp/view?usp=drive_link",
+    "price": 5759,
+    "product_page_url": "https://chimertech.shop/products/bovine-theileria-ta-to-antibody-rapid-test-kit-20-test",
+    "recommended_for": [
+      "detection",
+      "disease management",
+      "quick, field-deployable diagnosis for effective control.",
+      "reduces animal stress and supports timely treatment."
+    ]
+  },
+  {
+    "id": "VDD3-205-A01-001L",
+    "name": "H-Udderon, Herbal Teat Spray for Mastitis prevention.",
+    "category": "Udder Hygiene and Disease Prevention",
+    "description": "Chimertech presents H-Udderon, Herbal Teat Spray for Mastitis prevention, formulated to protect livestock from infections naturally...",
+    "image_url": "https://drive.google.com/file/d/1nf53Vx8nr36Jm24qYaIILlmybCHUdi2f/view?usp=drive_link",
+    "price": 349,
+    "product_page_url": "https://chimertech.shop/products/h-udderon-herbal-teat-spray-for-mastitis-prevention",
+    "recommended_for": [
+      "prevention",
+      "disease management",
+      "teat spray for external application"
+    ]
+  },
+  {
+    "id": "VDS1-501-A01-500G",
+    "name": "NutraKine Fertility Booster 500 g",
+    "category": "Nutrition and Supplements",
+    "description": "Helps improve conception rates, reduce repeat breeding issues, and support timely pregnancies Optimizes hormonal functions crucial for...",
+    "image_url": "https://drive.google.com/file/d/1y4M4LXBYYB9AJtSmzgxPJd6V0Mg3uZZp/view?usp=drive_link",
+    "price": 565,
+    "product_page_url": "https://chimertech.shop/products/nutrakine-fertility-booster-500-g",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "easily administered through feed or water, suitable for on-farm use without special training",
+      "enhances conception rates and reproductive efficiency in dairy cattle"
+    ]
+  },
+  {
+    "id": "VDS1-502-A01-500G",
+    "name": "NutraKine Milk Booster 500 g",
+    "category": "Nutrition and Supplements",
+    "description": "Scientifically formulated nutritional supplement designed to naturally enhance milk production Regular use ensures not only a natural...",
+    "image_url": "https://drive.google.com/file/d/1OqZ9--aKTD7cNIVAzlE6Ao-lA0ZFGZf2/view?usp=drive_link",
+    "price": 510,
+    "product_page_url": "https://chimertech.shop/products/nutrakine-milk-booster-500-g",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "helps animals overcome stress and metabolic imbalances during lactation, leading to quicker recovery and consistent milk yield"
+    ]
+  },
+  {
+    "id": "VDS1-503-A01-500G",
+    "name": "NutraKine Gain 500 g",
+    "category": "Nutrition and Supplements",
+    "description": "Specially formulated digestive supplement designed to improve feed efficiency and promote healthy digestion. Improves the animal's...",
+    "image_url": "https://drive.google.com/file/d/12hFHaVf2up9xw5jl0h3e7k3skIV5FQAy/view?usp=drive_link",
+    "price": 510,
+    "product_page_url": "https://chimertech.shop/products/nutrakine-gain-500-g",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "promotes weight gain and milk production, especially during periods of stress.",
+      "reduces feed costs by enhancing nutrient utilization"
+    ]
+  },
+  {
+    "id": "VDS1-504-A01-001L",
+    "name": "NutraKine MastoVita 200ml",
+    "category": "Nutrition and Supplements",
+    "description": "Premium multivitamin liquid feed supplement crafted to support the health, vitality, and productivity of livestock across all stages...",
+    "image_url": "https://drive.google.com/file/d/1D8ga4aVb6_EJSt26gJYdMc510_qrgV2C/view?usp=drive_link",
+    "price": 779,
+    "product_page_url": "https://chimertech.shop/products/nutrakine-mastovita-200ml",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "the liquid form enables rapid nutrient uptake, ensuring quicker, visible improvements in animal health and performance."
+    ]
+  },
+  {
+    "id": "VDS1-505-A01-005L",
+    "name": "NutraKine Calcdex 1L",
+    "category": "Nutrition and Supplements",
+    "description": "Helps improve appetite and milk let-down in weak or post-calving animals. Enriched with easily absorbable calcium to prevent milk...",
+    "image_url": "https://drive.google.com/file/d/1sGqHXruSdTwQIb_QP_zrvuxW0MdF041z/view?usp=drive_link",
+    "price": 599,
+    "product_page_url": "https://chimertech.shop/products/nutrakine-calcdex-1l",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "ethno-veterinary formulation with quick absorption, making it ideal for on-farm use without complex procedures.",
+      "helps animals overcome stress and metabolic imbalances during lactation, leading to quicker recovery and consistent milk yield"
+    ]
+  },
+  {
+    "id": "VDS1-506-A01-500M",
+    "name": "NutraKine Calcdex 500 ml",
+    "category": "Nutrition and Supplements",
+    "description": "Energy booster and stress reliever supplement for dairy cattle during pre and post calving period.",
+    "image_url": "https://drive.google.com/file/d/1DMrOznvqAP3-V5gAmD0DZjoKfGVPOTwv/view?usp=drive_link",
+    "price": 430,
+    "product_page_url": "https://chimertech.shop/products/nutrakine-calcdex-500-ml",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "keeps animals active, alert, and productive.",
+      "reduces weakness and supports better milk let-down.",
+      "quick recovery solution for sick or weak animals",
+      "keeps the herd active, alert, and consistently productive throughout demanding stages"
+    ]
+  },
+  {
+    "id": "VDS1-507-A01-300G",
+    "name": "NutraKine Phos+ 300 g",
+    "category": "Nutrition and Supplements",
+    "description": "Highly bioavailable phosphorus supplement to prevent infertility and metabolic disorders. Boosts milk production efficiency and...",
+    "image_url": "https://drive.google.com/file/d/1CNUGdonlPtpx8Vq6t76z_ACCck_Bs73b/view?usp=drive_link",
+    "price": 249,
+    "product_page_url": "https://chimertech.shop/products/nutrakine-phos-300-g",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "improves feed intake and digestion",
+      "regular use improves milk yield, reproductive performance, and nutrient digestion, leading to a healthier, more productive herd."
+    ]
+  },
+  {
+    "id": "VDS1-508-A01-001L",
+    "name": "NutraKine Calfster 500 ml",
+    "category": "Nutrition and Supplements",
+    "description": "Animal Feed Supplement to induce or stimulate uterine contractions Augments and promotes effective labor in animals without harsh...",
+    "image_url": "https://drive.google.com/file/d/1fMi9gPPnRi6zDHkN4GTr5dKxbveHeFYb/view?usp=drive_link",
+    "price": 429,
+    "product_page_url": "https://chimertech.shop/products/nutrakine-calfster-500-ml",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "easy to administer, farmer – friendly and reduces the chance of post-calving complications",
+      "can be conveniently mixed with feed or given orally, making it simple to use at the farm level during critical stages of parturition"
+    ]
+  },
+  {
+    "id": "VDS1-509-A01-001L",
+    "name": "NutraKine Liver Tonic 1 litre",
+    "category": "Nutrition and Supplements",
+    "description": "A Liver stimulant and detoxifier that enhances metabolism and supports digestion Promotes better feed conversion in livestock,...",
+    "image_url": "https://drive.google.com/file/d/1hRV3BsqZnQtoci-1EttN_ASeJ0JboY4b/view?usp=drive_link",
+    "price": 249,
+    "product_page_url": "https://chimertech.shop/products/nutrakine-liver-tonic-1-litre",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "useful during antibiotic treatments or toxin exposure.",
+      "boosts energy levels and improves animal performance"
+    ]
+  },
+  {
+    "id": "VDS1-510-A01-100M",
+    "name": "NutraKine D-Wormer 100 ml",
+    "category": "Nutrition and Supplements",
+    "description": "A powerful ethno-veterinary broad-spectrum dewormer designed to combat liver flukes and all internal parasites Ensures better nutrient...",
+    "image_url": "https://drive.google.com/file/d/1Cn3xUVkd_8-17KzYnhyCh3aUXZSwyLN1/view?usp=drive_link",
+    "price": 229,
+    "product_page_url": "https://chimertech.shop/products/nutrakine-d-wormer-100-ml",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "helps maintain animal health and maximize milk yield by supporting overall health and productivity",
+      "fully absorb nutrients from their feed, leading to faster growth and higher feed efficiency"
+    ]
+  },
+  {
+    "id": "VDS1-511-A01-010K",
+    "name": "ServaTac-Milk replacer for calf. 10kg",
+    "category": "Nutrition and Supplements",
+    "description": "ServaTec is a high-performance complete milk replacer specially formulated for rearing healthy, fast-growing calves. Developed by...",
+    "image_url": "https://drive.google.com/file/d/16IThq3mJsDp-z-XTIDc60IT4pVH18jXe/view?usp=drive_link",
+    "price": 2750,
+    "product_page_url": "https://chimertech.shop/products/servatac-milk-replacer-for-calf-10kg",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "why choose servatec?",
+      "balanced growth support – optimized protein and fat levels to promote steady, uniform growth",
+      "digestive safety – designed for easy digestion and reduced digestive stress",
+      "easy mixing & feeding – simple preparation and smooth consumption"
+    ]
+  },
+  {
+    "id": "VDS1-511-A01-025K",
+    "name": "ServaTac-Milk replacer for calf. 25kg",
+    "category": "Nutrition and Supplements",
+    "description": "ServaTec is a high-performance complete milk replacer specially formulated for rearing healthy, fast-growing calves. Developed by...",
+    "image_url": "https://drive.google.com/file/d/16IThq3mJsDp-z-XTIDc60IT4pVH18jXe/view?usp=drive_link",
+    "price": 7000,
+    "product_page_url": "https://chimertech.shop/products/servatac-milk-replacer-for-calf-25kg",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "why choose servatec?",
+      "balanced growth support – optimized protein and fat levels to promote steady, uniform growth",
+      "digestive safety – designed for easy digestion and reduced digestive stress",
+      "easy mixing & feeding – simple preparation and smooth consumption"
+    ]
+  },
+  {
+    "id": "VDS1-512-A01-010K",
+    "name": "Kidimilk-Milk replacer for kid goat and lambs. 10Kg",
+    "category": "Nutrition and Supplements",
+    "description": "KidiMilk is a high-quality complete milk replacer specially formulated for rearing kid goats and lambs. Designed for progressive...",
+    "image_url": "https://drive.google.com/file/d/1Nv5vAOU4vGimN-O2qIMs8noysMMEzThw/view?usp=drive_link",
+    "price": 3800,
+    "product_page_url": "https://chimertech.shop/products/kidimilk-milk-replacer-for-kid-goat-and-lambs-10kg",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "why choose kidimilk?",
+      "supports strong growth (8/10 growth rate)",
+      "high digestive safety (8/10 rating)",
+      "excellent conformity & weaning ability (8/10 rating)"
+    ]
+  },
+  {
+    "id": "VDS1-512-A01-025K",
+    "name": "Kidimilk-Milk replacer for kid goat and lambs. 25Kg",
+    "category": "Nutrition and Supplements",
+    "description": "KidiMilk is a high-quality complete milk replacer specially formulated for rearing kid goats and lambs. Designed for progressive...",
+    "image_url": "https://drive.google.com/file/d/1Nv5vAOU4vGimN-O2qIMs8noysMMEzThw/view?usp=drive_link",
+    "price": 9000,
+    "product_page_url": "https://chimertech.shop/products/kidimilk-milk-replacer-for-kid-goat-and-lambs-25kg",
+    "recommended_for": [
+      "supplement",
+      "nutrition",
+      "why choose kidimilk?",
+      "supports strong growth (8/10 growth rate)",
+      "high digestive safety (8/10 rating)",
+      "excellent conformity & weaning ability (8/10 rating)"
+    ]
+  },
+  {
+    "id": "VBD1-801-A01-01TK",
+    "name": "PregKine Bovine Pregnancy Rapid Test - 1 Test 1 Test",
+    "category": "Reproductive Management",
+    "description": "Advanced, rapid pregnancy detection kit for cattle, designed to identify pregnancy-associated biomarkers directly from a small blood...",
+    "image_url": "https://drive.google.com/file/d/1TNbzyECdC_ore2iMekPmrxBwwWpb-Ebu/view?usp=drive_link",
+    "price": 360,
+    "product_page_url": "https://chimertech.shop/products/pregkine-bovine-pregnancy-rapid-test-1-test-1-test",
+    "recommended_for": [
+      "detection",
+      "breeding",
+      "detects in as early as 28 days post breeding or insemination",
+      "generates the result in as fast as 20 minutes."
+    ]
+  },
+  {
+    "id": "VBD1-801-A01-20TK",
+    "name": "PregKine Bovine Pregnancy Rapid Test - 20 Test Pack of 20 Tests",
+    "category": "Reproductive Management",
+    "description": "Advanced, rapid pregnancy detection kit for cattle, designed to identify pregnancy-associated biomarkers directly from a small blood...",
+    "image_url": "https://drive.google.com/file/d/1TNbzyECdC_ore2iMekPmrxBwwWpb-Ebu/view?usp=drive_link",
+    "price": 6228,
+    "product_page_url": "https://chimertech.shop/products/pregkine-bovine-pregnancy-rapid-test-20-test-pack-of-20-tests",
+    "recommended_for": [
+      "detection",
+      "breeding",
+      "detects in as early as 28 days post breeding or insemination",
+      "generates the result in as fast as 20 minutes."
+    ]
+  },
+  {
+    "id": "VBG1-802-A01-1UNT",
+    "name": "Estrus Gun Cattle",
+    "category": "Reproductive Management",
+    "description": "Helps identify heat cycles for timely insemination in cattle, improving fertility and reducing missed breeding opportunities. Helps...",
+    "image_url": "https://drive.google.com/file/d/11doZxiXclxMgFkhbeJ_7d3ufaz_n567c/view?usp=drive_link",
+    "price": 8150,
+    "product_page_url": "https://chimertech.shop/products/estrus-gun-cattle",
+    "recommended_for": [
+      "ai equipment",
+      "breeding",
+      "simple and reliable tool for farmers and technicians.",
+      "improves reproductive efficiency and calving rates."
+    ]
+  },
+  {
+    "id": "VBG1-802-B01-1UNT",
+    "name": "Estrus Gun Goat / Sheep",
+    "category": "Reproductive Management",
+    "description": "Specially designed estrus detection tool for small ruminants like goats and sheep, ensuring better breeding efficiency. Assists in...",
+    "image_url": "https://drive.google.com/file/d/1JNI3IRzkhteKk_Yyr7FeKRUMsTakStGo/view?usp=drive_link",
+    "price": 7500,
+    "product_page_url": "https://chimertech.shop/products/estrus-gun-goat-sheep",
+    "recommended_for": [
+      "ai equipment",
+      "breeding",
+      "easy handling and accurate detection.",
+      "supports faster herd expansion"
+    ]
+  },
+  {
+    "id": "VBG1-804-A01-1UNT",
+    "name": "Semen thawer",
+    "category": "Reproductive Management",
+    "description": "Efficient thawing system for frozen semen straws Ensures viability and success of artificial insemination procedures Maintains the...",
+    "image_url": "https://drive.google.com/file/d/1AU4cWJ99YEi7W5VyGIISUxruG3bDchCC/view?usp=drive_link",
+    "price": 12500,
+    "product_page_url": "https://chimertech.shop/products/semen-thawer",
+    "recommended_for": [
+      "ai equipment",
+      "breeding",
+      "efficient thawing system for frozen semen straws",
+      "ensures viability and success of artificial insemination procedures",
+      "maintains the ideal temperature for semen thawing."
+    ]
+  },
+  {
+    "id": "VBG1-805-A01-1UNT",
+    "name": "Portable Liquid Nitrogen [LN2] Container for Cattle Semen Storage 2 Litre",
+    "category": "Reproductive Management",
+    "description": "Ideal for farms, AI centers, and veterinarians on the move. Lightweight and rugged – built to handle tough field conditions....",
+    "image_url": "https://drive.google.com/file/d/1AdEHmp23OFMBZW1emgfp3kakqB_2bWC0/view?usp=drive_link",
+    "price": 8850,
+    "product_page_url": "https://chimertech.shop/products/portable-liquid-nitrogen-ln2-container-for-cattle-semen-storage-2-litre",
+    "recommended_for": [
+      "ai equipment",
+      "breeding",
+      "high-quality construction – made from stainless steel or aluminum alloy for durability and corrosion resistance.",
+      "vacuum insulated design – provides long-term ln₂ retention with minimal evaporation.",
+      "multiple capacities available – ranges from 2l to 200l+ for different applications.",
+      "portable & lightweight – smaller models are easy to transport for field use."
+    ]
+  },
+  {
+    "id": "VBG1-806-A01-1UNT",
+    "name": "Digital artificial insemination gun with camera for cattle and horse.",
+    "category": "Reproductive Management",
+    "description": "A Veterinary Artificial Insemination (AI) Equipment such as a Visual Insemination Gun for cattle, horses, pigs, and dogs typically has...",
+    "image_url": "https://drive.google.com/file/d/1YgwThgMeUHEw95tDYVzJTanAI6jaI3Pl/view?usp=drive_link",
+    "price": 33000,
+    "product_page_url": "https://chimertech.shop/products/digital-artificial-insemination-gun-with-camera-for-cattle-and-horse",
+    "recommended_for": [
+      "ai equipment",
+      "breeding",
+      "endoscopic camera with lcd display, led light, rechargeable battery, stainless steel body, supports ai straws and catheters"
+    ]
+  },
+  {
+    "id": "VDG1-701-A01-1UNT",
+    "name": "nSure Lacto Pack of 10",
+    "category": "Milk Quality Testing",
+    "description": "Fast, reliable, and farmer-friendly milk adulteration detection kit Rapidly detects 12 adulterants in Milk Easy-to-use on-farm kit...",
+    "image_url": "https://drive.google.com/file/d/1OAvJpCQP5-D71bhKOpkXVRFgMt0b5C0B/view?usp=drive_link",
+    "price": 159,
+    "product_page_url": "https://chimertech.shop/products/nsure-lacto-pack-of-10",
+    "recommended_for": [
+      "milk processing",
+      "herd management",
+      "helps farmers maintain high-quality standards for their dairy produce",
+      "ensures milk safety, protects consumer trust, and prevents rejections",
+      "helps maintain milk quality and trust"
+    ]
+  },
+  {
+    "id": "VHG1-901-A01-1UNT",
+    "name": "RFID Reader",
+    "category": "Herd Management",
+    "description": "Easy livestock identification and tracking solution with RFID technology for better herd management, record keeping, and traceability....",
+    "image_url": "https://drive.google.com/file/d/1qlQcxFMWI0j6bvIeNcPH230IGWAvHoBE/view?usp=drive_link",
+    "price": 7000,
+    "product_page_url": "https://chimertech.shop/products/rfid-reader",
+    "recommended_for": [
+      "animal id",
+      "herd management",
+      "portable rfid reader integrable to mobile application over bluetooth",
+      "portable rfid reader with simple operation."
+    ]
+  },
+  {
+    "id": "VHG1-901-B01-1UNT",
+    "name": "RFID Eartags Pack of 10",
+    "category": "Herd Management",
+    "description": "Easy livestock identification and tracking solution with RFID technology for better herd management, record keeping, and traceability....",
+    "image_url": "https://drive.google.com/file/d/1r_8AnWuZFeE6NpxyU1N4PpIzwE0Bp-NT/view?usp=drive_link",
+    "price": 2800,
+    "product_page_url": "https://chimertech.shop/products/rfid-eartags-pack-of-10",
+    "recommended_for": [
+      "animal id",
+      "herd management",
+      "durable tags with tamper-proof design.",
+      "portable rfid reader with simple operation."
+    ]
+  },
+  {
+    "id": "VHD1-906-A01-1UNT",
+    "name": "Nsure Aqua Pack of 100",
+    "category": "Milk Quality Testing",
+    "description": "Instant test strips to monitor key water quality parameters. Checks pH, hardness, and nitrates, ensuring clean drinking water for...",
+    "image_url": "https://drive.google.com/file/d/18SkgW_oK7e6e3UxVYL0DtOnpXh-x_JoK/view?usp=drive_link",
+    "price": 1000,
+    "product_page_url": "https://chimertech.shop/products/nsure-aqua-pack-of-100",
+    "recommended_for": [
+      "detection",
+      "herd management",
+      "water quality testing strips pack containing 100 tests. measures key parameters including ph, hardness, nitrates, and contaminants. provides quick visual results without instruments. ideal for on-farm water safety monitoring to prevent water-related health issues and ensure optimal livestock performance."
+    ]
+  },
+  {
+    "id": "VHG1-907-A01-003G",
+    "name": "D-Horn(Dehorning Paste) 3 Grams.",
+    "category": "Herd Management",
+    "description": "Specially formulated chemical solution designed to prevent horn development in young calves Works by stopping horn tissue growth at...",
+    "image_url": "https://drive.google.com/file/d/1WcxcjzE1a5BMQEAie1GLMMXighOoZz0O/view?usp=drive_link",
+    "price": 215,
+    "product_page_url": "https://chimertech.shop/products/d-horn-dehorning-paste-3-grams",
+    "recommended_for": [
+      "management",
+      "herd management",
+      "3 grams syringe tube"
+    ]
+  },
+  {
+    "id": "VDG1-902-A01-1UNT",
+    "name": "Milking Machine Nano milk 150 BS",
+    "category": "Farm Equipment - Milking",
+    "description": "Introducing the NANOMILK 150BS Milking Machine by Chimertech Pvt Ltd – Your Trusted Partner in Smart Dairy Farming Take your dairy...",
+    "image_url": "https://drive.google.com/file/d/1ntuCW5dV_YXF_0j83aipY3YbIaHxXJOh/view?usp=drive_link",
+    "price": 20000,
+    "product_page_url": "https://chimertech.shop/products/milking-machine-nano-milk-150-bs",
+    "recommended_for": [
+      "milking",
+      "farm equipments",
+      "increased efficiency",
+      "animal comfort",
+      "wide compatibility",
+      "farm-ready design"
+    ]
+  },
+  {
+    "id": "VDG1-902-B01-1UNT",
+    "name": "Milking Machine Ecomilk 150BS",
+    "category": "Farm Equipment - Milking",
+    "description": "Take your dairy farming to the next level with the ECOMILK 150BS Milking Machine, a state-of-the-art solution designed to enhance...",
+    "image_url": "https://drive.google.com/file/d/13dEHvGS-VNFf8mw0GobEkl5P-EAQ_2fa/view?usp=drive_link",
+    "price": 22000,
+    "product_page_url": "https://chimertech.shop/products/milking-machine-ecomilk-150bs",
+    "recommended_for": [
+      "milking",
+      "farm equipments",
+      "increased efficiency",
+      "animal comfort",
+      "wide compatibility",
+      "farm-ready design"
+    ]
+  },
+  {
+    "id": "VDG1-902-C01-1UNT",
+    "name": "Milking Machine Dairy Flow 200",
+    "category": "Farm Equipment - Milking",
+    "description": "Chimertech Dairy Flow 200 Milking Machine – Empowering Your Dairy Farm with Innovation At Chimertech Pvt Ltd, we bring cutting-edge...",
+    "image_url": "https://drive.google.com/file/d/1UKJbFg2HnHCdz86sRVBQSp3wsmWNCnLY/view?usp=drive_link",
+    "price": 27500,
+    "product_page_url": "https://chimertech.shop/products/milking-machine-dairy-flow-200",
+    "recommended_for": [
+      "milking",
+      "farm equipments",
+      "the dairy flow 200 is perfect for farmers who want to",
+      "✔ increase efficiency and reduce labor in their dairy operations.",
+      "✔ streamline milking with a durable and reliable machine.",
+      "✔ enhance milk productivity while maintaining high hygiene standards"
+    ]
+  },
+  {
+    "id": "VDG1-902-D01-1UNT",
+    "name": "Milking Machine Dairy Flow 450",
+    "category": "Farm Equipment - Milking",
+    "description": "Introducing the Dairy Flow Pro 450 – Efficient & High-Performance Milking by Chimertech Pvt Ltd The Dairy Flow Pro 450 is your...",
+    "image_url": "https://drive.google.com/file/d/1UKJbFg2HnHCdz86sRVBQSp3wsmWNCnLY/view?usp=drive_link",
+    "price": 35000,
+    "product_page_url": "https://chimertech.shop/products/milking-machine-dairy-flow-450",
+    "recommended_for": [
+      "milking",
+      "farm equipments",
+      "the dairy flow 450 is perfect for farmers who want to",
+      "✔ increase efficiency and reduce labor in their dairy operations.",
+      "✔ streamline milking with a durable and reliable machine.",
+      "✔ enhance milk productivity while maintaining high hygiene standards"
+    ]
+  },
+  {
+    "id": "VDG1-903-A01-1UNT",
+    "name": "Chaff Cutter Dairy Cutter 1.5",
+    "category": "Farm Equipment - Fodder",
+    "description": "Dairy Cutter 1.5 – Precision-Engineered Chaff Cutter by Chimertech Pvt Ltd One of its key features is its impressive feed capacity,...",
+    "image_url": "https://drive.google.com/file/d/1mmYpi48YmW3MgPYjs698GNBYHK7xb9J0/view?usp=drive_link",
+    "price": 24800,
+    "product_page_url": "https://chimertech.shop/products/chaff-cutter-dairy-cutter-1-5",
+    "recommended_for": [
+      "fodder",
+      "farm equipments",
+      "heavy-duty chaff cutter with 1.5 hp motor capacity. processes approximately 500 kg/hour green fodder and 250 kg/hour dry fodder. auto-push feeding mechanism ensures operator safety. compact footprint with robust steel body, low maintenance design, and stable cutting performance suitable for small to medium dairy farms."
+    ]
+  },
+  {
+    "id": "VDG1-903-B01-1UNT",
+    "name": "Chaff Cutter FARM PRO 200",
+    "category": "Farm Equipment - Fodder",
+    "description": "Farm Pro 200 – The Ultimate Micro Chaff Cutter by Chimertech Pvt Ltd One of its standout features is the adjustable cutting size,...",
+    "image_url": "https://drive.google.com/file/d/15O0-RgS1uj5mPzjNIkQugBMkDo7kIB_a/view?usp=drive_link",
+    "price": 25000,
+    "product_page_url": "https://chimertech.shop/products/chaff-cutter-farm-pro-200",
+    "recommended_for": [
+      "fodder",
+      "farm equipments",
+      "powered by a 1.5 hp motor with adjustable cutting size from 19–25 mm. capable of handling up to 500 kg/hour of green fodder. maintenance-free transmission system with sturdy construction. designed for continuous farm operation with high efficiency, operator safety, and long service life."
+    ]
+  },
+  {
+    "id": "VDG1-903-C01-1UNT",
+    "name": "Chaff Cutter Power Slice 600X",
+    "category": "Farm Equipment - Fodder",
+    "description": "At Chimertech Pvt Ltd, we are proud to introduce our latest innovation in animal feed processing – the PowerSlice 600X. Designed and...",
+    "image_url": "https://drive.google.com/file/d/15O0-RgS1uj5mPzjNIkQugBMkDo7kIB_a/view?usp=drive_link",
+    "price": 38000,
+    "product_page_url": "https://chimertech.shop/products/chaff-cutter-power-slice-600x",
+    "recommended_for": [
+      "fodder",
+      "farm equipments",
+      "high-capacity fodder cutter designed for 20–30 animal farms. heavy-duty blades ensure uniform cutting and high throughput. rugged frame construction with smooth feeding mechanism. supports consistent fodder size for improved digestibility and feed efficiency. suitable for daily farm use with minimal downtime."
+    ]
+  },
+  {
+    "id": "VDG1-904-A01-1UNT",
+    "name": "Petrol Engine 6.5 HP",
+    "category": "Farm Equipment - Fodder",
+    "description": "6.5 HP Petrol Engine – High-Performance Power Solution by Chimertech Pvt Ltd Introducing our high-performance 6.5 HP petrol engine,...",
+    "image_url": "https://drive.google.com/file/d/1Od1Cr-SN3B7m5B0woRZSdvxCrqQp98l_/view?usp=drive_link",
+    "price": 9000,
+    "product_page_url": "https://chimertech.shop/products/petrol-engine-6-5-hp",
+    "recommended_for": [
+      "fodder",
+      "farm equipments",
+      "single-cylinder, air-cooled 6.5 hp petrol engine suitable for agricultural and industrial applications. delivers reliable power output with fuel efficiency. compatible with chaff cutters, pumps, and small machinery. durable metal casing, recoil start system, and low-vibration operation ensure long-term dependable performance."
+    ]
+  },
+  {
+    "id": "VDG1-905-A01-1UNT",
+    "name": "Rubber Mat for Cows Interlocked",
+    "category": "Farm Equipment - Cattle Comfort",
+    "description": "Premium cow mat for comfort and Durability for enhanced cattle health and productivity Easy to clean and maintain with thermal...",
+    "image_url": "https://drive.google.com/file/d/1MI_OACTJTnudDogsBOwo4uUkcZ9d-aTy/view?usp=drive_link",
+    "price": 2600,
+    "product_page_url": "https://chimertech.shop/products/rubber-mat-for-cows-interlocked",
+    "recommended_for": [
+      "cattle comfort",
+      "farm equipments",
+      "interlocking rubber cow mats with anti-slip surface and shock-absorbing design. provides thermal insulation and joint protection. easy installation without adhesives. durable, easy-to-clean material reduces lameness, improves resting comfort, and enhances milk productivity. suitable for stalls, alleys, and milking areas."
+    ]
+  },
+  {
+    "id": "VDG1-905-B01-1UNT",
+    "name": "Rubber Mat for Cows 17 mm",
+    "category": "Farm Equipment - Cattle Comfort",
+    "description": "Premium cow mat for comfort and Durability for enhanced cattle health and productivity Easy to clean and maintain with thermal...",
+    "image_url": "https://drive.google.com/file/d/1MI_OACTJTnudDogsBOwo4uUkcZ9d-aTy/view?usp=drive_link",
+    "price": 2500,
+    "product_page_url": "https://chimertech.shop/products/rubber-mat-for-cows-17-mm",
+    "recommended_for": [
+      "cattle comfort",
+      "farm equipments",
+      "heavy-duty 17 mm thick rubber mat designed for high-traffic cattle areas. non-slip surface improves safety and reduces injury risk. provides cushioning for joints and hooves. resistant to moisture and wear. easy to maintain and suitable for long-term use in dairy sheds."
+    ]
+  },
+  {
+    "id": "VDG1-906-A01-1UNT",
+    "name": "3 in 1 TDS, PH, Temperature Meter.",
+    "category": "Farm Equipment - Monitoring",
+    "description": "in 1 Meter: - You can test TDS, PH and temperature of the water with this device. LCD with green back-lit makes the reading visible in...",
+    "image_url": "https://drive.google.com/file/d/1jNn7xgahFPMk4jnCzmBzwShcXeyqoCgM/view?usp=drive_link",
+    "price": 6999,
+    "product_page_url": "https://chimertech.shop/products/3-in-1-tds-ph-temperature-meter",
+    "recommended_for": [
+      "monitoring",
+      "farm equipments",
+      "3-in-1 water quality meter"
+    ]
+  },
+  {
+    "id": "VDG1-907-A01-1UNT",
+    "name": "Calf nose band.",
+    "category": "Farm Equipment - Management",
+    "description": "Calf Nose Band – Chimertech Pvt Ltd The calf nose band is an essential tool designed to help in weaning calves efficiently and...",
+    "image_url": "https://drive.google.com/file/d/1OrGwX1NKPOsb5vzvl5coWsZEpxfHrlbF/view?usp=drive_link",
+    "price": 350,
+    "product_page_url": "https://chimertech.shop/products/calf-nose-band",
+    "recommended_for": [
+      "management",
+      "farm equipments",
+      "benefits",
+      "promotes healthy growth by helping calves transition to solid feed at the right time.",
+      "prevents milk dependency, reducing prolonged suckling and minimizing stress on the mother cow.",
+      "increases efficiency lightweight, adjustable, ergonomic, easy-lock design, suitable for multiple calf breedsby simplifying the weaning process for both farmers and animals.premium material"
+    ]
+  },
+  {
+    "id": "VDG1-908-A01-1UNT",
+    "name": "VetGuard Pro Shield-Full face mask for veterinary use.",
+    "category": "Farm Equipment - Veterinarian Use",
+    "description": "Creative Reusable Full Face Mask with a high elastic band, designed for veterinarians, animal care professionals, and workers in...",
+    "image_url": "https://drive.google.com/file/d/1Uam6y-8EnkmrvQF_iieR_8rJJY5-GJwV/view?usp=drive_link",
+    "price": 750,
+    "product_page_url": "https://chimertech.shop/products/vetguard-pro-shield-full-face-mask-for-veterinary-use",
+    "recommended_for": [
+      "veterinarian use",
+      "farm equipments",
+      "full-face reusable shield, anti-fog, anti-scratch, anti-impact, replaceable breathing filter plug"
+    ]
+  },
+  {
+    "id": "VDG1-909-A01-1UNT",
+    "name": "Hoof cutting tool for goats and sheep heavy duty stainless steel trimming shears.",
+    "category": "Farm Equipment - Hygiene",
+    "description": "The Hoof Cutting Tool for Goats and Sheep is a heavy-duty, stainless steel trimming shear designed for precise and efficient hoof...",
+    "image_url": "https://drive.google.com/file/d/1StOt9L3NIhGRBWVSbT0IQMnX2lQ1x0s8/view?usp=drive_link",
+    "price": 749,
+    "product_page_url": "https://chimertech.shop/products/hoof-cutting-tool-for-goats-and-sheep-heavy-duty-stainless-steel-trimming-shears",
+    "recommended_for": [
+      "hygiene",
+      "farm equipments",
+      "durable construction",
+      "ergonomic design",
+      "sharp and precise blades",
+      "heavy-duty performance"
+    ]
+  },
+  {
+    "id": "VDG1-910-A01-1UNT",
+    "name": "Bottle topper nipple for goats, puppy and kittens.",
+    "category": "Farm Equipment - Supplement",
+    "description": "The Bottle Topper Nipple is a versatile and essential feeding accessory designed for hand-rearing young goats, puppies, and kittens....",
+    "image_url": "https://drive.google.com/file/d/1j0l7dS4GwaLW8pMV04_XGZ49Qx_IJ5Yc/view?usp=drive_link",
+    "price": 345,
+    "product_page_url": "https://chimertech.shop/products/bottle-topper-nipple-for-goats-puppy-and-kittens",
+    "recommended_for": [
+      "supplement",
+      "farm equipments",
+      "versatile use",
+      "easy attachment",
+      "soft and durable material",
+      "hygienic design"
+    ]
+  },
+  {
+    "id": "VDG1-911-A01-1UNT",
+    "name": "Oral Drencher for goats and sheep.",
+    "category": "Farm Equipment - Supplement",
+    "description": "The Oral Drencher for Goat and Sheep is a durable, easy-to-use tool designed for the precise administration of liquid medications,...",
+    "image_url": "https://drive.google.com/file/d/1-S7bEipBpklJFvFi-jODMt--Pa4YNyEL/view?usp=drive_link",
+    "price": 650,
+    "product_page_url": "https://chimertech.shop/products/oral-drencher-for-goats-and-sheep",
+    "recommended_for": [
+      "supplement",
+      "farm equipments",
+      "precise dosage control",
+      "durable construction",
+      "ergonomic design",
+      "wide mouth opening"
+    ]
+  },
+  {
+    "id": "VDG1-912-A01-1UNT",
+    "name": "Calf milk feeding bottle rubber nipple.",
+    "category": "Farm Equipment - Supplement",
+    "description": "The Calf Milk Feeding Bottle Nipples are essential for effective and safe feeding of calves. Made from durable rubber, these nipples...",
+    "image_url": "https://drive.google.com/file/d/1nUexL2CAWaZIn5HavSONv-T0T2aSV6dv/view?usp=drive_link",
+    "price": 315,
+    "product_page_url": "https://chimertech.shop/products/calf-milk-feeding-bottle-rubber-nipple",
+    "recommended_for": [
+      "supplement",
+      "farm equipments",
+      "rubber construction",
+      "pack of 2",
+      "fits standard bottles",
+      "easy to clean"
+    ]
+  },
+  {
+    "id": "VDG1-913-A01-350M",
+    "name": "Oral Drenching pipe for Cow, Horse and Buffalo 350ml.",
+    "category": "Farm Equipment - Supplement",
+    "description": "The Oral Drenching Pipe is a specialized tool designed for administering liquid medications, supplements, or nutrients to large...",
+    "image_url": "https://drive.google.com/file/d/1kJepyrbPSJEcj3qAnxhQrTJTOuCQ06SB/view?usp=drive_link",
+    "price": 650,
+    "product_page_url": "https://chimertech.shop/products/oral-drenching-pipe-for-cow-horse-and-buffalo-350ml",
+    "recommended_for": [
+      "supplement",
+      "farm equipments",
+      "350 ml capacity",
+      "durable construction",
+      "ergonomic design",
+      "versatile use"
+    ]
+  },
+  {
+    "id": "VDG1-914-A01-1UNT",
+    "name": "Plastic unbreakable automatic cow drinking water bowl dispenser, green.",
+    "category": "Farm Equipment - Supplement",
+    "description": "The Plastic Unbreakable Automatic Cow Drinking Water Bowl Dispenser in dark green is a robust and reliable watering solution designed...",
+    "image_url": "https://drive.google.com/file/d/1pjbZ3pAgJ4eVLN9kVlQWpnC6nEJfj0eT/view?usp=drive_link",
+    "price": 1285,
+    "product_page_url": "https://chimertech.shop/products/plastic-unbreakable-automatic-cow-drinking-water-bowl-dispenser-green",
+    "recommended_for": [
+      "supplement",
+      "farm equipments",
+      "unbreakable plastic construction",
+      "automatic refill mechanism",
+      "dark green color",
+      "large capacity"
+    ]
+  },
+  {
+    "id": "VDG1-914-B01-1UNT",
+    "name": "Plastic unbreakable automatic cow drinking water bowl dispenser with U-Bolt -Du.",
+    "category": "Farm Equipment - Supplement",
+    "description": "The Plastic Unbreakable Automatic Cow Drinking Water Bowl Dispenser with U-Bolt is a highly durable and efficient watering solution...",
+    "image_url": "https://drive.google.com/file/d/1qPx7hkmYgIM-ObV3sX_VYYhi8Wzrx1fH/view?usp=drive_link",
+    "price": 1350,
+    "product_page_url": "https://chimertech.shop/products/plastic-unbreakable-automatic-cow-drinking-water-bowl-dispenser-with-u-bolt-du",
+    "recommended_for": [
+      "supplement",
+      "farm equipments",
+      "unbreakable plastic construction",
+      "automatic water refill",
+      "u-bolt for secure installation",
+      "durable and reliable"
+    ]
+  },
+  {
+    "id": "VDG1-915-A01-1UNT",
+    "name": "Stainless Steel water bowl.",
+    "category": "Farm Equipment - Supplement",
+    "description": "The Stainless Steel Water Bowl is a versatile and durable drinking solution designed for a variety of animals, including cows, horses,...",
+    "image_url": "https://drive.google.com/file/d/1uysoaKzFDbpJR45mn0MFpNmg6i2oGDuN/view?usp=drive_link",
+    "price": 2500,
+    "product_page_url": "https://chimertech.shop/products/stainless-steel-water-bowl",
+    "recommended_for": [
+      "supplement",
+      "farm equipments",
+      "material",
+      "stainless steel",
+      "capacity",
+      "2l"
+    ]
+  },
+  {
+    "id": "VDG1-916-A01-008L",
+    "name": "Calf Milk Feeding Bucket, 5 Nipples and 8 LTR capacity.",
+    "category": "Farm Equipment - Supplement",
+    "description": "The Calf Milk Feeding Bucket is designed to efficiently provide milk to calves with an 8-liter capacity and five included nipples....",
+    "image_url": "https://drive.google.com/file/d/1sHCn5OrI4aiO9_bP7lAbDE1wRxyutd-X/view?usp=drive_link",
+    "price": 3050,
+    "product_page_url": "https://chimertech.shop/products/calf-milk-feeding-bucket-5-nipples-and-8-ltr-capacity",
+    "recommended_for": [
+      "supplement",
+      "farm equipments",
+      "8 ltr capacity",
+      "5 nipples included",
+      "durable construction",
+      "easy to clean"
+    ]
+  },
+  {
+    "id": "VDG1-917-A01-1UNT",
+    "name": "Power Sprayer.",
+    "category": "Farm Equipment - Farm Maintenance",
+    "description": "Power Sprayers – Chimertech Pvt Ltd Providing powerful and efficient solutions for agricultural needs, our advanced power sprayers are...",
+    "image_url": "https://drive.google.com/file/d/159_1ReEzJCF_tXU8Tlvtove3Xg_bnuir/view?usp=drive_link",
+    "price": 11500,
+    "product_page_url": "https://chimertech.shop/products/power-sprayer",
+    "recommended_for": [
+      "farm maintenance",
+      "farm equipments",
+      "5 nipples included"
+    ]
+  },
+  {
+    "id": "VDG1-918-A01-1UNT",
+    "name": "Calf feeding bottle.",
+    "category": "Farm Equipment - Supplement",
+    "description": "Plastic Feeding Bottle for Cows – Chimertech Pvt Ltd Ensuring that calves receive proper nutrition is essential for their growth and...",
+    "image_url": "https://drive.google.com/file/d/1SqsXyQ2JgdXRul4Qytf5iEMO1RHUqiQ7/view?usp=drive_link",
+    "price": 410,
+    "product_page_url": "https://chimertech.shop/products/calf-feeding-bottle",
+    "recommended_for": [
+      "supplement",
+      "farm equipments",
+      "ergonomic grip handle, wide neck, clear measurement markings, soft teat, sturdy reusable bottle"
+    ]
+  },
+  {
+    "id": "VDG1-919-A01-1UNT",
+    "name": "Anti kick bar.",
+    "category": "Farm Equipment - Farm Maintenance",
+    "description": "Anti-Kick Bar – Chimertech Pvt Ltd Ensure safety and efficiency in your dairy operations with the Anti-Kick Bar from Chimertech Pvt...",
+    "image_url": "https://drive.google.com/file/d/1ry3Lm75Q6dv7UtClwXJk478JMEmFa9M8/view?usp=drive_link",
+    "price": 1850,
+    "product_page_url": "https://chimertech.shop/products/anti-kick-bar",
+    "recommended_for": [
+      "farm maintenance",
+      "farm equipments",
+      "heavy duty galvanized iron construction",
+      "made completely from hot dip galvanized iron for maximum durability and corrosion resistance.",
+      "adjustable length for all livestock sizes",
+      "easily adjustable design fits cows and buffaloes of different sizes for a secure and comfortable hold."
+    ]
+  },
+  {
+    "id": "VDG1-920-A01-1UNT",
+    "name": "Pulsator repair kit.",
+    "category": "Farm Equipment - Farm Maintenance",
+    "description": "Ensure the optimal performance of your milking machine with our Pulsator Repair Kit. This comprehensive kit includes all the essential...",
+    "image_url": "https://drive.google.com/file/d/1w6P3oIjk4VZqxmHlUIrOf_lNVPlCpXw6/view?usp=drive_link",
+    "price": 480,
+    "product_page_url": "https://chimertech.shop/products/pulsator-repair-kit",
+    "recommended_for": [
+      "farm maintenance",
+      "farm equipments",
+      "universal compatibility, complete kit set, durable wear-resistant materials"
+    ]
+  },
+  {
+    "id": "VDG1-921-A01-1UNT",
+    "name": "Vaccum Regulator",
+    "category": "Farm Equipment - Farm Maintenance",
+    "description": "Chimertech Pvt Ltd Plastic Automatic Vacuum Pressure Regulator: Precision and Reliability for Optimal Milking Performance In dairy...",
+    "image_url": "https://drive.google.com/file/d/1Z6mq1MvCRBnT7G8WD-FLRb6b9ze2W3-M/view?usp=drive_link",
+    "price": 485,
+    "product_page_url": "https://chimertech.shop/products/vaccum-regulator",
+    "recommended_for": [
+      "farm maintenance",
+      "farm equipments",
+      "fully automatic adjustment, corrosion resistant, universal milking machine compatibility, easy installation"
+    ]
+  },
+  {
+    "id": "VDG1-922-A01-1UNT",
+    "name": "Cleaning brush set (Lite).",
+    "category": "Farm Equipment - Farm Maintenance",
+    "description": "We understand the importance of maintaining hygiene in dairy farming, especially when using milking machines. Proper cleaning is...",
+    "image_url": "https://drive.google.com/file/d/1sVRn-4Sxv8v-YVisGHIyA39DcfP3jE_6/view?usp=drive_link",
+    "price": 1000,
+    "product_page_url": "https://chimertech.shop/products/cleaning-brush-set-lite",
+    "recommended_for": [
+      "farm maintenance",
+      "farm equipments",
+      "multiple brush sizes; non-abrasive durable bristles; ergonomic handle; suitable for all milking machine parts"
+    ]
+  },
+  {
+    "id": "VDG1-923-A01-1UNT",
+    "name": "Liner for milking machine.",
+    "category": "Farm Equipment - Farm Maintenance",
+    "description": "27mm Diameter, 318mm Length Milking Machine Line – Chimertech Pvt Ltd Chimertech Pvt Ltd introduces the 27mm diameter, 318mm length...",
+    "image_url": "https://drive.google.com/file/d/1fyufDUlHnO17qzjE-qNVR-cpJgN8Del9/view?usp=drive_link",
+    "price": 470,
+    "product_page_url": "https://chimertech.shop/products/liner-for-milking-machine",
+    "recommended_for": [
+      "farm maintenance",
+      "farm equipments",
+      "multiple brush sizes; durable nylon bristles; long and short handles; suitable for pipes, tubes, and containers"
+    ]
+  },
+  {
+    "id": "VDG1-924-A01-1UNT",
+    "name": "Pulsator 60-40.",
+    "category": "Farm Equipment - Farm Maintenance",
+    "description": "Pulsator 60-40 Spare Parts for Milking Machines – Chimertech Pvt Ltd Enhance your milking efficiency with the Pulsator 60-40 spare...",
+    "image_url": "https://drive.google.com/file/d/1ShM1R6zJcMeuQBwrh2gW3-C10a6LXaDc/view?usp=drive_link",
+    "price": 1550,
+    "product_page_url": "https://chimertech.shop/products/pulsator-60-40",
+    "recommended_for": [
+      "farm maintenance",
+      "farm equipments",
+      "vacuum-operated pulsator; stainless steel upper body; 60"
+    ]
+  },
+  {
+    "id": "VDG1-925-A01-1UNT",
+    "name": "Teat cups for milking machine.",
+    "category": "Farm Equipment - Farm Maintenance",
+    "description": "Teat Cups for Milking Machines – Chimertech Pvt Ltd Upgrade your milking experience with Chimertech Pvt Ltd’s teat cups for milking...",
+    "image_url": "https://drive.google.com/file/d/1epbBQ4VQws42BJbaPcXQHkymmBh_PfpZ/view?usp=drive_link",
+    "price": 1550,
+    "product_page_url": "https://chimertech.shop/products/teat-cups-for-milking-machine",
+    "recommended_for": [
+      "farm maintenance",
+      "farm equipments",
+      "27 mm diameter, corrosion-resistant, dairy-grade hygienic finish, universal cluster compatibility"
+    ]
+  },
+  {
+    "id": "VDG1-926-A01-1UNT",
+    "name": "Oral feeding Syringe | Transparent | Luer Lock | for veterinary use.",
+    "category": "Farm Equipment - Veterinarian Use",
+    "description": "The Oral Feeding Syringe is a transparent, luer lock syringe designed for precise and efficient feeding and medication administration...",
+    "image_url": "https://drive.google.com/file/d/1DmXvHC_STrthGmBnJnx5dn92qDvfP8nk/view?usp=drive_link",
+    "price": 790,
+    "product_page_url": "https://chimertech.shop/products/oral-feeding-syringe-transparent-luer-lock-for-veterinary-use",
+    "recommended_for": [
+      "veterinarian use",
+      "farm equipments",
+      "transparent body; luer lock connection; veterinary-grade material; durable and easy to clean"
+    ]
+  },
+  {
+    "id": "VDG1-927-A01-1UNT",
+    "name": "Syringe gun adjustable and continuous syringe.",
+    "category": "Farm Equipment - Veterinarian Use",
+    "description": "This high-quality adjustable syringe gun is designed for efficient, quick, and precise administration of vaccines, medicines, or...",
+    "image_url": "https://drive.google.com/file/d/10prGZmNyGkC_E322qQo--DlZGPtho4tf/view?usp=drive_link",
+    "price": 2900,
+    "product_page_url": "https://chimertech.shop/products/syringe-gun-adjustable-and-continuous-syringe",
+    "recommended_for": [
+      "veterinarian use",
+      "farm equipments",
+      "adjustable dosage control, continuous injection mechanism, ergonomic grip, reusable, easy disassembly for cleaning"
+    ]
+  },
+  {
+    "id": "VDG1-928-A01-1UNT",
+    "name": "Digital veterinary thermometer with flexible tip-pet health monitoring.",
+    "category": "Farm Equipment - Veterinarian Use",
+    "description": "Ensure your pet's health with this Digital Veterinary Thermometer, designed specifically for animals. Its flexible tip provides...",
+    "image_url": "https://drive.google.com/file/d/1-HLG8e-95YrR_J5qx7fkE179XoY06l8d/view?usp=drive_link",
+    "price": 285,
+    "product_page_url": "https://chimertech.shop/products/digital-veterinary-thermometer-with-flexible-tip-pet-health-monitoring",
+    "recommended_for": [
+      "veterinarian use",
+      "farm equipments",
+      "flexible & safe design",
+      "quick & accurate readings",
+      "easy-to-use display",
+      "versatile & durable"
+    ]
+  },
+  {
+    "id": "VDG1-929-A01-1UNT",
+    "name": "Hoof knife for cow, horse and goat.",
+    "category": "Farm Equipment - Hygiene",
+    "description": "The Hoof Knife is an essential tool designed for trimming and maintaining the hooves of cows, horses, and goats. This knife allows for...",
+    "image_url": "https://drive.google.com/file/d/1StOt9L3NIhGRBWVSbT0IQMnX2lQ1x0s8/view?usp=drive_link",
+    "price": 490,
+    "product_page_url": "https://chimertech.shop/products/hoof-knife-for-cow-horse-and-goat",
+    "recommended_for": [
+      "hygiene",
+      "farm equipments",
+      "sharp precision blade, ergonomic anti-fatigue handle, durable farm-grade construction, multi-livestock compatible"
+    ]
+  },
+  {
+    "id": "VDG1-930-A01-1UNT",
+    "name": "Drinking bowl.",
+    "category": "Farm Equipment - Supplement",
+    "description": "Cow Drinking Bowl – Reliable Hydration Solution by Chimertech Pvt Ltd The cow drinking bowl is designed to provide a constant and...",
+    "image_url": "https://drive.google.com/file/d/1LFz0BL-YqC2fHSivglx3CYOQNifUjkK0/view?usp=drive_link",
+    "price": 1800,
+    "product_page_url": "https://chimertech.shop/products/drinking-bowl",
+    "recommended_for": [
+      "supplement",
+      "farm equipments",
+      "automatic water bowl with durable plastic body and refill mechanism"
+    ]
+  },
+  {
+    "id": "VDD1-414-A01-1UNT",
+    "name": "Mastitis indicator for milking machines.",
+    "category": "Farm Equipment - Prevention",
+    "description": "Mastitis Indicator for Milking Machines Mastitis is one of the most common and costly diseases in dairy farming, leading to...",
+    "image_url": "https://drive.google.com/file/d/1iAgK0Lxg_MG6CsGtuu_R80JgSVykZofX/view?usp=drive_link",
+    "price": 690,
+    "product_page_url": "https://chimertech.shop/products/mastitis-indicator-for-milking-machines",
+    "recommended_for": [
+      "prevention",
+      "farm equipments",
+      "compact device fitted into milk tube of milking machine"
+    ]
   }
 ]

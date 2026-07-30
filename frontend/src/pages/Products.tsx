@@ -48,8 +48,8 @@ export default function Products() {
         {/* Header */}
         <div className="mb-10 animate-fade-up">
           <p className="section-label mb-3">Chimertech Catalogue</p>
-          <h1 className="text-display font-black text-white mb-3">Products</h1>
-          <p className="text-grey-400 text-sm max-w-xl leading-relaxed">
+          <h1 className="text-4xl sm:text-5xl font-black text-slate-900 mb-3 tracking-tight">Products</h1>
+          <p className="text-slate-600 text-sm max-w-xl leading-relaxed font-medium">
             Browse the full range of Chimertech cattle health products. Products are recommended automatically based on your analysis results.
           </p>
         </div>
@@ -62,17 +62,17 @@ export default function Products() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search products…"
-            className="input-field sm:max-w-xs"
+            className="w-full sm:max-w-xs px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 text-sm font-semibold focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 shadow-sm"
           />
           <div className="flex gap-2 flex-wrap">
             {CATEGORIES.map(cat => (
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                className={`px-3.5 py-2 rounded-xl text-xs transition-all duration-200 ${
                   category === cat
-                    ? 'bg-white text-black'
-                    : 'bg-white/[0.04] text-grey-400 hover:bg-white/[0.08] hover:text-white border border-white/[0.06]'
+                    ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-600/20 border border-emerald-600'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200 font-semibold shadow-sm'
                 }`}
               >
                 {cat}
@@ -83,7 +83,7 @@ export default function Products() {
 
         {/* Count */}
         {!loading && (
-          <p className="text-xs text-grey-600 mb-5">
+          <p className="text-xs font-bold text-slate-500 mb-5">
             {filtered.length} product{filtered.length !== 1 ? 's' : ''} found
           </p>
         )}
@@ -100,8 +100,8 @@ export default function Products() {
 
         {!loading && filtered.length === 0 && (
           <div className="text-center py-24">
-            <p className="text-grey-500 text-sm">No products found.</p>
-            <button onClick={() => { setSearch(''); setCategory('All'); }} className="btn-ghost mt-4 text-xs">
+            <p className="text-slate-600 font-bold text-sm">No products found.</p>
+            <button onClick={() => { setSearch(''); setCategory('All'); }} className="btn-secondary mt-4 text-xs font-bold">
               Clear filters
             </button>
           </div>

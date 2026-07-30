@@ -8,11 +8,11 @@ interface Step {
 
 const STEPS: Step[] = [
   { id: 'uploading',          label: 'Video uploaded',              description: 'Securely uploading your video to the server' },
-  { id: 'extracting',         label: 'Extracting frames',           description: 'Pulling one frame for every second of footage' },
+  { id: 'extracting',         label: 'Extracting frames',           description: 'Pulling high-clarity frames from footage' },
   { id: 'filtering_blur',     label: 'Removing blurry frames',      description: 'Using Laplacian variance to filter unclear frames' },
   { id: 'removing_duplicates',label: 'Removing duplicate frames',   description: 'Perceptual hashing to eliminate near-identical shots' },
   { id: 'ranking',            label: 'Selecting best 10 frames',    description: 'Ranking by image clarity and selecting top frames' },
-  { id: 'sending_ai',         label: 'Sending frames to AI',        description: 'Transmitting selected frames to Gemini Vision model' },
+  { id: 'sending_ai',         label: 'Sending frames to AI',        description: 'Transmitting selected frames to Chimertech AI Vision Engine' },
   { id: 'analysing',          label: 'Calculating result',          description: 'AI analysing cattle condition and generating report' },
 ];
 
@@ -47,12 +47,10 @@ export default function ProcessingProgress({ status }: Props) {
   if (status === 'idle' || status === 'error') return null;
 
   return (
-    <div className="glass-card p-6 space-y-3 animate-fade-in border border-white/10 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full filter blur-2xl pointer-events-none" />
-      
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
-        <h3 className="text-sm font-extrabold text-white tracking-tight flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
+    <div className="glass-card p-6 space-y-3 animate-fade-in border border-slate-200 bg-white shadow-sm relative overflow-hidden rounded-2xl">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
+        <h3 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
           {status === 'completed' ? 'Analysis Complete' :
            status === 'frames_ready' ? 'Frames Cleaned & Stored' :
            'Processing Video Pipeline…'}
@@ -60,30 +58,30 @@ export default function ProcessingProgress({ status }: Props) {
         <span className="badge-green text-[10px] uppercase font-bold tracking-wider">AI Pipeline</span>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {STEPS.map(step => {
           const state = getStepState(step, status);
           return (
             <div
               key={step.id}
               className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-300 ${
-                state === 'active' ? 'bg-emerald-500/10 border border-emerald-500/30 shadow-[0_0_15px_rgba(34,197,94,0.15)]' :
-                state === 'done'   ? 'bg-white/[0.02] border border-transparent' :
-                'opacity-40 border border-transparent'
+                state === 'active' ? 'bg-emerald-50 border border-emerald-300 shadow-sm' :
+                state === 'done'   ? 'bg-slate-50 border border-slate-200/60' :
+                'opacity-50 border border-transparent'
               }`}
             >
               {/* Dot */}
               <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${
-                state === 'done'   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' :
-                state === 'active' ? 'bg-emerald-500 text-black shadow-[0_0_12px_rgba(34,197,94,0.8)] animate-pulse' :
-                'bg-white/[0.06] text-grey-600'
+                state === 'done'   ? 'bg-emerald-600 text-white' :
+                state === 'active' ? 'bg-emerald-500 text-white animate-pulse' :
+                'bg-slate-200 text-slate-500'
               }`}>
                 {state === 'done' ? (
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="w-3.5 h-3.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                   </svg>
                 ) : state === 'active' ? (
-                  <span className="w-2 h-2 rounded-full bg-black animate-ping" />
+                  <span className="w-2 h-2 rounded-full bg-white animate-ping" />
                 ) : (
                   <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
                 )}
@@ -91,14 +89,14 @@ export default function ProcessingProgress({ status }: Props) {
 
               {/* Text */}
               <div className="flex-1 min-w-0">
-                <p className={`text-xs font-bold tracking-tight ${
-                  state === 'done'   ? 'text-grey-300' :
-                  state === 'active' ? 'text-emerald-400' : 'text-grey-500'
+                <p className={`text-xs font-extrabold ${
+                  state === 'done'   ? 'text-slate-800' :
+                  state === 'active' ? 'text-emerald-800' : 'text-slate-500'
                 }`}>
                   {step.label}
                 </p>
                 {state === 'active' && (
-                  <p className="text-[11px] text-grey-400 mt-0.5 animate-fade-in font-medium">{step.description}</p>
+                  <p className="text-[11px] text-slate-700 font-bold mt-0.5 animate-fade-in">{step.description}</p>
                 )}
               </div>
 
@@ -108,7 +106,7 @@ export default function ProcessingProgress({ status }: Props) {
                   {[0,1,2].map(i => (
                     <span
                       key={i}
-                      className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"
+                      className="w-1.5 h-1.5 rounded-full bg-emerald-500"
                       style={{ animation: `pulse-soft 1.2s ease-in-out ${i * 0.25}s infinite` }}
                     />
                   ))}

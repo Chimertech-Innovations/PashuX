@@ -62,11 +62,10 @@ export default function DiseaseDetection() {
         {/* Header */}
         <div className="mb-10 animate-fade-up">
           <p className="section-label mb-3">Cattle Screening</p>
-          <h1 className="text-display font-black text-white mb-3">Disease Detection</h1>
-          <p className="text-grey-400 text-sm max-w-xl leading-relaxed">
+          <h1 className="text-display font-black text-slate-900 mb-3">Disease Detection</h1>
+          <p className="text-slate-600 text-sm max-w-xl leading-relaxed font-medium">
             Upload cattle photo or video (up to 60s) to screen for visible health concerns. Images are analyzed and video frames are de-blurred & deduplicated before AI screening.
           </p>
-
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -96,18 +95,21 @@ export default function DiseaseDetection() {
 
                 {/* Step to trigger AI analysis explicitly */}
                 {state.status === 'frames_ready' && (
-                  <div className="glass-card p-5 border-emerald-500/30 bg-emerald-500/[0.04] text-center space-y-3 animate-fade-in">
+                  <div className="glass-card p-5 border-emerald-300 bg-emerald-50 text-center space-y-3 animate-fade-in">
                     <div>
-                      <p className="text-sm font-bold text-emerald-400">✨ Frames successfully extracted & cleaned!</p>
-                      <p className="text-xs text-grey-400 mt-1">
+                      <p className="text-sm font-bold text-emerald-800">Frames successfully cleaned & stored</p>
+                      <p className="text-xs text-slate-600 font-medium mt-1">
                         Review your {frames.length} high-clarity frames above. Click below to start AI disease screening.
                       </p>
                     </div>
                     <button
                       onClick={() => startAnalysis(user?.id)}
-                      className="btn-primary text-sm py-2.5 px-6 font-semibold bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg"
+                      className="btn-primary text-sm py-2.5 px-6 font-bold shadow-md flex items-center justify-center gap-2 mx-auto"
                     >
-                      🩺 Screen Frames with AI
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                      </svg>
+                      Screen Frames with AI
                     </button>
                   </div>
                 )}
@@ -116,21 +118,26 @@ export default function DiseaseDetection() {
 
             {/* Error Message with Retry */}
             {state.status === 'error' && (
-              <div className="glass-card p-6 border-red-500/20 animate-fade-in space-y-3">
+              <div className="glass-card p-6 border-rose-200 bg-rose-50 animate-fade-in space-y-3">
                 <div className="flex items-start gap-3">
-                  <span className="text-xl">⚠️</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
                   <div>
-                    <p className="text-sm font-semibold text-red-400 mb-1">Screening Issue</p>
-                    <p className="text-xs text-grey-400">{state.error}</p>
+                    <p className="text-sm font-bold text-rose-700 mb-1">Screening Issue</p>
+                    <p className="text-xs text-slate-600">{state.error}</p>
                   </div>
                 </div>
                 <div className="flex gap-3 pt-2">
                   {state.framePaths.length > 0 && (
                     <button
                       onClick={() => startAnalysis(user?.id)}
-                      className="btn-primary text-xs py-2 px-4 bg-emerald-500 text-black font-semibold"
+                      className="btn-primary text-xs py-2 px-4 font-bold flex items-center gap-1.5"
                     >
-                      🔄 Retry AI Screening
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                      </svg>
+                      Retry AI Screening
                     </button>
                   )}
                   <button onClick={reset} className="btn-secondary text-xs py-2 px-4">
@@ -171,8 +178,8 @@ export default function DiseaseDetection() {
           {/* Right info panel */}
           {state.status === 'idle' && (
             <div className="lg:col-span-2 space-y-4 animate-fade-in">
-              <div className="glass-card p-5">
-                <h3 className="text-xs font-semibold text-white mb-4">What We Screen For</h3>
+              <div className="glass-card p-5 bg-white border border-slate-200 shadow-sm">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 mb-4">What We Screen For</h3>
                 <ul className="space-y-2.5">
                   {[
                     'Mastitis (udder swelling)',
@@ -183,20 +190,24 @@ export default function DiseaseDetection() {
                     'General body condition',
                     'Wound or injury detection',
                   ].map(item => (
-                    <li key={item} className="flex items-start gap-2.5 text-xs text-grey-500">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 flex-shrink-0" />
+                    <li key={item} className="flex items-start gap-2.5 text-xs text-slate-900 font-bold">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1 flex-shrink-0" />
                       {item}
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="glass-card p-5 border-amber-500/10 bg-amber-500/[0.02]">
+              <div className="glass-card p-5 border border-amber-200 bg-amber-50/70 shadow-sm">
                 <div className="flex items-start gap-3">
-                  <span className="text-xl">🩺</span>
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.008v.008H12v-.008z" />
+                    </svg>
+                  </div>
                   <div>
-                    <p className="text-xs font-semibold text-amber-400 mb-1">Screening Disclaimer</p>
-                    <p className="text-xs text-grey-500 leading-relaxed">
+                    <p className="text-xs font-black text-amber-950 mb-1">Screening Disclaimer</p>
+                    <p className="text-xs text-slate-800 font-semibold leading-relaxed">
                       This tool screens for visible signs only. Results must be confirmed by a qualified veterinarian before any treatment is started.
                     </p>
                   </div>
@@ -206,6 +217,7 @@ export default function DiseaseDetection() {
               <Disclaimer type="vet" />
             </div>
           )}
+
         </div>
       </div>
 

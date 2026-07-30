@@ -89,8 +89,8 @@ export default function LiveDetection() {
             <span className="section-label">Real-Time Camera Scan</span>
             <span className="badge-green text-[10px] uppercase font-bold tracking-wider animate-pulse">Live 10s Auto-Shutoff</span>
           </div>
-          <h1 className="text-display font-black text-white mb-2">Live BCS & Disease Detection</h1>
-          <p className="text-grey-400 text-sm max-w-xl leading-relaxed">
+          <h1 className="text-display font-black text-slate-900 mb-2">Live BCS & Disease Detection</h1>
+          <p className="text-slate-600 text-sm max-w-xl leading-relaxed font-medium">
             Turn on the camera stream to scan your cattle. Results for Body Condition Score (BCS) & Disease Screening appear directly below the live video container in real time!
           </p>
         </div>
@@ -105,25 +105,27 @@ export default function LiveDetection() {
 
           {/* Real-time status banner under video container */}
           {isAnalyzing && (
-            <div className="glass-card p-4 border-emerald-500/40 bg-emerald-500/[0.08] flex items-center justify-between animate-pulse">
+            <div className="glass-card p-4 border-emerald-300 bg-emerald-50 flex items-center justify-between animate-pulse">
               <div className="flex items-center gap-3">
-                <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
+                <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
                 <div>
-                  <p className="text-xs font-black text-emerald-400 uppercase tracking-wider">⚡ ANALYZING LIVE CATTLE FEED</p>
-                  <p className="text-[11px] text-grey-400">Processing live snapshot frame through OpenAI Vision models...</p>
+                  <p className="text-xs font-black text-emerald-800 uppercase tracking-wider">ANALYZING LIVE CATTLE FEED</p>
+                  <p className="text-[11px] text-slate-600 font-medium">Processing live snapshot frame through Chimertech Neural Vision models...</p>
                 </div>
               </div>
-              <span className="text-xs font-mono font-bold text-emerald-400">Please wait...</span>
+              <span className="text-xs font-mono font-bold text-emerald-700">Please wait...</span>
             </div>
           )}
 
           {error && (
-            <div className="glass-card p-4 border-rose-500/30 bg-rose-500/[0.05] flex items-center gap-3 text-rose-400 text-xs">
-              <span className="text-lg">⚠️</span>
-              <p className="font-medium flex-1">{error}</p>
+            <div className="glass-card p-4 border-rose-300 bg-rose-50 flex items-center gap-3 text-rose-700 text-xs font-medium">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-rose-600 flex-shrink-0">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+              <p className="font-bold flex-1">{error}</p>
               <button
                 onClick={() => setError(null)}
-                className="btn-ghost text-xs text-rose-400 hover:text-white"
+                className="btn-ghost text-xs text-rose-600 hover:text-rose-800 font-bold"
               >
                 Dismiss
               </button>
@@ -133,25 +135,26 @@ export default function LiveDetection() {
 
         {/* 2. BOTTOM CONTAINER: Live Detailed Results directly below live video feed */}
         {(bcsResult || diseaseResult || isAnalyzing) && (
-          <div className="space-y-6 pt-4 border-t border-white/10 animate-fade-in">
+          <div className="space-y-6 pt-4 border-t border-slate-200 animate-fade-in">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-black text-white flex items-center gap-2">
-                  <span>📊</span> Live Analysis Results
+                <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                  Live Analysis Results
                   <span className="badge-green text-[10px] uppercase font-bold tracking-wider">Updated Live</span>
                 </h2>
-                <p className="text-xs text-grey-400">Detailed AI assessment of your cattle / buffalo below the live video container</p>
+                <p className="text-xs text-slate-500 font-medium">Detailed AI assessment of your cattle / buffalo below the live video container</p>
               </div>
+
 
               {/* View Tabs */}
               {(bcsResult || diseaseResult) && (
-                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/10">
+                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
                   <button
                     onClick={() => setActiveTab('all')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                       activeTab === 'all'
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'text-grey-400 hover:text-white'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     All Results
@@ -160,8 +163,8 @@ export default function LiveDetection() {
                     onClick={() => setActiveTab('bcs')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                       activeTab === 'bcs'
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'text-grey-400 hover:text-white'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     BCS Score
@@ -170,8 +173,8 @@ export default function LiveDetection() {
                     onClick={() => setActiveTab('disease')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                       activeTab === 'disease'
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'text-grey-400 hover:text-white'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     Disease Check
@@ -189,8 +192,9 @@ export default function LiveDetection() {
             {(activeTab === 'all' || activeTab === 'bcs') && bcsResult && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
-                    <span>🟢</span> Live Body Condition Scoring (BCS)
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    Live Body Condition Scoring (BCS)
                   </h3>
                 </div>
                 <BCSResultCard result={bcsResult} />
@@ -201,8 +205,9 @@ export default function LiveDetection() {
             {(activeTab === 'all' || activeTab === 'disease') && diseaseResult && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-2">
-                    <span>🩺</span> Live Disease & Health Screening
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-amber-800 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                    Live Disease & Health Screening
                   </h3>
                 </div>
                 <DiseaseResultCard result={diseaseResult} />
@@ -249,34 +254,38 @@ export default function LiveDetection() {
         {/* Info panel when idle */}
         {!bcsResult && !diseaseResult && !isAnalyzing && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="glass-card p-5 space-y-3 border border-white/10">
-              <h3 className="text-xs font-extrabold text-white">How Real-Time Camera Scan Works</h3>
-              <ol className="space-y-2.5 text-xs text-grey-400">
+            <div className="glass-card p-5 space-y-3 bg-white border border-slate-200 shadow-sm rounded-2xl">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">How Real-Time Camera Scan Works</h3>
+              <ol className="space-y-3 text-xs text-slate-900 font-bold">
                 <li className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-emerald-400">1</span>
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center justify-center flex-shrink-0 text-[10px] font-black">1</span>
                   Turn on live camera at top and align cattle in grid overlay
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-emerald-400">2</span>
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center justify-center flex-shrink-0 text-[10px] font-black">2</span>
                   Click "START 10s LIVE SCAN"
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-emerald-400">3</span>
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center justify-center flex-shrink-0 text-[10px] font-black">3</span>
                   Instant frame snapshot is analyzed and results update DIRECTLY BELOW the live video feed!
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-emerald-400">4</span>
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center justify-center flex-shrink-0 text-[10px] font-black">4</span>
                   After 10 seconds, camera hardware automatically shuts OFF
                 </li>
               </ol>
             </div>
 
-            <div className="glass-card p-5 space-y-3 border border-emerald-500/20 bg-emerald-500/[0.02]">
+            <div className="glass-card p-5 space-y-3 border border-emerald-200 bg-emerald-50/80 shadow-sm rounded-2xl">
               <div className="flex items-start gap-3">
-                <span className="text-2xl">🩺</span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center flex-shrink-0 font-bold">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                  </svg>
+                </div>
                 <div>
-                  <p className="text-xs font-bold text-emerald-400 mb-1">Cattle & Buffalo AI Intelligence</p>
-                  <p className="text-xs text-grey-400 leading-relaxed">
+                  <p className="text-xs font-black text-emerald-950 mb-1">Cattle & Buffalo AI Intelligence</p>
+                  <p className="text-xs text-slate-800 leading-relaxed font-bold">
                     Evaluates ribs, spine, flank hollows, udder symmetry, coat condition, and posture directly from live camera feed.
                   </p>
                 </div>
@@ -284,6 +293,7 @@ export default function LiveDetection() {
             </div>
           </div>
         )}
+
       </div>
 
       {/* Interactive AI Chatbot */}

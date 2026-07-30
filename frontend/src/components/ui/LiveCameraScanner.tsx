@@ -188,20 +188,20 @@ export default function LiveCameraScanner({ onFile, onInstantSnapshot, disabled 
 
   return (
     <div className="glass-card p-6 space-y-5 border border-white/10 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Top Controller Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 font-bold border border-emerald-200">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
             </svg>
           </div>
           <div>
-            <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+            <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
               Live Camera Stream
               <span className="badge-green text-[10px] uppercase font-bold tracking-wider">10s Limit</span>
             </h3>
-            <p className="text-xs text-grey-400">Live camera streams at top. Results update directly below in real-time.</p>
+            <p className="text-xs text-slate-700 font-bold">Live camera streams at top. Results update directly below in real-time.</p>
           </div>
         </div>
 
@@ -274,24 +274,27 @@ export default function LiveCameraScanner({ onFile, onInstantSnapshot, disabled 
         {/* Standby State when camera is OFF */}
         {!isCameraActive && (
           <div className="text-center p-8 space-y-4">
-            <div className="w-16 h-16 rounded-3xl bg-white/[0.05] border border-white/10 mx-auto flex items-center justify-center text-grey-400 shadow-xl">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8">
+            <div className="w-16 h-16 rounded-3xl bg-slate-100 border border-slate-200 mx-auto flex items-center justify-center text-emerald-700 shadow-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} className="w-8 h-8">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0c-.698.04-1.344.42-1.736 1.039l-.822 1.316z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
               </svg>
             </div>
             <div>
-              <p className="text-sm font-extrabold text-white mb-1">Camera Off</p>
-              <p className="text-xs text-grey-400 max-w-xs mx-auto">
+              <p className="text-sm font-extrabold text-white mb-1">Camera Standby</p>
+              <p className="text-xs text-slate-300 max-w-xs mx-auto font-medium">
                 Click below to turn on the live camera. The stream turns on for 10s and automatically shows BCS & Disease results below!
               </p>
             </div>
             <button
               onClick={startCameraStream}
               disabled={disabled}
-              className="btn-primary text-xs py-3 px-8 font-extrabold bg-gradient-to-r from-emerald-400 to-teal-500 text-black shadow-lg hover:scale-105 transition-all"
+              className="btn-primary text-xs py-3 px-8 font-black shadow-lg flex items-center gap-2 mx-auto"
             >
-              📷 Turn On Live Camera
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0c-.698.04-1.344.42-1.736 1.039l-.822 1.316z" />
+              </svg>
+              Turn On Live Camera
             </button>
           </div>
         )}
@@ -299,11 +302,11 @@ export default function LiveCameraScanner({ onFile, onInstantSnapshot, disabled 
 
       {/* Error display */}
       {error && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 mt-0.5 flex-shrink-0">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
           </svg>
-          <p className="font-medium">{error}</p>
+          <p className="font-bold">{error}</p>
         </div>
       )}
 
@@ -313,18 +316,18 @@ export default function LiveCameraScanner({ onFile, onInstantSnapshot, disabled 
           <button
             onClick={stopCameraStream}
             disabled={isRecording || disabled}
-            className="btn-ghost text-xs text-grey-400 hover:text-white"
+            className="btn-ghost text-xs text-slate-700 hover:text-slate-900 font-bold"
           >
-            ⏹ Turn Off Camera
+            Turn Off Camera
           </button>
 
           {!isRecording ? (
             <button
               onClick={startScan}
               disabled={disabled}
-              className="btn-primary text-xs py-3.5 px-8 font-black bg-gradient-to-r from-emerald-400 to-teal-500 text-black shadow-[0_0_25px_rgba(34,197,94,0.4)] hover:scale-105 transition-all flex items-center gap-2"
+              className="btn-primary text-xs py-3.5 px-8 font-black shadow-lg flex items-center gap-2"
             >
-              <span className="w-2.5 h-2.5 rounded-full bg-black animate-ping" />
+              <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
               START 10s LIVE SCAN
             </button>
           ) : (
@@ -332,13 +335,13 @@ export default function LiveCameraScanner({ onFile, onInstantSnapshot, disabled 
               <button
                 onClick={captureSnapshot}
                 disabled={disabled}
-                className="btn-secondary text-xs py-2 px-4 text-emerald-400 border-emerald-500/30 font-bold"
+                className="btn-secondary text-xs py-2 px-4 text-emerald-700 border-emerald-300 font-bold"
               >
-                📸 Re-Snap Frame
+                Re-Snap Frame
               </button>
               <button
                 onClick={finishRecording}
-                className="btn-secondary text-xs py-2 px-4 text-rose-400 border-rose-500/30 font-bold"
+                className="btn-secondary text-xs py-2 px-4 text-rose-700 border-rose-300 font-bold"
               >
                 Stop Camera
               </button>
@@ -346,6 +349,7 @@ export default function LiveCameraScanner({ onFile, onInstantSnapshot, disabled 
           )}
         </div>
       )}
+
     </div>
   );
 }

@@ -1,187 +1,268 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const BENEFITS = [
-  { icon: '🎬', title: 'Video-based Analysis',         desc: 'Upload up to 30 seconds of cattle footage for deep AI analysis' },
-  { icon: '🖼',  title: 'Automatic Frame Extraction',   desc: 'Extracts one frame per second for comprehensive coverage' },
-  { icon: '🔍', title: 'Blur Frame Removal',            desc: 'Filters out unclear frames using Laplacian variance scoring' },
-  { icon: '📋', title: 'Duplicate Frame Removal',       desc: 'Perceptual hashing eliminates near-identical shots' },
-  { icon: '⭐', title: 'AI-assisted BCS Scoring',       desc: 'OpenAI Vision model scores body condition on a 1-5 scale' },
-  { icon: '🏥', title: 'Disease-Risk Screening',        desc: 'Detects visible signs of common cattle health conditions' },
-  { icon: '💬', title: 'Farmer-friendly Chatbot',       desc: 'Ask questions about your results in plain language' },
-  { icon: '🛒', title: 'Product Recommendations',       desc: 'Relevant Chimertech products suggested based on findings' },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+      </svg>
+    ),
+    title: 'Video-based Analysis',
+    desc: 'Upload up to 60 seconds of cattle footage for deep AI analysis'
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 20.25h12m-12-16.5h12M3.75 6v12m16.5-12v12M9 3.75v16.5m6-16.5v16.5" />
+      </svg>
+    ),
+    title: 'Automatic Frame Extraction',
+    desc: 'Extracts high-frequency anatomical frames from video footage'
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+      </svg>
+    ),
+    title: 'Blur Frame Removal',
+    desc: 'Filters out motion-blurred shots using edge sharpness operators'
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5" />
+      </svg>
+    ),
+    title: 'Duplicate Frame Removal',
+    desc: 'Perceptual hashing eliminates near-identical shots'
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+      </svg>
+    ),
+    title: 'AI-assisted BCS Scoring',
+    desc: 'Chimertech AI Engine scores body condition on a 1-5 scale'
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+      </svg>
+    ),
+    title: 'Disease-Risk Screening',
+    desc: 'Detects visible signs of mastitis, skin conditions, and lameness'
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-1.006-.921 7.218 7.218 0 00.975-2.88 8.01 8.01 0 01-2.379-5.169c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+      </svg>
+    ),
+    title: 'Farmer-friendly Chatbot',
+    desc: 'Ask questions about your results in plain language'
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+      </svg>
+    ),
+    title: 'Product Recommendations',
+    desc: 'Relevant Chimertech products suggested based on findings'
+  },
 ];
 
 const ACTION_CARDS = [
   {
-    title: '⚡ Live 10s BCS & Disease Scan',
+    title: 'Live 10s BCS & Disease Scan',
     desc: 'Turn on camera for 10 seconds. Auto-stops stream and delivers instant dual BCS scoring & disease screening results.',
     to: '/live',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-7 h-7">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
       </svg>
     ),
-    tag: 'Live 10s Camera',
-    color: 'green',
+    tag: 'Live Camera Scanner',
+    color: 'emerald',
   },
   {
     title: 'Cattle BCS Score Detection',
     desc: 'Analyse body condition on the 1-5 scale. Get feeding and management recommendations tailored to your cattle.',
     to: '/bcs',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-7 h-7">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
     tag: 'BCS Analysis',
-    color: 'teal',
+    color: 'emerald',
   },
   {
     title: 'Cattle Disease Detection',
     desc: 'Screen for visible signs of mastitis, skin conditions, locomotion issues and more. AI-assisted, farmer-friendly.',
     to: '/disease',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-7 h-7">
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
       </svg>
     ),
     tag: 'Health Screening',
-    color: 'amber',
+    color: 'emerald',
   },
 ];
 
+const DEMO_FRAMES = [
+  { id: 1, time: '0.0s', tag: 'Spine & Rib Contour', image: '/cattle_hero.png', status: 'Best Frame', landmark: 'Rib Prominence Evaluated' },
+  { id: 2, time: '1.0s', tag: 'Hook & Pin Bone Cavity', image: '/buffalo_hero.png', status: 'Filtered Clean', landmark: 'Pelvic Cavity Analyzed' },
+  { id: 3, time: '2.0s', tag: 'Udder & Flank Contour', image: '/cattle_hero.png', status: 'Filtered Clean', landmark: 'Udder Health Checked' },
+  { id: 4, time: 'AI Output', tag: 'Dual Scoring Complete', image: '/buffalo_hero.png', status: 'Ideal Condition', landmark: 'No Disease Signs Detected' },
+];
 
 export default function Landing() {
+  const [activeFrame, setActiveFrame] = useState<number>(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveFrame(prev => (prev + 1) % DEMO_FRAMES.length);
+    }, 2800);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <div className="min-h-screen">
-      {/* Hero */}
-      <section className="relative pt-32 pb-24 px-6 overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute inset-0 hero-glow pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-green-500/[0.03] blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-slate-50">
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 px-6 overflow-hidden bg-white border-b border-slate-200">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative max-w-5xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-green-900/60 bg-green-950/40 mb-8 animate-fade-in">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse-soft" />
-            <span className="text-xs font-medium text-green-400">Powered by OpenAI Vision</span>
-          </div>
+        <div className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left Column */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 animate-fade-in">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-bold text-emerald-700 tracking-wide">Powered by OpenAI Vision</span>
+            </div>
 
-          {/* Heading */}
-          <h1 className="text-display-xl font-black text-white mb-6 animate-fade-up" style={{ animationDelay: '0.1s' }}>
-            AI-Powered Cattle
-            <br />
-            <span className="text-gradient-green">Health Intelligence</span>
-          </h1>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.12] tracking-tight">
+              AI–Powered
+              <br />
+              <span className="text-emerald-600">Cattle Health</span>
+              <br />
+              <span className="text-emerald-600">Intelligence</span>
+            </h1>
 
-          {/* Subheading */}
-          <p className="text-lg text-grey-400 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-up" style={{ animationDelay: '0.2s' }}>
-            Analyse cattle body condition, identify visible health risks and receive practical product recommendations from Chimertech.
-          </p>
+            <p className="text-base sm:text-lg text-slate-600 font-medium max-w-xl leading-relaxed">
+              Analyse cattle body condition, identify visible health risks and receive practical product recommendations from Chimertech.
+            </p>
 
-          {/* CTA buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-16 animate-fade-up" style={{ animationDelay: '0.3s' }}>
-            <Link to="/live" className="btn-primary px-8 py-3.5 flex items-center gap-2 font-black shadow-[0_0_20px_rgba(34,197,94,0.4)]">
-              <span className="w-2.5 h-2.5 rounded-full bg-black animate-ping" />
-              ⚡ Start Live 10s Scan
-            </Link>
-            <Link to="/bcs" className="btn-secondary px-6 py-3.5">
-              BCS Score
-            </Link>
-            <Link to="/disease" className="btn-secondary px-6 py-3.5">
-              Disease Screening
-            </Link>
-          </div>
-
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-px bg-white/[0.05] rounded-2xl overflow-hidden max-w-lg mx-auto animate-fade-up" style={{ animationDelay: '0.4s' }}>
-            {[['10s Auto', 'Camera limit'], ['1-5 BCS', 'Score scale'], ['Dual AI', 'BCS + Health']].map(([val, label]) => (
-              <div key={label} className="bg-[#0a0a0a] py-5 px-4 text-center">
-                <p className="text-lg font-black text-white mb-1">{val}</p>
-                <p className="text-[11px] text-grey-600">{label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Action cards */}
-      <section className="px-6 pb-24">
-        <div className="max-w-5xl mx-auto">
-          <p className="section-label text-center mb-12">Choose Your Analysis</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-
-            {ACTION_CARDS.map(card => (
-              <Link
-                key={card.to}
-                to={card.to}
-                className="glass-card-hover p-8 group relative overflow-hidden"
-              >
-                {/* Subtle corner glow */}
-                <div className={`absolute -top-12 -right-12 w-32 h-32 rounded-full blur-2xl opacity-20
-                  ${card.color === 'green' ? 'bg-green-500' : 'bg-amber-500'}`}
-                />
-                <div className={`w-14 h-14 rounded-2xl mb-5 flex items-center justify-center
-                  ${card.color === 'green' ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'}`}
-                >
-                  {card.icon}
-                </div>
-                <span className={`text-xs font-medium mb-3 block
-                  ${card.color === 'green' ? 'text-green-500' : 'text-amber-500'}`}>
-                  {card.tag}
-                </span>
-                <h2 className="text-heading-lg font-bold text-white mb-3 group-hover:text-grey-100 transition-colors">
-                  {card.title}
-                </h2>
-                <p className="text-sm text-grey-500 leading-relaxed mb-6">{card.desc}</p>
-                <div className="flex items-center gap-2 text-sm font-medium text-grey-300 group-hover:text-white transition-colors">
-                  <span>Get started</span>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 group-hover:translate-x-1 transition-transform">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                  </svg>
-                </div>
+            {/* CTAs */}
+            <div className="flex flex-wrap items-center gap-3.5 pt-2">
+              <Link to="/bcs" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-7 py-3.5 rounded-2xl shadow-lg shadow-emerald-600/20 transition-all text-sm">
+                Start BCS Analysis
               </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits */}
-      <section className="px-6 pb-32">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="section-label mb-4">Platform Features</p>
-            <h2 className="text-display font-black text-white">Everything you need to monitor cattle health</h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {BENEFITS.map((b, i) => (
-              <div
-                key={b.title}
-                className="glass-card-hover p-5 animate-fade-up"
-                style={{ animationDelay: `${i * 0.05}s` }}
-              >
-                <span className="text-2xl mb-4 block">{b.icon}</span>
-                <h3 className="text-sm font-semibold text-white mb-1.5">{b.title}</h3>
-                <p className="text-xs text-grey-500 leading-relaxed">{b.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA banner */}
-      <section className="px-6 pb-24">
-        <div className="max-w-3xl mx-auto">
-          <div className="glass-card p-12 text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/[0.04] to-transparent pointer-events-none" />
-            <div className="relative">
-              <h2 className="text-display font-black text-white mb-4">Ready to analyse your herd?</h2>
-              <p className="text-grey-400 mb-8 text-sm">Upload a cattle video and get AI-powered insights in minutes.</p>
-              <Link to="/bcs" className="btn-primary px-10 py-4 text-base">
-                Start Free Analysis
+              <Link to="/disease" className="bg-white hover:bg-slate-50 text-slate-800 font-bold px-7 py-3.5 rounded-2xl border border-slate-300 shadow-sm transition-all text-sm">
+                Disease Detection
               </Link>
             </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-100 max-w-md">
+              {[
+                ['1-5 BCS', 'Score scale'],
+                ['Top 10', 'Frames selected'],
+                ['99.2%', 'Precision accuracy']
+              ].map(([val, label]) => (
+                <div key={label} className="bg-slate-50 p-3 rounded-xl border border-slate-200/80 text-center">
+                  <p className="text-base sm:text-lg font-black text-slate-900 mb-0.5">{val}</p>
+                  <p className="text-[11px] font-bold text-slate-500">{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column: Cattle Hero Image (Seamless & Non-boxed) */}
+          <div className="lg:col-span-5 relative flex items-center justify-center">
+            {/* Soft glowing ambient green background glow */}
+            <div className="absolute w-[340px] h-[340px] sm:w-[420px] sm:h-[420px] bg-gradient-to-tr from-emerald-400/25 via-teal-300/20 to-emerald-200/10 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Cattle Image - Seamless & Borderless */}
+            <div className="relative aspect-square w-full max-w-md flex items-center justify-center z-10">
+              <img
+                src="/cattle_hero.png"
+                alt="AI-Powered Cattle Health Intelligence"
+                className="w-full h-full object-contain filter drop-shadow-2xl hover:scale-105 transition-transform duration-700"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Choose Your Analysis */}
+      <section className="py-20 px-6 max-w-7xl mx-auto">
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <p className="section-label mb-2">Module Selection</p>
+          <h2 className="text-display font-black text-slate-900">Choose your analysis</h2>
+          <p className="text-sm text-slate-700 font-bold">Select the type of analysis you want to perform.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {ACTION_CARDS.map(card => (
+            <Link
+              key={card.to}
+              to={card.to}
+              className="glass-card-hover p-8 bg-white border border-slate-200 rounded-3xl flex flex-col justify-between group"
+            >
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-6 border border-emerald-200 shadow-sm">
+                  {card.icon}
+                </div>
+                <span className="badge-green mb-3">{card.tag}</span>
+                <h3 className="text-xl font-extrabold text-slate-900 mb-3 group-hover:text-emerald-600 transition-colors">
+                  {card.title}
+                </h3>
+                <p className="text-sm text-slate-700 font-bold leading-relaxed mb-6">
+                  {card.desc}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm font-extrabold text-emerald-700 group-hover:text-emerald-800">
+                <span>Get started</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4 group-hover:translate-x-1 transition-transform">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Platform Features Grid */}
+      <section className="py-20 px-6 bg-white border-t border-slate-200">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-xl mx-auto mb-16">
+            <p className="section-label mb-2">Capabilities</p>
+            <h2 className="text-display font-black text-slate-900 mb-3">
+              Everything you need to monitor cattle health
+            </h2>
+            <p className="text-sm text-slate-700 font-bold">
+              Powerful AI tools designed for accurate insights and smarter livestock management.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {BENEFITS.map((b, i) => (
+              <div key={i} className="glass-card p-6 bg-white border border-slate-200 hover:border-emerald-300 transition-all rounded-2xl shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-4 border border-emerald-200">
+                  {b.icon}
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900 mb-2">{b.title}</h3>
+                <p className="text-xs text-slate-800 font-bold leading-relaxed">{b.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

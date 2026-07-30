@@ -16,7 +16,7 @@ export function SkeletonCard({ lines = 3 }: { lines?: number }) {
 export function SkeletonProductCard() {
   return (
     <div className="glass-card p-5 space-y-4 animate-fade-in">
-      <div className="skeleton w-full aspect-video rounded-xl" />
+      <div className="skeleton w-full aspect-square rounded-xl" />
       <div className="skeleton h-3 w-1/3 rounded-full" />
       <div className="skeleton h-5 w-3/4 rounded-lg" />
       <div className="skeleton h-3 rounded-full" />

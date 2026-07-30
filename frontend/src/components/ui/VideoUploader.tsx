@@ -40,7 +40,6 @@ export default function VideoUploader({ onFile, disabled, maxDurationSeconds = 6
         return;
       }
 
-      // Check duration via HTMLVideoElement
       const url = URL.createObjectURL(file);
       const video = document.createElement('video');
       video.preload = 'metadata';
@@ -57,7 +56,6 @@ export default function VideoUploader({ onFile, disabled, maxDurationSeconds = 6
       };
       video.onerror = () => {
         URL.revokeObjectURL(url);
-        // Browser cannot decode codec (e.g. iPhone HEVC / H.265 / MOV), but backend OpenCV will process it cleanly!
         setIsVideo(true);
         setPreview(null);
         setFileName(file.name);
@@ -94,42 +92,42 @@ export default function VideoUploader({ onFile, disabled, maxDurationSeconds = 6
 
   if (fileName) {
     return (
-      <div className="glass-card p-6 space-y-4 animate-fade-in border border-white/10">
+      <div className="glass-card p-6 space-y-4 animate-fade-in bg-white border border-slate-200 shadow-sm">
         {isVideo && preview ? (
           <video
             src={preview}
             controls
-            className="w-full rounded-xl max-h-64 object-contain bg-black"
+            className="w-full rounded-xl max-h-64 object-contain bg-slate-900 border border-slate-200"
           />
         ) : !isVideo && preview ? (
           <img
             src={preview}
             alt="Cattle preview"
-            className="w-full rounded-xl max-h-64 object-contain bg-black"
+            className="w-full rounded-xl max-h-64 object-contain bg-slate-900 border border-slate-200"
           />
         ) : (
-          <div className="w-full p-8 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col items-center justify-center gap-3 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+          <div className="w-full p-8 rounded-xl bg-slate-50 border border-slate-200 flex flex-col items-center justify-center gap-3 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
               </svg>
             </div>
             <div>
-              <p className="text-sm font-extrabold text-white">{fileName}</p>
-              <p className="text-xs text-emerald-400 mt-1 font-medium">Video File Ready (Server OpenCV will extract frames)</p>
+              <p className="text-sm font-extrabold text-slate-900">{fileName}</p>
+              <p className="text-xs text-emerald-700 mt-1 font-bold">Video File Ready for Frame Analysis</p>
             </div>
           </div>
         )}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-white truncate">{fileName}</p>
-            <p className="text-xs text-grey-400 mt-0.5 font-medium">
+            <p className="text-sm font-bold text-slate-900 truncate">{fileName}</p>
+            <p className="text-xs text-slate-500 mt-0.5 font-medium">
               {isVideo ? 'Video ready for frame extraction & analysis' : 'Photo ready for clarity check & analysis'}
             </p>
           </div>
           <button
             onClick={() => { setPreview(null); setFileName(null); setError(null); }}
-            className="btn-ghost text-xs text-rose-400 hover:text-rose-300 font-semibold"
+            className="btn-ghost text-xs text-rose-600 hover:text-rose-700 font-bold"
             disabled={disabled}
           >
             Remove
@@ -144,28 +142,26 @@ export default function VideoUploader({ onFile, disabled, maxDurationSeconds = 6
       <div
         {...getRootProps()}
         className={`
-          relative border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer
-          transition-all duration-300 group overflow-hidden glass-card
+          relative border-2 border-dashed rounded-3xl p-12 text-center cursor-pointer
+          transition-all duration-300 group overflow-hidden bg-white shadow-sm
           ${isDragActive
-            ? 'border-emerald-500/80 bg-emerald-500/[0.08] shadow-[0_0_30px_rgba(34,197,94,0.2)]'
-            : 'border-white/10 hover:border-emerald-500/40 hover:bg-white/[0.04]'
+            ? 'border-emerald-500 bg-emerald-50/60 shadow-lg shadow-emerald-500/10'
+            : 'border-emerald-300 hover:border-emerald-500 hover:bg-emerald-50/30'
           }
           ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
         <input {...getInputProps()} />
-        <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full filter blur-2xl pointer-events-none group-hover:bg-emerald-500/10 transition-all" />
 
         {/* Icon */}
         <div className={`
-          w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center transition-all duration-300
+          w-16 h-16 rounded-3xl mx-auto mb-5 flex items-center justify-center transition-all duration-300
           ${isDragActive
-            ? 'bg-emerald-500/20 scale-110 shadow-[0_0_20px_rgba(34,197,94,0.4)]'
-            : 'bg-white/[0.06] group-hover:bg-emerald-500/15 group-hover:scale-105'
+            ? 'bg-emerald-600 text-white scale-110 shadow-md'
+            : 'bg-emerald-100 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-105'
           }
         `}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}
-            className={`w-8 h-8 transition-colors ${isDragActive ? 'text-emerald-400' : 'text-grey-400 group-hover:text-emerald-400'}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-8 h-8">
             <path strokeLinecap="round" strokeLinejoin="round"
               d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0c-.698.04-1.344.42-1.736 1.039l-.822 1.316z" />
             <path strokeLinecap="round" strokeLinejoin="round"
@@ -174,32 +170,46 @@ export default function VideoUploader({ onFile, disabled, maxDurationSeconds = 6
         </div>
 
         {isDragActive ? (
-          <p className="text-emerald-400 font-bold text-base">Drop your photo or video here to analyze</p>
+          <p className="text-emerald-700 font-extrabold text-base">Drop your photo or video here to analyze</p>
         ) : (
           <>
-            <p className="text-white font-extrabold text-base mb-1 tracking-tight">
+            <p className="text-slate-900 font-extrabold text-lg mb-1 tracking-tight">
               Drag & drop cattle photo or video
             </p>
-            <p className="text-grey-400 text-xs font-medium">or click anywhere to browse from your device</p>
+            <p className="text-slate-500 text-xs font-semibold">or click anywhere to browse from your device</p>
           </>
         )}
 
         <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
-          <span className="badge-grey text-[10px] uppercase font-bold tracking-wider">📷 JPG / PNG / WEBP</span>
-          <span className="badge-grey text-[10px] uppercase font-bold tracking-wider">🎥 MP4 / MOV / AVI</span>
-          <span className="badge-green text-[10px] uppercase font-bold tracking-wider">⚡ Up to 60s</span>
+          <span className="badge-grey text-[10px] uppercase font-bold tracking-wider flex items-center gap-1.5">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5 text-slate-500">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
+            JPG / PNG / WEBP
+          </span>
+          <span className="badge-grey text-[10px] uppercase font-bold tracking-wider flex items-center gap-1.5">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5 text-slate-500">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+            MP4 / MOV / AVI
+          </span>
+          <span className="badge-green text-[10px] uppercase font-bold tracking-wider flex items-center gap-1.5">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5 text-emerald-600">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Up to 60s
+          </span>
         </div>
       </div>
 
       {error && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 animate-fade-in shadow-[0_0_16px_rgba(244,63,94,0.15)]">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-rose-400 mt-0.5 flex-shrink-0">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-50 border border-rose-200 animate-fade-in">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-rose-600 mt-0.5 flex-shrink-0">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
           </svg>
-          <p className="text-sm font-medium text-rose-400">{error}</p>
+          <p className="text-sm font-bold text-rose-700">{error}</p>
         </div>
       )}
     </div>
   );
 }
-

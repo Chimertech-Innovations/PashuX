@@ -225,9 +225,14 @@ async def analyse_instant_live(
         if is_image:
             processed = process_image(media_path, work_dir)
         else:
-            processed = process_video(media_path, work_dir)
+            try:
+                processed = process_video(media_path, work_dir)
+            except Exception as exc:
+                logger.warning(f"Video frame processing encountered error, attempting image fallback: {exc}")
+                processed = process_image(media_path, work_dir)
 
         frame_paths = [item["path"] for item in processed.get("frame_data", [])]
+
         if not frame_paths:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No readable cattle frames found in live camera capture.")
 
@@ -237,10 +242,14 @@ async def analyse_instant_live(
 
         # Storage & DB best effort
         frame_urls = []
-        for fpath in frame_paths:
-            url = await db.upload_frame_to_storage(fpath, request_id, os.path.basename(fpath))
-            if url:
-                frame_urls.append(url)
+        for idx, fpath in enumerate(frame_paths, start=1):
+            try:
+                url = await db.upload_frame_to_storage(fpath, request_id, idx)
+                if url:
+                    frame_urls.append(url)
+            except Exception as exc:
+                logger.warning(f"Storage frame upload exception ignored: {exc}")
+
 
         try:
             req = await db.create_analysis_request(user_id=user_id, analysis_type="combined", video_path=media_path)

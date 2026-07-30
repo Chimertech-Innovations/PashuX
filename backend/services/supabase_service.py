@@ -130,7 +130,7 @@ async def get_frames_for_request(request_id: str) -> list:
 async def upload_frame_to_storage(
     frame_path: str,
     request_id: str,
-    frame_number: int,
+    frame_number: Any = 1,
 ) -> str:
     """
     Upload a frame image to Supabase Storage and return the public URL.
@@ -138,7 +138,14 @@ async def upload_frame_to_storage(
     """
     sb = get_client()
     bucket = "frames"
-    storage_path = f"{request_id}/frame_{frame_number:04d}.jpg"
+    if isinstance(frame_number, int):
+        storage_path = f"{request_id}/frame_{frame_number:04d}.jpg"
+    else:
+        fn_str = str(frame_number)
+        if fn_str.endswith(".jpg") or fn_str.endswith(".png") or fn_str.endswith(".webp"):
+            storage_path = f"{request_id}/{fn_str}"
+        else:
+            storage_path = f"{request_id}/frame_{fn_str}.jpg"
 
     with open(frame_path, "rb") as f:
         data = f.read()
@@ -151,6 +158,7 @@ async def upload_frame_to_storage(
 
     public_url = sb.storage.from_(bucket).get_public_url(storage_path)
     return public_url
+
 
 
 async def upload_video_to_storage(

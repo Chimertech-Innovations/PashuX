@@ -66,41 +66,50 @@ def is_near_duplicate(fp1: dict, fp2: dict) -> bool:
 def extract_frames(video_path: str, output_dir: str) -> List[Tuple[str, float]]:
     """
     Extract one frame per second from the video.
-    Returns list of (frame_path, blur_score) tuples sorted by timestamp.
+    Supports WebM clips from browser MediaRecorder with unknown/negative frame count metadata.
     """
+    # 1. Image fallback check: if this is a photo/snapshot image file
+    img = cv2.imread(video_path)
+    if img is not None and img.size > 0:
+        blur = compute_blur_score(img)
+        frame_path = os.path.join(output_dir, "frame_0000.jpg")
+        cv2.imwrite(frame_path, img, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        return [(frame_path, blur)]
+
+    # 2. Video frame extraction
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         raise ValueError(f"Cannot open video file: {video_path}")
 
     fps = cap.get(cv2.CAP_PROP_FPS)
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    duration_sec = total_frames / fps if fps > 0 else 0
+    if fps <= 0 or fps > 120 or np.isnan(fps):
+        fps = 30.0
 
-    logger.info(f"Video: {duration_sec:.1f}s, {fps:.1f} fps, {total_frames} total frames")
-
+    sample_interval = max(1, int(fps))
     frames: List[Tuple[str, float]] = []
+    frame_idx = 0
     second = 0
 
     while True:
-        frame_pos = int(second * fps)
-        if frame_pos >= total_frames:
-            break
-
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_pos)
         ret, frame = cap.read()
-        if not ret:
+        if not ret or frame is None or frame.size == 0:
             break
 
-        blur = compute_blur_score(frame)
-        frame_path = os.path.join(output_dir, f"frame_{second:04d}.jpg")
-        cv2.imwrite(frame_path, frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
-        frames.append((frame_path, blur))
+        if frame_idx % sample_interval == 0:
+            blur = compute_blur_score(frame)
+            frame_path = os.path.join(output_dir, f"frame_{second:04d}.jpg")
+            cv2.imwrite(frame_path, frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
+            frames.append((frame_path, blur))
+            second += 1
 
-        second += 1
+        frame_idx += 1
+        if second >= 60:
+            break
 
     cap.release()
-    logger.info(f"Extracted {len(frames)} frames (1 per second)")
+    logger.info(f"Extracted {len(frames)} frames sequentially (1 frame every {sample_interval} frames)")
     return frames
+
 
 
 def remove_blurry_frames(

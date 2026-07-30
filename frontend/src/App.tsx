@@ -10,6 +10,7 @@ import LiveDetection from '@/pages/LiveDetection';
 import AnalysisHistory from '@/pages/AnalysisHistory';
 import Products from '@/pages/Products';
 import Profile from '@/pages/Profile';
+import Admin from '@/pages/Admin';
 
 export default function App() {
   return (
@@ -21,12 +22,14 @@ export default function App() {
             <Routes>
               <Route path="/"        element={<Landing />} />
               <Route path="/auth"    element={<Auth />} />
+              <Route path="/admin"   element={<Admin />} />
               <Route path="/live"    element={<LiveDetection />} />
               <Route path="/bcs"     element={<BCSDetection />} />
               <Route path="/disease" element={<DiseaseDetection />} />
               <Route path="/history" element={<AnalysisHistory />} />
               <Route path="/products" element={<Products />} />
               <Route path="/profile"  element={<Profile />} />
+
 
               {/* 404 fallback */}
               <Route path="*" element={

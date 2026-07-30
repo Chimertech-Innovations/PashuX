@@ -184,14 +184,16 @@ async def upload_video_to_storage(
             data,
             {"content-type": "video/mp4", "upsert": "true"},
         )
-        logger.info(f"Original video uploaded to storage: {storage_path}")
-        return storage_path
+        public_url = sb.storage.from_(bucket).get_public_url(storage_path)
+        logger.info(f"Original video uploaded to storage: {public_url}")
+        return public_url
     except Exception as exc:
         logger.warning(
             f"Video upload to 'videos' bucket skipped: [{type(exc).__name__}] {exc}. "
             "Create a 'videos' bucket in Supabase Storage to enable this."
         )
         return ""
+
 
 
 # ── Chat Messages ─────────────────────────────────────────────────────────────
@@ -247,3 +249,86 @@ async def get_analysis_history(user_id: str) -> list:
         .execute()
     )
     return result.data
+
+
+# ── Admin Functions ────────────────────────────────────────────────────────────
+
+async def get_all_users() -> list:
+    sb = get_client()
+    try:
+        users = sb.table("users").select("*").order("created_at", desc=True).execute().data
+    except Exception:
+        users = []
+    return users
+
+
+async def get_all_reports() -> list:
+    sb = get_client()
+    try:
+        reqs = sb.table("analysis_requests").select("*").order("created_at", desc=True).execute().data or []
+        for req in reqs:
+            req_id = req.get("id")
+            u_id = req.get("user_id")
+            
+            # Fetch results
+            res_data = sb.table("analysis_results").select("*").eq("request_id", req_id).execute().data or []
+            req["analysis_results"] = res_data
+            
+            # Fetch frames
+            frames_data = sb.table("selected_frames").select("*").eq("request_id", req_id).order("frame_number").execute().data or []
+            req["selected_frames"] = frames_data
+
+            # Fetch chat messages
+            chats_data = sb.table("chat_messages").select("*").eq("request_id", req_id).order("created_at").execute().data or []
+            req["chat_messages"] = chats_data
+
+            # Fetch user info
+            if u_id:
+                try:
+                    u_data = sb.table("users").select("full_name, email").eq("id", u_id).limit(1).execute().data
+                    if u_data:
+                        req["users"] = u_data[0]
+                    else:
+                        req["users"] = {"full_name": "Registered User", "email": "user@chimertech.ai"}
+                except Exception:
+                    req["users"] = {"full_name": "Registered User", "email": "user@chimertech.ai"}
+            else:
+                req["users"] = {"full_name": "Guest User", "email": "guest@chimertech.ai"}
+        return reqs
+    except Exception as exc:
+        logger.warning(f"Error fetching all reports for admin: {exc}")
+        return []
+
+
+
+async def get_admin_stats() -> dict:
+    sb = get_client()
+    try:
+        users_res = sb.table("users").select("id", count="exact").execute()
+        reqs_res  = sb.table("analysis_requests").select("id, analysis_type", count="exact").execute()
+        
+        reqs = reqs_res.data or []
+        total_users = users_res.count or len(sb.table("users").select("id").execute().data or [])
+        total_scans = reqs_res.count or len(reqs)
+        
+        bcs_count = sum(1 for r in reqs if r.get("analysis_type") == "bcs")
+        disease_count = sum(1 for r in reqs if r.get("analysis_type") == "disease")
+        combined_count = sum(1 for r in reqs if r.get("analysis_type") in ("combined", "live"))
+        
+        return {
+            "total_users": total_users,
+            "total_scans": total_scans,
+            "bcs_scans": bcs_count,
+            "disease_scans": disease_count,
+            "live_scans": combined_count,
+        }
+    except Exception as exc:
+        logger.warning(f"Failed to calculate admin stats: {exc}")
+        return {
+            "total_users": 0,
+            "total_scans": 0,
+            "bcs_scans": 0,
+            "disease_scans": 0,
+            "live_scans": 0,
+        }
+

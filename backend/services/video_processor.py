@@ -205,8 +205,22 @@ def process_video(video_path: str, work_dir: str) -> dict:
     if not unique_frames:
         unique_frames = [sharp_frames_sorted[0]]
 
-    # Step 4 – Select best clean frames (up to TOP_FRAMES_COUNT max, e.g. 10, but returns whatever clean unique count exists e.g. 2, 3, or 4)
+    # Step 4 – Select best clean frames (minimum 3 frames if video has 3+ frames, maximum 10 frames)
     top_frames = select_top_frames(unique_frames, top_n=TOP_FRAMES_COUNT)
+
+    # Ensure minimum 3 frames if total extracted frames >= 3
+    if len(top_frames) < 3 and len(all_frames) >= 3:
+        seen_paths = {p for p, _ in top_frames}
+        sorted_all = sorted(all_frames, key=lambda x: x[1], reverse=True)
+        for p, s in sorted_all:
+            if p not in seen_paths:
+                top_frames.append((p, s))
+                seen_paths.add(p)
+                if len(top_frames) >= 3:
+                    break
+
+    # Cap at maximum 10 frames for optimal accuracy
+    top_frames = top_frames[:10]
 
     # Step 5 – Erase/delete all unselected, blurry, and duplicate frame files from disk
     selected_paths = {p for p, _ in top_frames}
@@ -227,6 +241,7 @@ def process_video(video_path: str, work_dir: str) -> dict:
             for i, (p, s) in enumerate(top_frames)
         ],
     }
+
 
 
 

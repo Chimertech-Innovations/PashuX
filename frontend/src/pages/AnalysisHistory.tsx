@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getHistory } from '@/lib/api';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
+import { generateHealthReportPDF } from '@/utils/pdfGenerator';
+
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', {
@@ -110,15 +112,40 @@ export default function AnalysisHistory() {
                     {result && (
                       <p className="text-sm font-extrabold text-slate-900 truncate">
                         {isBCS
-                          ? `BCS ${result.bcs_score?.toFixed(1)} — ${result.result_json?.condition}`
+                          ? `BCS ${result.bcs_score?.toFixed(1)} — ${result.result_json?.condition || 'Evaluated'}`
                           : result.result_json?.possible_condition}
                       </p>
                     )}
                     <p className="text-xs font-bold text-slate-500 mt-1">{formatDate(item.created_at)}</p>
                   </div>
+
+                  {/* PDF Download Button */}
+                  <button
+                    onClick={() => {
+                      const resJson = result?.result_json || {};
+                      generateHealthReportPDF({
+                        requestId: item.id,
+                        userEmail: user?.email,
+                        date: formatDate(item.created_at),
+                        analysisType: item.analysis_type,
+                        bcsScore: result?.bcs_score ?? resJson.bcs_score,
+                        bcsConfidence: result?.confidence ?? resJson.confidence,
+                        possibleCondition: result?.possible_condition ?? resJson.possible_condition,
+                        diseaseConfidence: result?.confidence ?? resJson.confidence,
+                        severity: result?.severity ?? resJson.severity,
+                        observations: result?.observations || resJson.observations || resJson.visible_signs,
+                        recommendations: result?.recommendations || resJson.recommendations || resJson.next_steps,
+                        aiSuggestions: resJson.ai_summary || resJson.condition,
+                      });
+                    }}
+                    className="btn-secondary py-2 px-3.5 text-xs font-black flex items-center gap-1.5 self-start sm:self-center"
+                  >
+                    <span>📄</span> PDF
+                  </button>
                 </div>
               );
             })}
+
           </div>
         )}
       </div>

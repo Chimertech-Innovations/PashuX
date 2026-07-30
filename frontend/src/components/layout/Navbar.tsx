@@ -13,7 +13,8 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const { pathname } = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
+
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -60,6 +61,14 @@ export default function Navbar() {
 
         {/* Auth Actions Area */}
         <div className="hidden md:flex items-center gap-3">
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-purple-600 text-white shadow-md hover:bg-purple-700 transition-all flex items-center gap-1.5"
+            >
+              <span>⚡</span> Admin Portal
+            </Link>
+          )}
           {user ? (
             <>
               <Link to="/profile" className="btn-ghost text-xs font-black text-slate-800">
@@ -78,6 +87,7 @@ export default function Navbar() {
             </>
           )}
         </div>
+
 
         {/* Mobile Hamburger Button */}
         <button

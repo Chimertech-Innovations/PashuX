@@ -9,6 +9,8 @@ import ChatBot from '@/components/ui/ChatBot';
 import Disclaimer from '@/components/ui/Disclaimer';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import type { Product, BCSResult, DiseaseResult } from '@/types';
+import { generateHealthReportPDF } from '@/utils/pdfGenerator';
+
 
 // Rule-based BCS product recommendations
 function getBCSProducts(score: number, allProducts: Product[]): Product[] {
@@ -183,7 +185,44 @@ export default function LiveDetection() {
               )}
             </div>
 
+            {(bcsResult || diseaseResult) && (
+              <div className="flex justify-between items-center bg-emerald-50 border border-emerald-200 p-4 rounded-2xl">
+                <div>
+                  <h3 className="text-sm font-black text-emerald-900">Live Camera Health Scan Complete</h3>
+                  <p className="text-xs text-emerald-700">Combined BCS and Disease report ready to download.</p>
+                </div>
+                <button
+                  onClick={() => {
+                    generateHealthReportPDF({
+                      requestId: requestId || `live_${Date.now()}`,
+                      userEmail: user?.email,
+                      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+                      analysisType: 'combined',
+                      bcsScore: bcsResult?.bcs_score,
+                      bcsConfidence: bcsResult?.confidence,
+                      possibleCondition: diseaseResult?.possible_condition,
+                      diseaseConfidence: diseaseResult?.confidence,
+                      severity: diseaseResult?.severity,
+                      observations: [
+                        ...(bcsResult?.observations || []),
+                        ...(diseaseResult?.visible_signs || []),
+                      ],
+                      recommendations: [
+                        ...(bcsResult?.recommendations || []),
+                        ...(diseaseResult?.next_steps || []),
+                      ],
+                      recommendedProducts: combinedRecs,
+                    });
+                  }}
+                  className="btn-primary py-2.5 px-5 text-xs font-black flex items-center gap-2 shadow-md shadow-emerald-500/20"
+                >
+                  <span>📄</span> Download PDF Report
+                </button>
+              </div>
+            )}
+
             {/* Skeleton Loading Card while analyzing */}
+
             {isAnalyzing && !bcsResult && !diseaseResult && (
               <SkeletonCard />
             )}

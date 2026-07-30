@@ -11,6 +11,8 @@ import ChatBot from '@/components/ui/ChatBot';
 import Disclaimer from '@/components/ui/Disclaimer';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import type { DiseaseResult, Product } from '@/types';
+import { generateHealthReportPDF } from '@/utils/pdfGenerator';
+
 
 // Rule-based disease product recommendations
 const DISEASE_PRODUCT_MAP: Record<string, string[]> = {
@@ -150,8 +152,36 @@ export default function DiseaseDetection() {
             {/* Result */}
             {state.status === 'completed' && state.diseaseResult ? (
               <>
+                <div className="flex justify-between items-center bg-emerald-50 border border-emerald-200 p-4 rounded-2xl">
+                  <div>
+                    <h3 className="text-sm font-black text-emerald-900">Disease Screening Complete</h3>
+                    <p className="text-xs text-emerald-700">Diagnostic report ready to save and print.</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!state.diseaseResult) return;
+                      generateHealthReportPDF({
+                        requestId: state.requestId || `disease_${Date.now()}`,
+                        userEmail: user?.email,
+                        date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+                        analysisType: 'disease',
+                        possibleCondition: state.diseaseResult.possible_condition,
+                        diseaseConfidence: state.diseaseResult.confidence,
+                        severity: state.diseaseResult.severity,
+                        observations: state.diseaseResult.visible_signs,
+                        recommendations: state.diseaseResult.next_steps,
+                        recommendedProducts: recProducts,
+                      });
+                    }}
+                    className="btn-primary py-2.5 px-5 text-xs font-black flex items-center gap-2 shadow-md shadow-emerald-500/20"
+                  >
+                    <span>📄</span> Download PDF Report
+                  </button>
+                </div>
+
                 <DiseaseResultCard result={state.diseaseResult} />
                 <Disclaimer type="vet" />
+
                 {recProducts.length > 0 && (
                   <div>
                     <h3 className="text-sm font-semibold text-white mb-4">Recommended Products</h3>

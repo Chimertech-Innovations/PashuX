@@ -240,23 +240,44 @@ async def analyse_instant_live(
         disease_task = ai.analyse_disease(frame_paths)
         bcs_result, disease_result = await asyncio.gather(bcs_task, disease_task)
 
-        # Storage & DB best effort
+        # 1. Upload live camera video to Supabase Storage
+        video_url = ""
+        try:
+            video_url = await db.upload_video_to_storage(media_path, request_id, ext=ext)
+        except Exception as exc:
+            logger.warning(f"Live video upload to storage skipped/failed: {exc}")
+
+        # 2. Upload extracted frames and record in selected_frames table
         frame_urls = []
-        for idx, fpath in enumerate(frame_paths, start=1):
+        frame_data_list = processed.get("frame_data", [])
+        for idx, fdata in enumerate(frame_data_list, start=1):
+            fpath = fdata.get("path")
+            c_score = fdata.get("clarity_score", 100.0)
             try:
                 url = await db.upload_frame_to_storage(fpath, request_id, idx)
                 if url:
                     frame_urls.append(url)
+                    await db.save_frame_record(
+                        request_id=request_id,
+                        frame_url=url,
+                        frame_number=idx,
+                        clarity_score=c_score
+                    )
             except Exception as exc:
                 logger.warning(f"Storage frame upload exception ignored: {exc}")
 
-
+        # 3. Create analysis request and save results in DB
         try:
-            req = await db.create_analysis_request(user_id=user_id, analysis_type="combined", video_path=media_path)
-            request_id = req.get("id", request_id)
-            await db.save_analysis_result(request_id=request_id, analysis_type="bcs", result_json=bcs_result.model_dump())
-            await db.save_analysis_result(request_id=request_id, analysis_type="disease", result_json=disease_result.model_dump())
-            await db.update_request_status(request_id, "completed")
+            req = await db.create_analysis_request(
+                user_id=user_id,
+                analysis_type="combined",
+                video_path=video_url or media_path
+            )
+            saved_id = req.get("id", request_id)
+            await db.save_analysis_result(request_id=saved_id, analysis_type="bcs", result_json=bcs_result.model_dump())
+            await db.save_analysis_result(request_id=saved_id, analysis_type="disease", result_json=disease_result.model_dump())
+            await db.update_request_status(saved_id, "completed")
+            request_id = saved_id
         except Exception as exc:
             logger.warning(f"DB save failed for instant live analysis: {exc}")
 
@@ -266,8 +287,10 @@ async def analyse_instant_live(
             "bcs_result": bcs_result.model_dump(),
             "disease_result": disease_result.model_dump(),
             "frame_urls": frame_urls,
+            "video_url": video_url,
         }
     finally:
         cleanup(work_dir)
+
 
 

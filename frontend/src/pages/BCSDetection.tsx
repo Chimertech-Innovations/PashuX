@@ -11,6 +11,8 @@ import ChatBot from '@/components/ui/ChatBot';
 import Disclaimer from '@/components/ui/Disclaimer';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import type { Product } from '@/types';
+import { generateHealthReportPDF } from '@/utils/pdfGenerator';
+
 
 // Rule-based BCS product recommendations
 function getBCSProducts(score: number, allProducts: Product[]): Product[] {
@@ -143,6 +145,32 @@ export default function BCSDetection() {
             {/* Result */}
             {state.status === 'completed' && state.bcsResult ? (
               <>
+                <div className="flex justify-between items-center bg-emerald-50 border border-emerald-200 p-4 rounded-2xl">
+                  <div>
+                    <h3 className="text-sm font-black text-emerald-900">BCS Analysis Complete</h3>
+                    <p className="text-xs text-emerald-700">Health report is ready to save and print.</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!state.bcsResult) return;
+                      generateHealthReportPDF({
+                        requestId: state.requestId || `bcs_${Date.now()}`,
+                        userEmail: user?.email,
+                        date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+                        analysisType: 'bcs',
+                        bcsScore: state.bcsResult.bcs_score,
+                        bcsConfidence: state.bcsResult.confidence,
+                        observations: state.bcsResult.observations,
+                        recommendations: state.bcsResult.recommendations,
+                        recommendedProducts: recProducts,
+                      });
+                    }}
+                    className="btn-primary py-2.5 px-5 text-xs font-black flex items-center gap-2 shadow-md shadow-emerald-500/20"
+                  >
+                    <span>📄</span> Download PDF Report
+                  </button>
+                </div>
+
                 <BCSResultCard result={state.bcsResult} />
                 <Disclaimer type="ai" />
                 {recProducts.length > 0 && (
@@ -164,6 +192,7 @@ export default function BCSDetection() {
                 </button>
               </>
             ) : state.status === 'completed' && !state.bcsResult ? (
+
               <SkeletonCard />
             ) : null}
           </div>

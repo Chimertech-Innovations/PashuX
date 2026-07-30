@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react';
-import { useVideoAnalysis } from '@/hooks/useVideoAnalysis';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getProducts } from '@/lib/api';
+import { getProducts, analyseInstantLive } from '@/lib/api';
 import LiveCameraScanner from '@/components/ui/LiveCameraScanner';
-import ProcessingProgress from '@/components/ui/ProcessingProgress';
 import BCSResultCard from '@/components/ui/BCSResultCard';
 import DiseaseResultCard from '@/components/ui/DiseaseResultCard';
-import FrameGallery from '@/components/ui/FrameGallery';
 import ProductCard from '@/components/ui/ProductCard';
 import ChatBot from '@/components/ui/ChatBot';
 import Disclaimer from '@/components/ui/Disclaimer';
@@ -44,129 +41,116 @@ function getDiseaseProducts(result: DiseaseResult, allProducts: Product[]): Prod
   return allProducts.filter(p => ids.has(p.id));
 }
 
-const FRAMES_READY_STATUSES = new Set([
-  'frames_ready', 'sending_ai', 'analysing', 'completed', 'error'
-]);
-
 export default function LiveDetection() {
   const { user } = useAuth();
-  const { state, run, startAnalysis, reset } = useVideoAnalysis('combined');
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const [bcsResult, setBcsResult] = useState<BCSResult | null>(null);
+  const [diseaseResult, setDiseaseResult] = useState<DiseaseResult | null>(null);
+  const [capturedFrames, setCapturedFrames] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'bcs' | 'disease'>('all');
 
   useEffect(() => {
     getProducts().then(setAllProducts).catch(() => {});
   }, []);
 
-  const isProcessing = ['uploading','extracting','filtering_blur','removing_duplicates','ranking','sending_ai','analysing'].includes(state.status);
-  const framesReady  = FRAMES_READY_STATUSES.has(state.status) && state.frameUrls.length > 0;
+  // Handle instant live camera capture file (snapshot or 10s clip)
+  const handleLiveMediaCapture = useCallback(async (file: File) => {
+    setIsAnalyzing(true);
+    setError(null);
 
-  const bcsRecs = state.bcsResult ? getBCSProducts(state.bcsResult.bcs_score, allProducts) : [];
-  const diseaseRecs = state.diseaseResult ? getDiseaseProducts(state.diseaseResult, allProducts) : [];
+    try {
+      const res = await analyseInstantLive(file, user?.id);
+      setRequestId(res.request_id);
+      setBcsResult(res.bcs_result);
+      setDiseaseResult(res.disease_result);
+      if (res.frame_urls && res.frame_urls.length > 0) {
+        setCapturedFrames(res.frame_urls);
+      }
+    } catch (err: any) {
+      setError(err.message || 'AI live analysis encountered an issue. Please try again.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [user]);
+
+  const bcsRecs = bcsResult ? getBCSProducts(bcsResult.bcs_score, allProducts) : [];
+  const diseaseRecs = diseaseResult ? getDiseaseProducts(diseaseResult, allProducts) : [];
   const combinedRecs = Array.from(new Set([...bcsRecs, ...diseaseRecs]));
-
-  const frames = state.frameUrls.map((url, i) => ({
-    url,
-    frameNumber: i + 1,
-    clarityScore: state.clarityScores[i],
-  }));
 
   return (
     <div className="min-h-screen pt-24 pb-24 px-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-10 animate-fade-up">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Page Header */}
+        <div className="animate-fade-up">
           <div className="flex items-center gap-2 mb-3">
-            <span className="section-label">Live Camera Scan</span>
-            <span className="badge-green text-[10px] uppercase font-bold tracking-wider animate-pulse">10s Auto-Off Camera</span>
+            <span className="section-label">Real-Time Camera Scan</span>
+            <span className="badge-green text-[10px] uppercase font-bold tracking-wider animate-pulse">Live 10s Auto-Shutoff</span>
           </div>
-          <h1 className="text-display font-black text-white mb-3">Live BCS & Disease Detection</h1>
+          <h1 className="text-display font-black text-white mb-2">Live BCS & Disease Detection</h1>
           <p className="text-grey-400 text-sm max-w-xl leading-relaxed">
-            Turn on live camera stream to record a 10-second clip of your cattle. Camera automatically shuts off after 10s and performs instant dual AI analysis for Body Condition Score (BCS) & Disease Screening.
+            Turn on the camera stream to scan your cattle. Results for Body Condition Score (BCS) & Disease Screening appear directly below the live video container in real time!
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Left Column */}
-          <div className="lg:col-span-3 space-y-5">
-            {/* Live Camera Scanner */}
-            {state.status === 'idle' && (
-              <LiveCameraScanner onFile={f => run(f, user?.id)} disabled={isProcessing} />
-            )}
+        {/* 1. TOP CONTAINER: Live Camera Stream */}
+        <div className="space-y-4">
+          <LiveCameraScanner
+            onFile={handleLiveMediaCapture}
+            onInstantSnapshot={handleLiveMediaCapture}
+            disabled={isAnalyzing}
+          />
 
-            {/* Processing Progress Bar */}
-            {state.status !== 'idle' && state.status !== 'completed' && (
-              <ProcessingProgress status={state.status} />
-            )}
-
-            {/* Cleaned Frames Gallery */}
-            {framesReady && (
-              <div className="animate-fade-in space-y-4">
-                <FrameGallery
-                  frames={frames}
-                  label={
-                    state.status === 'completed' ? 'Cleaned Frames Analyzed' :
-                    state.status === 'frames_ready' ? 'Cleaned & Deduplicated Frames (Ready for Multi-AI)' :
-                    'Cleaned Frames — AI Analysing BCS & Disease…'
-                  }
-                  isLoading={state.status === 'sending_ai' || state.status === 'analysing'}
-                />
-
-                {state.status === 'frames_ready' && (
-                  <div className="glass-card p-5 border-emerald-500/30 bg-emerald-500/[0.04] text-center space-y-3 animate-fade-in">
-                    <div>
-                      <p className="text-sm font-bold text-emerald-400">✨ 10-Second Live Stream Processed!</p>
-                      <p className="text-xs text-grey-400 mt-1">
-                        Camera turned off. Extracted & cleaned {frames.length} top clarity frames. Click below for AI BCS & Disease assessment.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => startAnalysis(user?.id)}
-                      className="btn-primary text-sm py-3 px-8 font-extrabold bg-gradient-to-r from-emerald-400 to-teal-500 text-black shadow-lg hover:scale-105 transition-all"
-                    >
-                      ⚡ Analyze BCS & Disease with AI
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Error Message */}
-            {state.status === 'error' && (
-              <div className="glass-card p-6 border-red-500/20 animate-fade-in space-y-3">
-                <div className="flex items-start gap-3">
-                  <span className="text-xl">⚠️</span>
-                  <div>
-                    <p className="text-sm font-semibold text-red-400 mb-1">Analysis Error</p>
-                    <p className="text-xs text-grey-400">{state.error}</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 pt-2">
-                  {state.framePaths.length > 0 && (
-                    <button
-                      onClick={() => startAnalysis(user?.id)}
-                      className="btn-primary text-xs py-2 px-4 bg-emerald-500 text-black font-semibold"
-                    >
-                      🔄 Retry Dual AI Analysis
-                    </button>
-                  )}
-                  <button onClick={reset} className="btn-secondary text-xs py-2 px-4">
-                    New Live Camera Scan
-                  </button>
+          {/* Real-time status banner under video container */}
+          {isAnalyzing && (
+            <div className="glass-card p-4 border-emerald-500/40 bg-emerald-500/[0.08] flex items-center justify-between animate-pulse">
+              <div className="flex items-center gap-3">
+                <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
+                <div>
+                  <p className="text-xs font-black text-emerald-400 uppercase tracking-wider">⚡ ANALYZING LIVE CATTLE FEED</p>
+                  <p className="text-[11px] text-grey-400">Processing live snapshot frame through OpenAI Vision models...</p>
                 </div>
               </div>
-            )}
+              <span className="text-xs font-mono font-bold text-emerald-400">Please wait...</span>
+            </div>
+          )}
 
-            {/* Combined Completed Results */}
-            {state.status === 'completed' && (state.bcsResult || state.diseaseResult) ? (
-              <div className="space-y-6 animate-fade-in">
-                {/* Result Tabs */}
-                <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/10">
+          {error && (
+            <div className="glass-card p-4 border-rose-500/30 bg-rose-500/[0.05] flex items-center gap-3 text-rose-400 text-xs">
+              <span className="text-lg">⚠️</span>
+              <p className="font-medium flex-1">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="btn-ghost text-xs text-rose-400 hover:text-white"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 2. BOTTOM CONTAINER: Live Detailed Results directly below live video feed */}
+        {(bcsResult || diseaseResult || isAnalyzing) && (
+          <div className="space-y-6 pt-4 border-t border-white/10 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-black text-white flex items-center gap-2">
+                  <span>📊</span> Live Analysis Results
+                  <span className="badge-green text-[10px] uppercase font-bold tracking-wider">Updated Live</span>
+                </h2>
+                <p className="text-xs text-grey-400">Detailed AI assessment of your cattle / buffalo below the live video container</p>
+              </div>
+
+              {/* View Tabs */}
+              {(bcsResult || diseaseResult) && (
+                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/10">
                   <button
                     onClick={() => setActiveTab('all')}
-                    className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                       activeTab === 'all'
-                        ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-white border border-emerald-500/30'
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                         : 'text-grey-400 hover:text-white'
                     }`}
                   >
@@ -174,9 +158,9 @@ export default function LiveDetection() {
                   </button>
                   <button
                     onClick={() => setActiveTab('bcs')}
-                    className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                       activeTab === 'bcs'
-                        ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-white border border-emerald-500/30'
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                         : 'text-grey-400 hover:text-white'
                     }`}
                   >
@@ -184,115 +168,130 @@ export default function LiveDetection() {
                   </button>
                   <button
                     onClick={() => setActiveTab('disease')}
-                    className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                       activeTab === 'disease'
-                        ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-white border border-emerald-500/30'
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                         : 'text-grey-400 hover:text-white'
                     }`}
                   >
-                    Disease Screening
+                    Disease Check
                   </button>
                 </div>
+              )}
+            </div>
 
-                {/* BCS Card */}
-                {(activeTab === 'all' || activeTab === 'bcs') && state.bcsResult && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
-                        <span>📊</span> Body Condition Score (BCS)
-                      </h3>
-                    </div>
-                    <BCSResultCard result={state.bcsResult} />
-                  </div>
-                )}
-
-                {/* Disease Card */}
-                {(activeTab === 'all' || activeTab === 'disease') && state.diseaseResult && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-2">
-                        <span>🩺</span> Disease & Health Screening
-                      </h3>
-                    </div>
-                    <DiseaseResultCard result={state.diseaseResult} />
-                  </div>
-                )}
-
-                <Disclaimer type="vet" />
-
-                {/* Combined Product Recommendations */}
-                {combinedRecs.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-bold text-white mb-4">Targeted Health & Nutrition Products</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {combinedRecs.map(p => (
-                        <ProductCard
-                          key={p.id}
-                          product={p}
-                          reason="Recommended based on live BCS and health assessment"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <button onClick={reset} className="btn-ghost text-xs text-grey-500">
-                  ← Start another 10s live camera scan
-                </button>
-              </div>
-            ) : state.status === 'completed' ? (
+            {/* Skeleton Loading Card while analyzing */}
+            {isAnalyzing && !bcsResult && !diseaseResult && (
               <SkeletonCard />
-            ) : null}
-          </div>
+            )}
 
-          {/* Right Info Column */}
-          {state.status === 'idle' && (
-            <div className="lg:col-span-2 space-y-4 animate-fade-in">
-              <div className="glass-card p-5 space-y-3">
-                <h3 className="text-xs font-extrabold text-white">How Live 10s Scan Works</h3>
-                <ol className="space-y-3">
-                  {[
-                    'Click "Open Camera Stream" and align cattle in grid',
-                    'Press "START 10s LIVE SCAN" to begin recording',
-                    'Live timer counts down 10s while capturing video',
-                    'At 10s mark, camera hardware automatically shuts OFF',
-                    'OpenCV extracts top clarity de-blurred frames',
-                    'AI performs simultaneous BCS scoring & disease check',
-                  ].map((step, i) => (
-                    <li key={i} className="flex items-start gap-3 text-xs text-grey-400">
-                      <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-emerald-400">
-                        {i + 1}
-                      </span>
-                      {step}
-                    </li>
-                  ))}
-                </ol>
+            {/* Detailed BCS Card */}
+            {(activeTab === 'all' || activeTab === 'bcs') && bcsResult && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                    <span>🟢</span> Live Body Condition Scoring (BCS)
+                  </h3>
+                </div>
+                <BCSResultCard result={bcsResult} />
               </div>
+            )}
 
-              <div className="glass-card p-5 border-emerald-500/20 bg-emerald-500/[0.02]">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">⚡</span>
-                  <div>
-                    <p className="text-xs font-bold text-emerald-400 mb-1">Combined AI Engine</p>
-                    <p className="text-xs text-grey-400 leading-relaxed">
-                      Evaluates rib prominence, spine contour, flank shadows, skin texture, udder symmetry, and posture in a single 10s video scan.
-                    </p>
-                  </div>
+            {/* Detailed Disease Screening Card */}
+            {(activeTab === 'all' || activeTab === 'disease') && diseaseResult && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                    <span>🩺</span> Live Disease & Health Screening
+                  </h3>
+                </div>
+                <DiseaseResultCard result={diseaseResult} />
+              </div>
+            )}
+
+            {/* Captured Snapshot Frame Preview */}
+            {capturedFrames.length > 0 && (
+              <div className="glass-card p-4 space-y-2 border border-white/10">
+                <p className="text-xs font-bold text-white">Live Captured Snapshot</p>
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {capturedFrames.map((url, idx) => (
+                    <img
+                      key={idx}
+                      src={url}
+                      alt={`Live frame ${idx + 1}`}
+                      className="h-24 rounded-lg object-cover bg-black border border-white/10"
+                    />
+                  ))}
                 </div>
               </div>
+            )}
 
-              <Disclaimer type="ai" />
+            <Disclaimer type="vet" />
+
+            {/* Combined Recommended Products */}
+            {combinedRecs.length > 0 && (
+              <div>
+                <h3 className="text-sm font-bold text-white mb-4">Recommended Products for Identified Live Status</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {combinedRecs.map(p => (
+                    <ProductCard
+                      key={p.id}
+                      product={p}
+                      reason="Suggested for cattle health based on live camera scan"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Info panel when idle */}
+        {!bcsResult && !diseaseResult && !isAnalyzing && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="glass-card p-5 space-y-3 border border-white/10">
+              <h3 className="text-xs font-extrabold text-white">How Real-Time Camera Scan Works</h3>
+              <ol className="space-y-2.5 text-xs text-grey-400">
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-emerald-400">1</span>
+                  Turn on live camera at top and align cattle in grid overlay
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-emerald-400">2</span>
+                  Click "START 10s LIVE SCAN"
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-emerald-400">3</span>
+                  Instant frame snapshot is analyzed and results update DIRECTLY BELOW the live video feed!
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-emerald-400">4</span>
+                  After 10 seconds, camera hardware automatically shuts OFF
+                </li>
+              </ol>
             </div>
-          )}
-        </div>
+
+            <div className="glass-card p-5 space-y-3 border border-emerald-500/20 bg-emerald-500/[0.02]">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">🩺</span>
+                <div>
+                  <p className="text-xs font-bold text-emerald-400 mb-1">Cattle & Buffalo AI Intelligence</p>
+                  <p className="text-xs text-grey-400 leading-relaxed">
+                    Evaluates ribs, spine, flank hollows, udder symmetry, coat condition, and posture directly from live camera feed.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Interactive AI Assistant */}
+      {/* Interactive AI Chatbot */}
       <ChatBot
-        requestId={state.requestId || undefined}
+        requestId={requestId || undefined}
         userId={user?.id}
         analysisType="combined"
-        analysisContext={{ bcs: state.bcsResult, disease: state.diseaseResult }}
+        analysisContext={{ bcs: bcsResult, disease: diseaseResult }}
       />
     </div>
   );

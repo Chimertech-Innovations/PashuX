@@ -115,6 +115,21 @@ export async function analyseCombined(
   });
 }
 
+export async function analyseInstantLive(
+  file: File,
+  userId?: string
+): Promise<CombinedAnalyseResponse & { frame_urls?: string[] }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (userId) formData.append('user_id', userId);
+
+  return request('/api/analyse-instant-live', {
+    method: 'POST',
+    body: formData,
+  });
+}
+
+
 
 // ── Chat ──────────────────────────────────────────────────────────────────────
 

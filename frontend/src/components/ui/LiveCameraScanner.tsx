@@ -2,10 +2,11 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface LiveCameraScannerProps {
   onFile: (file: File) => void;
+  onInstantSnapshot?: (file: File) => void;
   disabled?: boolean;
 }
 
-export default function LiveCameraScanner({ onFile, disabled }: LiveCameraScannerProps) {
+export default function LiveCameraScanner({ onFile, onInstantSnapshot, disabled }: LiveCameraScannerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -100,10 +101,27 @@ export default function LiveCameraScanner({ onFile, disabled }: LiveCameraScanne
       const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
       const file = new File([blob], `live_scan_10s.${ext}`, { type: mimeType });
       onFile(file);
-    } else {
-      setError('Recording failed to produce video data. Please try again.');
     }
   }, [onFile]);
+
+  // Capture instant snapshot frame from live video canvas
+  const captureSnapshot = useCallback(() => {
+    if (!videoRef.current || videoRef.current.videoWidth === 0) return;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(blob => {
+      if (blob && onInstantSnapshot) {
+        const file = new File([blob], 'live_camera_snapshot.jpg', { type: 'image/jpeg' });
+        onInstantSnapshot(file);
+      }
+    }, 'image/jpeg', 0.92);
+  }, [onInstantSnapshot]);
 
   // Start 10-second countdown and video recording
   const startScan = useCallback(() => {
@@ -112,6 +130,11 @@ export default function LiveCameraScanner({ onFile, disabled }: LiveCameraScanne
     recordedChunksRef.current = [];
     setTimeLeft(10.0);
     setIsRecording(true);
+
+    // Trigger instant snapshot capture 500ms into live stream
+    setTimeout(() => {
+      captureSnapshot();
+    }, 500);
 
     try {
       const options = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
@@ -128,7 +151,7 @@ export default function LiveCameraScanner({ onFile, disabled }: LiveCameraScanne
       mediaRecorder.onstop = handleStopRecording;
       mediaRecorder.start(200); // collect 200ms slice
     } catch (err: any) {
-      setError('MediaRecorder error on this browser. Falling back to snapshot mode.');
+      setError('MediaRecorder error on this browser. Snapshot mode active.');
     }
 
     const startTime = Date.now();
@@ -145,7 +168,7 @@ export default function LiveCameraScanner({ onFile, disabled }: LiveCameraScanne
         finishRecording();
       }
     }, 100);
-  }, [isCameraActive, handleDataAvailable, handleStopRecording, finishRecording]);
+  }, [isCameraActive, captureSnapshot, handleDataAvailable, handleStopRecording, finishRecording]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -175,10 +198,10 @@ export default function LiveCameraScanner({ onFile, disabled }: LiveCameraScanne
           </div>
           <div>
             <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-              Live Camera Scanner
-              <span className="badge-green text-[10px] uppercase font-bold tracking-wider">Auto 10s Limit</span>
+              Live Camera Stream
+              <span className="badge-green text-[10px] uppercase font-bold tracking-wider">10s Limit</span>
             </h3>
-            <p className="text-xs text-grey-400">Camera turns on for 10s, auto-shuts off, then performs BCS & Disease analysis</p>
+            <p className="text-xs text-grey-400">Live camera streams at top. Results update directly below in real-time.</p>
           </div>
         </div>
 
@@ -192,7 +215,7 @@ export default function LiveCameraScanner({ onFile, disabled }: LiveCameraScanne
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-emerald-400">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
             </svg>
-            Flip
+            Flip Camera
           </button>
         )}
       </div>
@@ -212,12 +235,12 @@ export default function LiveCameraScanner({ onFile, disabled }: LiveCameraScanne
           <div className="absolute inset-0 pointer-events-none border border-emerald-500/20 grid grid-cols-3 grid-rows-3">
             <div className="border-r border-b border-emerald-500/15" />
             <div className="border-r border-b border-emerald-500/15 flex items-center justify-center">
-              <div className="w-24 h-24 rounded-full border border-dashed border-emerald-400/40" />
+              <div className="w-24 h-24 rounded-full border border-dashed border-emerald-400/40 animate-pulse" />
             </div>
             <div className="border-b border-emerald-500/15" />
             <div className="border-r border-b border-emerald-500/15" />
             <div className="border-r border-b border-emerald-500/15 flex items-center justify-center">
-              <p className="text-[10px] text-emerald-400/70 font-mono uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded">
+              <p className="text-[10px] text-emerald-400 font-mono uppercase tracking-widest bg-black/60 px-3 py-1 rounded-full border border-emerald-500/30">
                 Align Cattle Spine & Flank
               </p>
             </div>
@@ -230,10 +253,10 @@ export default function LiveCameraScanner({ onFile, disabled }: LiveCameraScanne
 
         {/* Recording 10s Timer & Countdown Overlay */}
         {isRecording && (
-          <div className="absolute top-4 left-4 right-4 flex items-center justify-between bg-black/75 backdrop-blur-md px-4 py-2.5 rounded-xl border border-red-500/30 shadow-lg animate-pulse">
+          <div className="absolute top-4 left-4 right-4 flex items-center justify-between bg-black/80 backdrop-blur-md px-4 py-2.5 rounded-xl border border-red-500/30 shadow-lg animate-pulse">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-rose-500 animate-ping" />
-              <span className="text-xs font-black uppercase text-rose-400 tracking-wider">RECORDING LIVE 10s CLIP</span>
+              <span className="text-xs font-black uppercase text-rose-400 tracking-wider">LIVE SCANNING CATTLE</span>
             </div>
 
             <div className="flex items-center gap-3">
@@ -258,17 +281,17 @@ export default function LiveCameraScanner({ onFile, disabled }: LiveCameraScanne
               </svg>
             </div>
             <div>
-              <p className="text-sm font-extrabold text-white mb-1">Camera is Currently OFF</p>
+              <p className="text-sm font-extrabold text-white mb-1">Camera Off</p>
               <p className="text-xs text-grey-400 max-w-xs mx-auto">
-                Click below to turn on the camera. The camera will stay active for 10 seconds to scan the cattle, then automatically turn off.
+                Click below to turn on the live camera. The stream turns on for 10s and automatically shows BCS & Disease results below!
               </p>
             </div>
             <button
               onClick={startCameraStream}
               disabled={disabled}
-              className="btn-primary text-xs py-2.5 px-6 font-bold bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg"
+              className="btn-primary text-xs py-3 px-8 font-extrabold bg-gradient-to-r from-emerald-400 to-teal-500 text-black shadow-lg hover:scale-105 transition-all"
             >
-              📷 Open Camera Stream
+              📷 Turn On Live Camera
             </button>
           </div>
         )}
@@ -299,19 +322,27 @@ export default function LiveCameraScanner({ onFile, disabled }: LiveCameraScanne
             <button
               onClick={startScan}
               disabled={disabled}
-              className="btn-primary text-xs py-3 px-8 font-black bg-gradient-to-r from-emerald-400 to-teal-500 text-black shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:scale-105 transition-all flex items-center gap-2"
+              className="btn-primary text-xs py-3.5 px-8 font-black bg-gradient-to-r from-emerald-400 to-teal-500 text-black shadow-[0_0_25px_rgba(34,197,94,0.4)] hover:scale-105 transition-all flex items-center gap-2"
             >
               <span className="w-2.5 h-2.5 rounded-full bg-black animate-ping" />
               START 10s LIVE SCAN
             </button>
           ) : (
-            <button
-              onClick={finishRecording}
-              className="btn-secondary text-xs py-3 px-6 text-rose-400 border-rose-500/30 hover:bg-rose-500/10 font-bold flex items-center gap-2"
-            >
-              <span className="w-2 h-2 rounded-full bg-rose-500" />
-              Stop Early & Analyze
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={captureSnapshot}
+                disabled={disabled}
+                className="btn-secondary text-xs py-2 px-4 text-emerald-400 border-emerald-500/30 font-bold"
+              >
+                📸 Re-Snap Frame
+              </button>
+              <button
+                onClick={finishRecording}
+                className="btn-secondary text-xs py-2 px-4 text-rose-400 border-rose-500/30 font-bold"
+              >
+                Stop Camera
+              </button>
+            </div>
           )}
         </div>
       )}

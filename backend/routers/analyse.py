@@ -4,14 +4,16 @@ POST /api/analyse-bcs
 POST /api/analyse-disease
 """
 
+import os
 import logging
 import asyncio
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
 
 from models.schemas import AnalyseRequest, CombinedAnalyseRequest, AnalysisResultResponse
 import services.image_analysis as ai
 import services.supabase_service as db
-from services.video_processor import cleanup
+from services.video_processor import cleanup, process_video, process_image
+
 
 
 
@@ -184,4 +186,79 @@ async def analyse_combined(body: CombinedAnalyseRequest):
         "bcs_result": bcs_result.model_dump(),
         "disease_result": disease_result.model_dump(),
     }
+
+
+@router.post("/analyse-instant-live")
+async def analyse_instant_live(
+    file: UploadFile = File(...),
+    user_id: str = Form(None),
+):
+    """
+    Single-step live camera analysis endpoint.
+    Accepts live snapshot image or 10s video clip, cleans frames,
+    and runs concurrent BCS scoring & Disease screening in ONE call.
+    """
+    import uuid, tempfile, aiofiles
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file uploaded.")
+
+    request_id = str(uuid.uuid4())
+    work_dir = os.path.join(tempfile.gettempdir(), "chimertech_live", request_id)
+    os.makedirs(work_dir, exist_ok=True)
+
+    filename_lower = (file.filename or "").lower()
+    is_image = (
+        (file.content_type or "").startswith("image/")
+        or any(filename_lower.endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp"])
+    )
+
+    default_ext = ".jpg" if is_image else ".webm"
+    ext = os.path.splitext(file.filename or f"live_input{default_ext}")[1] or default_ext
+    media_path = os.path.join(work_dir, f"live_input{ext}")
+
+    async with aiofiles.open(media_path, "wb") as f:
+        await f.write(content)
+
+    try:
+        if is_image:
+            processed = process_image(media_path, work_dir)
+        else:
+            processed = process_video(media_path, work_dir)
+
+        frame_paths = [item["path"] for item in processed.get("frame_data", [])]
+        if not frame_paths:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No readable cattle frames found in live camera capture.")
+
+        bcs_task = ai.analyse_bcs(frame_paths)
+        disease_task = ai.analyse_disease(frame_paths)
+        bcs_result, disease_result = await asyncio.gather(bcs_task, disease_task)
+
+        # Storage & DB best effort
+        frame_urls = []
+        for fpath in frame_paths:
+            url = await db.upload_frame_to_storage(fpath, request_id, os.path.basename(fpath))
+            if url:
+                frame_urls.append(url)
+
+        try:
+            req = await db.create_analysis_request(user_id=user_id, analysis_type="combined", video_path=media_path)
+            request_id = req.get("id", request_id)
+            await db.save_analysis_result(request_id=request_id, analysis_type="bcs", result_json=bcs_result.model_dump())
+            await db.save_analysis_result(request_id=request_id, analysis_type="disease", result_json=disease_result.model_dump())
+            await db.update_request_status(request_id, "completed")
+        except Exception as exc:
+            logger.warning(f"DB save failed for instant live analysis: {exc}")
+
+        return {
+            "request_id": request_id,
+            "analysis_type": "combined",
+            "bcs_result": bcs_result.model_dump(),
+            "disease_result": disease_result.model_dump(),
+            "frame_urls": frame_urls,
+        }
+    finally:
+        cleanup(work_dir)
+
 

@@ -81,8 +81,8 @@ export default function LiveDetection() {
   const combinedRecs = Array.from(new Set([...bcsRecs, ...diseaseRecs]));
 
   return (
-    <div className="min-h-screen pt-24 pb-24 px-6">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen pt-20 sm:pt-24 pb-20 sm:pb-24 px-3 sm:px-6 max-w-full overflow-x-hidden">
+      <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
         {/* Page Header */}
         <div className="animate-fade-up">
           <div className="flex items-center gap-2 mb-3">

@@ -217,24 +217,24 @@ export default function LiveCameraScanner({ onFile, onInstantSnapshot, disabled 
   return (
     <div
       ref={containerRef}
-      className={`transition-all duration-300 ${
+      className={`transition-all duration-300 w-full max-w-full overflow-hidden ${
         isFullscreen
-          ? 'fixed inset-0 z-[99999] bg-black text-white p-4 sm:p-6 flex flex-col justify-between overflow-hidden'
-          : 'glass-card p-4 sm:p-6 space-y-4 sm:space-y-5 border border-slate-200 bg-white shadow-sm rounded-3xl animate-fade-in'
+          ? 'fixed inset-0 z-[99999] bg-black text-white p-3 sm:p-6 flex flex-col justify-between overflow-hidden'
+          : 'glass-card p-3.5 sm:p-6 space-y-4 sm:space-y-5 border border-slate-200 bg-white shadow-sm rounded-2xl sm:rounded-3xl animate-fade-in'
       }`}
     >
       {/* Top Controller Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 font-bold border border-emerald-200 shadow-sm">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+      <div className="flex items-center justify-between gap-2 sm:gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 font-bold border border-emerald-200 shadow-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 sm:w-5 sm:h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
             </svg>
           </div>
-          <div>
-            <h3 className={`text-sm sm:text-base font-extrabold flex items-center gap-2 ${isFullscreen ? 'text-white' : 'text-slate-900'}`}>
-              Live Camera Stream
-              <span className="badge-green text-[9px] sm:text-[10px] uppercase font-bold tracking-wider">10s Limit</span>
+          <div className="min-w-0">
+            <h3 className={`text-xs sm:text-base font-extrabold flex items-center gap-1.5 sm:gap-2 truncate ${isFullscreen ? 'text-white' : 'text-slate-900'}`}>
+              <span className="truncate">Live Camera Stream</span>
+              <span className="badge-green text-[8px] sm:text-[10px] uppercase font-bold tracking-wider flex-shrink-0">10s Limit</span>
             </h3>
             <p className={`text-xs font-bold hidden sm:block ${isFullscreen ? 'text-slate-300' : 'text-slate-600'}`}>
               Live camera streams at top. Results update directly below in real-time.
@@ -242,25 +242,25 @@ export default function LiveCameraScanner({ onFile, onInstantSnapshot, disabled 
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
           {isCameraActive && (
             <button
               onClick={toggleFacingMode}
               disabled={isRecording || disabled}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] sm:text-xs font-bold flex items-center gap-1 transition-all shadow-sm active:scale-95"
               title="Switch camera"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-emerald-600">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
               </svg>
-              <span className="hidden sm:inline">Flip</span>
+              <span>Flip</span>
             </button>
           )}
 
           {isCameraActive && (
             <button
               onClick={toggleFullscreen}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-sm ${
+              className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-extrabold flex items-center gap-1 transition-all shadow-sm active:scale-95 ${
                 isFullscreen
                   ? 'bg-rose-600 hover:bg-rose-700 text-white'
                   : 'bg-emerald-600 hover:bg-emerald-700 text-white'
@@ -268,17 +268,17 @@ export default function LiveCameraScanner({ onFile, onInstantSnapshot, disabled 
             >
               {isFullscreen ? (
                 <>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5 sm:w-4 sm:h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 9L4.5 4.5m0 0H9m-4.5 0V9m10.5 0l4.5-4.5m0 0H15m4.5 0V9M9 15l-4.5 4.5m0 0H9m-4.5 0v-4.5m10.5 0l4.5 4.5m0 0H15m4.5 0v-4.5" />
                   </svg>
-                  Exit Fullscreen
+                  <span>Exit</span>
                 </>
               ) : (
                 <>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5 sm:w-4 sm:h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
                   </svg>
-                  Full Screen
+                  <span>Full Screen</span>
                 </>
               )}
             </button>
@@ -286,11 +286,11 @@ export default function LiveCameraScanner({ onFile, onInstantSnapshot, disabled 
         </div>
       </div>
 
-      {/* Camera Viewport Container */}
-      <div className={`relative overflow-hidden bg-black flex items-center justify-center border border-slate-800 shadow-2xl transition-all ${
+      {/* Camera Viewport Container - Portrait View (3:4) on mobile, Landscape (16:9) on desktop */}
+      <div className={`relative w-full max-w-full overflow-hidden bg-black flex items-center justify-center border border-slate-800 shadow-2xl transition-all ${
         isFullscreen
           ? 'flex-1 w-full rounded-2xl my-2'
-          : 'rounded-2xl aspect-video sm:aspect-video min-h-[260px] sm:min-h-[380px]'
+          : 'rounded-2xl aspect-[3/4] sm:aspect-video'
       }`}>
         {/* Video Element */}
         <video

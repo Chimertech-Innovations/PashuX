@@ -214,11 +214,29 @@ const DEMO_REPORTS: ReportRecord[] = [
 export default function Admin() {
   const { isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState<'reports' | 'users' | 'testing'>('reports');
-  const [users, setUsers] = useState<UserRecord[]>(DEMO_USERS);
-  const [reports, setReports] = useState<ReportRecord[]>(DEMO_REPORTS);
+
+  // Initialize from sessionStorage cache for 0ms instant display on refresh
+  const [users, setUsers] = useState<UserRecord[]>(() => {
+    try {
+      const cached = sessionStorage.getItem('cached_admin_users');
+      return cached ? JSON.parse(cached) : DEMO_USERS;
+    } catch {
+      return DEMO_USERS;
+    }
+  });
+
+  const [reports, setReports] = useState<ReportRecord[]>(() => {
+    try {
+      const cached = sessionStorage.getItem('cached_admin_reports');
+      return cached ? JSON.parse(cached) : DEMO_REPORTS;
+    } catch {
+      return DEMO_REPORTS;
+    }
+  });
+
   const [loading, setLoading] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<ReportRecord | null>(null);
   const [collapsedReports, setCollapsedReports] = useState<Set<string>>(new Set());
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [useTestingData, setUseTestingData] = useState<boolean>(false);
 
@@ -235,58 +253,96 @@ export default function Admin() {
 
         if (!isMounted) return;
 
-        const fetchedUsers: UserRecord[] = (usersRes.users || []).map((u: any) => ({
-          id: u.id,
-          email: u.email,
-          full_name: u.full_name || u.email.split('@')[0],
-          created_at: u.created_at || new Date().toISOString(),
-          role: u.role || 'user',
-          total_scans: u.total_scans || 0,
-        }));
+        const fetchedUsers: UserRecord[] = (usersRes.users || []).map((u: any) => {
+          const email = u.email || 'user@chimertech.ai';
+          let name = u.full_name;
+          if (!name || name.trim() === '' || name === 'Registered User') {
+            name = email.split('@')[0].toUpperCase();
+          }
+          return {
+            id: u.id,
+            email: email,
+            full_name: name,
+            created_at: u.created_at || new Date().toISOString(),
+            role: u.role || 'user',
+            total_scans: u.total_scans || 0,
+          };
+        });
 
         const fetchedReports: ReportRecord[] = (reportsRes.reports || []).map((r: any) => {
-          const res = r.analysis_results?.[0] || {};
-          const resJson = res.result_json || {};
+          const resList: any[] = r.analysis_results || [];
+          
+          // Find bcs score & confidence if present in any result item
+          const bcsItem = resList.find((x: any) => x.bcs_score != null) || resList[0] || {};
+          const bcsJson = bcsItem.result_json || {};
+
+          // Find disease condition & severity if present in any result item
+          const diseaseItem = resList.find((x: any) => x.possible_condition != null) || resList.find((x: any) => x !== bcsItem) || resList[0] || {};
+          const diseaseJson = diseaseItem.result_json || {};
+
           const framesList: FrameItem[] = (r.selected_frames || []).map((f: any) => ({
             url: f.frame_url,
             clarity: f.clarity_score,
             number: f.frame_number,
           }));
 
+          const allObs: string[] = Array.from(new Set([
+            ...(bcsItem.observations || bcsJson.observations || []),
+            ...(diseaseItem.observations || diseaseJson.observations || diseaseJson.visible_signs || []),
+          ]));
+
+          const allRecs: string[] = Array.from(new Set([
+            ...(bcsItem.recommendations || bcsJson.recommendations || []),
+            ...(diseaseItem.recommendations || diseaseJson.recommendations || diseaseJson.next_steps || []),
+          ]));
+
+          const aiReply = bcsJson.ai_summary || diseaseJson.ai_summary || bcsJson.condition || diseaseJson.possible_condition || 'Detailed AI scan analysis completed.';
+
+          const recProducts = bcsJson.recommended_products || diseaseJson.recommended_products || [
+            { id: 'p_default_1', name: 'Chimertech Bovine Mineral Pack', category: 'Supplements', price: 650, description: 'Essential daily mineral supplement for overall cattle health.' },
+            { id: 'p_default_2', name: 'Herbal Udder Care Spray 500ml', category: 'Udder Care', price: 640, description: 'Natural antibacterial spray for udder hygiene.' }
+          ];
+
+          const userEmail = r.users?.email || (r.user_id ? 'user@chimertech.ai' : 'Guest / Unregistered');
+          let userName = r.users?.full_name;
+          if (!userName || userName === 'Guest User' || userName === 'Registered User') {
+            userName = r.users?.email ? r.users.email.split('@')[0].toUpperCase() : (userEmail !== 'Guest / Unregistered' ? userEmail.split('@')[0].toUpperCase() : 'Guest User');
+          }
+
           return {
             id: r.id,
             user_id: r.user_id,
-            user_email: r.users?.email || 'Guest / Unregistered',
-            user_name: r.users?.full_name || 'Guest User',
+            user_email: userEmail,
+            user_name: userName,
             analysis_type: r.analysis_type || 'bcs',
             processing_status: r.processing_status || 'completed',
-            created_at: r.created_at,
+            created_at: r.created_at || new Date().toISOString(),
             video_url: r.original_video_url || '',
             frames: framesList.length > 0 ? framesList : [
               { url: 'https://images.unsplash.com/photo-1570042707227-2c937108ecf6?w=600&auto=format&fit=crop&q=60', number: 1, clarity: 180 },
               { url: 'https://images.unsplash.com/photo-1546445317-29f4545f9d52?w=600&auto=format&fit=crop&q=60', number: 2, clarity: 175 },
               { url: 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=600&auto=format&fit=crop&q=60', number: 3, clarity: 165 },
             ],
-            bcs_score: res.bcs_score ?? resJson.bcs_score,
-            bcs_confidence: res.confidence ?? resJson.confidence,
-            possible_condition: res.possible_condition ?? resJson.possible_condition,
-            disease_confidence: res.confidence ?? resJson.confidence,
-            severity: res.severity ?? resJson.severity,
-            observations: res.observations || resJson.observations || resJson.visible_signs || [],
-            recommendations: res.recommendations || resJson.recommendations || resJson.next_steps || [],
-            ai_reply: resJson.ai_summary || resJson.condition || 'Detailed AI scan analysis completed.',
-            recommended_products: resJson.recommended_products || [
-              { id: 'p_default_1', name: 'Chimertech Bovine Mineral Pack', category: 'Supplements', price: 650, description: 'Essential daily mineral supplement.' },
-            ],
+            bcs_score: bcsItem.bcs_score ?? bcsJson.bcs_score,
+            bcs_confidence: bcsItem.confidence ?? bcsJson.confidence,
+            possible_condition: diseaseItem.possible_condition ?? diseaseJson.possible_condition,
+            disease_confidence: diseaseItem.confidence ?? diseaseJson.confidence,
+            severity: diseaseItem.severity ?? diseaseJson.severity,
+            observations: allObs,
+            recommendations: allRecs,
+            ai_reply: aiReply,
+            recommended_products: recProducts,
           };
         });
 
         if (fetchedUsers.length > 0) {
           setUsers(fetchedUsers);
+          try { sessionStorage.setItem('cached_admin_users', JSON.stringify(fetchedUsers)); } catch {}
         }
 
         if (fetchedReports.length > 0) {
           setReports(fetchedReports);
+          try { sessionStorage.setItem('cached_admin_reports', JSON.stringify(fetchedReports)); } catch {}
         }
       } catch (err) {
         console.warn('Backend admin fetch failed, retaining active demo dataset:', err);
@@ -299,9 +355,16 @@ export default function Admin() {
     return () => { isMounted = false; };
   }, [apiBase]);
 
-  const activeReportsList = useTestingData || reports.length === 0 ? DEMO_REPORTS : reports;
-  const activeUsersList = useTestingData || users.length === 0 ? DEMO_USERS : users;
+  // Combine DB and Demo reports if desired, sorting newest first
+  const activeReportsList = useTestingData
+    ? DEMO_REPORTS
+    : [...reports, ...DEMO_REPORTS.filter(d => !reports.some(r => r.id === d.id))].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
 
+  const activeUsersList = useTestingData
+    ? DEMO_USERS
+    : [...users, ...DEMO_USERS.filter(d => !users.some(u => u.id === d.id))];
 
   const totalScans = activeReportsList.length;
   const bcsCount = activeReportsList.filter(r => r.analysis_type === 'bcs' || r.bcs_score !== undefined).length;
@@ -570,15 +633,22 @@ export default function Admin() {
                             <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
                               {report.frames && report.frames.length > 0 ? (
                                 report.frames.map((frame, idx) => (
-                                  <div key={idx} className="relative group rounded-lg overflow-hidden border border-slate-700 bg-slate-950">
+                                  <div
+                                    key={idx}
+                                    onClick={() => setPreviewImage(frame.url)}
+                                    className="relative group rounded-lg overflow-hidden border border-slate-700 bg-slate-950 cursor-pointer hover:border-emerald-400 transition-all"
+                                  >
                                     <img
                                       src={frame.url}
                                       alt={`Frame ${idx + 1}`}
-                                      className="w-full h-20 object-cover group-hover:scale-105 transition-transform"
+                                      className="w-full h-20 object-cover group-hover:scale-110 transition-transform"
                                     />
                                     <span className="absolute bottom-1 right-1 bg-black/80 text-[9px] font-mono text-emerald-400 px-1.5 py-0.5 rounded">
                                       #{frame.number || idx + 1}
                                     </span>
+                                    <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                      <span className="text-[10px] font-extrabold text-white bg-black/70 px-2 py-0.5 rounded-full">🔍 Zoom</span>
+                                    </div>
                                   </div>
                                 ))
                               ) : (
@@ -730,6 +800,24 @@ export default function Admin() {
         )}
 
       </div>
+
+      {/* Frame Image Modal Lightbox */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl border border-slate-700 shadow-2xl bg-slate-950 p-2">
+            <img src={previewImage} alt="Extracted Cattle Frame Full Preview" className="w-full h-full object-contain max-h-[82vh] rounded-xl" />
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-4 right-4 bg-slate-900/90 hover:bg-slate-800 text-white font-extrabold text-xs px-4 py-2 rounded-full border border-slate-700 shadow-lg transition-all"
+            >
+              ✕ Close Lightbox
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

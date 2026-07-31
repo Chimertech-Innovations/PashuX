@@ -256,8 +256,23 @@ async def get_analysis_history(user_id: str) -> list:
 async def get_all_users() -> list:
     sb = get_client()
     try:
-        users = sb.table("users").select("*").order("created_at", desc=True).execute().data
-    except Exception:
+        users = sb.table("users").select("*").order("created_at", desc=True).execute().data or []
+        reqs = sb.table("analysis_requests").select("user_id").execute().data or []
+        
+        # Count scans per user in-memory (O(N) single pass)
+        scan_counts = {}
+        for r in reqs:
+            uid = r.get("user_id")
+            if uid:
+                scan_counts[uid] = scan_counts.get(uid, 0) + 1
+
+        for u in users:
+            u_id = u.get("id")
+            u["total_scans"] = scan_counts.get(u_id, 0)
+            if not u.get("full_name") and u.get("email"):
+                u["full_name"] = u.get("email").split("@")[0].capitalize()
+    except Exception as exc:
+        logger.warning(f"Error fetching all users for admin: {exc}")
         users = []
     return users
 
@@ -265,35 +280,80 @@ async def get_all_users() -> list:
 async def get_all_reports() -> list:
     sb = get_client()
     try:
-        reqs = sb.table("analysis_requests").select("*").order("created_at", desc=True).execute().data or []
+        # Try 1-query nested relation select first
+        try:
+            reqs = (
+                sb.table("analysis_requests")
+                .select("*, analysis_results(*), selected_frames(*), chat_messages(*)")
+                .order("created_at", desc=True)
+                .execute()
+                .data or []
+            )
+            has_relations = len(reqs) > 0 and ("analysis_results" in reqs[0] or "selected_frames" in reqs[0])
+        except Exception:
+            reqs = []
+            has_relations = False
+
+        # Fallback to 5 bulk queries if nested select fails or lacks relation keys
+        if not has_relations:
+            reqs = sb.table("analysis_requests").select("*").order("created_at", desc=True).execute().data or []
+            if not reqs:
+                return []
+
+            # Bulk fetch all child tables in parallel batch
+            results_data = sb.table("analysis_results").select("*").execute().data or []
+            frames_data  = sb.table("selected_frames").select("*").execute().data or []
+            chats_data   = sb.table("chat_messages").select("*").execute().data or []
+
+            # Group by request_id in memory
+            results_by_req = {}
+            for res in results_data:
+                rid = res.get("request_id")
+                if rid:
+                    results_by_req.setdefault(rid, []).append(res)
+
+            frames_by_req = {}
+            for frm in frames_data:
+                rid = frm.get("request_id")
+                if rid:
+                    frames_by_req.setdefault(rid, []).append(frm)
+
+            chats_by_req = {}
+            for ch in chats_data:
+                rid = ch.get("request_id")
+                if rid:
+                    chats_by_req.setdefault(rid, []).append(ch)
+
+            for req in reqs:
+                rid = req.get("id")
+                req["analysis_results"] = results_by_req.get(rid, [])
+                req["selected_frames"]  = frames_by_req.get(rid, [])
+                req["chat_messages"]    = chats_by_req.get(rid, [])
+
+        # Bulk fetch user profiles for mapping
+        users_data = sb.table("users").select("id, full_name, email").execute().data or []
+        user_map = {u["id"]: u for u in users_data if u.get("id")}
+
         for req in reqs:
-            req_id = req.get("id")
             u_id = req.get("user_id")
-            
-            # Fetch results
-            res_data = sb.table("analysis_results").select("*").eq("request_id", req_id).execute().data or []
-            req["analysis_results"] = res_data
-            
-            # Fetch frames
-            frames_data = sb.table("selected_frames").select("*").eq("request_id", req_id).order("frame_number").execute().data or []
-            req["selected_frames"] = frames_data
-
-            # Fetch chat messages
-            chats_data = sb.table("chat_messages").select("*").eq("request_id", req_id).order("created_at").execute().data or []
-            req["chat_messages"] = chats_data
-
-            # Fetch user info
-            if u_id:
-                try:
-                    u_data = sb.table("users").select("full_name, email").eq("id", u_id).limit(1).execute().data
-                    if u_data:
-                        req["users"] = u_data[0]
-                    else:
-                        req["users"] = {"full_name": "Registered User", "email": "user@chimertech.ai"}
-                except Exception:
-                    req["users"] = {"full_name": "Registered User", "email": "user@chimertech.ai"}
+            if u_id and u_id in user_map:
+                u_info = user_map[u_id]
+                em = u_info.get("email") or "user@chimertech.ai"
+                fn = u_info.get("full_name")
+                if not fn or fn.strip() == "":
+                    fn = em.split("@")[0].capitalize()
+                req["users"] = {"full_name": fn, "email": em}
+            elif u_id:
+                req["users"] = {"full_name": "Registered User", "email": "user@chimertech.ai"}
             else:
                 req["users"] = {"full_name": "Guest User", "email": "guest@chimertech.ai"}
+
+            # Ensure frames and chats are sorted
+            if req.get("selected_frames"):
+                req["selected_frames"].sort(key=lambda x: x.get("frame_number", 0))
+            if req.get("chat_messages"):
+                req["chat_messages"].sort(key=lambda x: x.get("created_at", ""))
+
         return reqs
     except Exception as exc:
         logger.warning(f"Error fetching all reports for admin: {exc}")

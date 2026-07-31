@@ -1,90 +1,59 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const IHERD_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.chimertech.iherd&hl=en_IN';
 
-const BENEFITS = [
+const ACCORDION_ITEMS = [
   {
+    id: 'bcs',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-emerald-600">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
       </svg>
     ),
-    title: 'Video-based Analysis',
-    desc: 'Upload up to 60 seconds of cattle footage for deep AI analysis'
+    title: 'Real-time Cattle BCS Data',
+    desc: 'Extract high-precision Body Condition Scores (BCS 1.0 to 5.0 scale) and key visual observations from 10-second camera video streams.',
   },
   {
+    id: 'disease',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 20.25h12m-12-16.5h12M3.75 6v12m16.5-12v12M9 3.75v16.5m6-16.5v16.5" />
-      </svg>
-    ),
-    title: 'Automatic Frame Extraction',
-    desc: 'Extracts high-frequency anatomical frames from video footage'
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-      </svg>
-    ),
-    title: 'Blur Frame Removal',
-    desc: 'Filters out motion-blurred shots using edge sharpness operators'
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5" />
-      </svg>
-    ),
-    title: 'Duplicate Frame Removal',
-    desc: 'Perceptual hashing eliminates near-identical shots'
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-      </svg>
-    ),
-    title: 'AI-assisted BCS Scoring',
-    desc: 'Chimertech AI Engine scores body condition on a 1-5 scale'
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-blue-600">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
       </svg>
     ),
-    title: 'Disease-Risk Screening',
-    desc: 'Detects visible signs of mastitis, skin conditions, and lameness'
+    title: 'Early Disease Risk Screening',
+    desc: 'Screen for early visual signs of mastitis, skin lesions, locomotion issues, and udder inflammation to prevent yield loss.',
   },
   {
+    id: 'products',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-1.006-.921 7.218 7.218 0 00.975-2.88 8.01 8.01 0 01-2.379-5.169c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
-      </svg>
-    ),
-    title: 'Farmer-friendly Chatbot',
-    desc: 'Ask questions about your results in plain language'
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-amber-600">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
       </svg>
     ),
-    title: 'Product Recommendations',
-    desc: 'Targeted NutraKine Gain, Liver Tonic, Phos+, Milk Booster & Calcdex products'
+    title: 'Chimertech Veterinary Product Recommendations',
+    desc: 'Automated clinical protocols pairing NutraKine Gain, Liver Tonic, Phos+, Milk Booster, and Calcdex with BCS score diagnoses.',
+  },
+  {
+    id: 'openai',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-indigo-600">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+      </svg>
+    ),
+    title: 'OpenAI Vision Powered & PDF Export',
+    desc: 'Powered by GPT-4 Vision frame extraction. Generate and download instant professional English PDF reports for herd records.',
   },
 ];
 
-const ACTION_CARDS = [
+const ANALYSIS_MODULES = [
   {
     title: 'Live 10s BCS & Disease Scan',
     desc: 'Turn on camera for 10 seconds. Auto-stops stream and delivers instant dual BCS scoring & disease screening results.',
     to: '/live',
     image: '/card_live.png',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-emerald-700">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
       </svg>
     ),
@@ -92,11 +61,11 @@ const ACTION_CARDS = [
   },
   {
     title: 'Cattle BCS Score Detection',
-    desc: 'Analyse body condition on the 1-5 scale. Get feeding and management recommendations tailored to your cattle.',
+    desc: 'Analyse body condition on the 1–5 scale. Get feeding and management recommendations tailored to your cattle.',
     to: '/bcs',
     image: '/card_bcs.png',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-emerald-700">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
@@ -108,7 +77,7 @@ const ACTION_CARDS = [
     to: '/disease',
     image: '/card_disease.png',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-emerald-700">
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
       </svg>
     ),
@@ -117,97 +86,206 @@ const ACTION_CARDS = [
 ];
 
 export default function Landing() {
-  return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6 overflow-hidden bg-white border-b border-slate-200">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+  const [activeAccordion, setActiveAccordion] = useState<string>('bcs');
 
-        <div className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Left Column */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 border border-emerald-300 animate-fade-in shadow-sm">
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans overflow-x-hidden">
+      {/* SECTION 1: HERO SECTION (Populated STRICTLY with PashuX Project Data) */}
+      <section className="relative pt-28 sm:pt-32 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden bg-gradient-to-b from-sky-50/60 via-white to-slate-50 border-b border-slate-200">
+        {/* Soft Radial Background Glow */}
+        <div className="absolute top-10 right-10 w-[300px] sm:w-[700px] h-[300px] sm:h-[700px] bg-gradient-to-br from-cyan-400/20 via-sky-300/15 to-emerald-300/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[250px] sm:w-[500px] h-[250px] sm:h-[500px] bg-gradient-to-tr from-sky-200/20 to-teal-300/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          {/* Left Column: Text & CTAs with Project Data */}
+          <div className="lg:col-span-6 space-y-5 sm:space-y-6 text-left">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 border border-emerald-300 animate-fade-in shadow-sm">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
-              <span className="text-xs font-black text-slate-900 tracking-wide uppercase">Powered by OpenAI Vision</span>
+              <span className="text-[11px] sm:text-xs font-black text-slate-900 tracking-wide uppercase">PashuX AI • OpenAI Vision Inside</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.12] tracking-tight">
-              AI–Powered
-              <br />
-              <span className="text-emerald-700">Cattle Health</span>
-              <br />
-              <span className="text-emerald-700">Intelligence</span>
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.12] tracking-tight">
+              Cattle Health & BCS AI Intelligence
             </h1>
 
-            <p className="text-base sm:text-lg text-slate-900 font-bold max-w-xl leading-relaxed">
-              Analyse cattle body condition, identify visible health risks and receive targeted product recommendations from Chimertech.
+            <p className="text-sm sm:text-lg text-slate-700 font-bold leading-relaxed max-w-xl">
+              Analyse cattle body condition scores (BCS 1-5 scale), detect early disease risks, and receive targeted product recommendations from Chimertech with our 10-second camera AI scanner.
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <Link to="/bcs" className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-7 py-3.5 rounded-2xl shadow-xl shadow-emerald-600/25 transition-all text-sm hover:scale-105">
-                Start BCS Analysis
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-1">
+              <Link
+                to="/live"
+                className="w-full sm:w-auto text-center px-7 py-3.5 sm:py-4 rounded-2xl bg-[#0f172a] hover:bg-slate-800 text-white font-black text-xs sm:text-sm shadow-xl shadow-slate-900/20 hover:scale-105 transition-all flex items-center justify-center gap-2"
+              >
+                <span>Start Live 10s Camera Scan</span>
               </Link>
-              <Link to="/disease" className="bg-white hover:bg-slate-100 text-slate-900 font-black px-7 py-3.5 rounded-2xl border-2 border-slate-300 shadow-md transition-all text-sm hover:scale-105">
-                Disease Detection
-              </Link>
+
               <a
                 href={IHERD_PLAY_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white hover:bg-slate-50 text-slate-900 font-black px-7 py-3.5 rounded-2xl border-2 border-emerald-300 shadow-md transition-all text-sm flex items-center gap-2.5 hover:scale-105 hover:border-emerald-500"
+                className="w-full sm:w-auto text-center px-6 py-3.5 sm:py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-900 border-2 border-slate-300 font-black text-xs sm:text-sm shadow-md hover:scale-105 transition-all flex items-center justify-center gap-2.5"
               >
-                <img src="/iherd_logo.png" alt="iHerd Logo" className="w-5 h-5 rounded-md object-contain bg-slate-50 p-0.5 border border-slate-200" />
-                <span>Download iHerd App</span>
+                <img src="/iherd_logo.png" alt="iHerd Logo" className="w-5 h-5 rounded-md object-contain" />
+                <span>Get iHerd App</span>
               </a>
-            </div>
-
-            {/* Stats row */}
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-200 max-w-md">
-              {[
-                ['1-5 BCS', 'Score scale'],
-                ['Top 10', 'Frames selected'],
-                ['99.2%', 'Precision accuracy']
-              ].map(([val, label]) => (
-                <div key={label} className="bg-slate-100 p-3 rounded-2xl border border-slate-300 text-center shadow-sm">
-                  <p className="text-base sm:text-lg font-black text-slate-900 mb-0.5">{val}</p>
-                  <p className="text-[11px] font-black text-slate-900">{label}</p>
-                </div>
-              ))}
             </div>
           </div>
 
-          {/* Right Column: Cattle Hero Image with Premium Radius */}
-          <div className="lg:col-span-5 relative flex items-center justify-center">
-            <div className="absolute w-[360px] h-[360px] sm:w-[440px] sm:h-[440px] bg-gradient-to-tr from-emerald-400/30 via-teal-300/25 to-emerald-200/15 rounded-[3.5rem] blur-3xl pointer-events-none" />
+          {/* Right Column: Premium iPhone Mockups Overlapping */}
+          <div className="lg:col-span-6 relative flex justify-center items-center overflow-hidden py-4">
+            {/* Background Glow Aura */}
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/30 to-sky-400/30 rounded-full blur-3xl scale-95" />
 
-            <div className="relative aspect-square w-full max-w-md p-3.5 rounded-[2.8rem] bg-gradient-to-b from-white/95 via-emerald-50/60 to-white/90 border-2 border-emerald-300 shadow-2xl shadow-emerald-950/20 overflow-hidden backdrop-blur-xl group hover:border-emerald-500 transition-all duration-500">
-              <img
-                src="/cattle_hero.png"
-                alt="AI-Powered Cattle Health Intelligence"
-                className="w-full h-full object-cover rounded-[2.2rem] filter drop-shadow-md group-hover:scale-105 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 rounded-[2.8rem] ring-1 ring-inset ring-white/60 pointer-events-none" />
+            <div className="relative w-full max-w-lg h-[440px] sm:h-[520px] flex items-center justify-center scale-[0.82] sm:scale-100 origin-center transition-transform">
+              {/* Rear iPhone: Live Camera Stream Mockup */}
+              <div className="absolute left-2 sm:left-8 top-6 w-[220px] sm:w-[260px] rounded-[44px] bg-slate-900 p-2.5 sm:p-3 shadow-2xl border-4 border-slate-800 -rotate-6 transition-transform hover:-rotate-3 duration-500">
+                <div className="relative rounded-[36px] overflow-hidden bg-black aspect-[9/19.5] border border-slate-700 shadow-inner">
+                  {/* Dynamic Island */}
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 sm:w-20 h-3.5 sm:h-4 bg-black rounded-full z-30" />
+                  
+                  {/* Phone Header */}
+                  <div className="pt-7 px-3 sm:px-4 pb-2 bg-slate-900/90 backdrop-blur-sm border-b border-slate-800 text-white flex items-center justify-between text-xs z-20 relative">
+                    <span className="font-black tracking-wider text-emerald-400 text-[10px] sm:text-[11px]">PashuX AI Scanner</span>
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                  </div>
+
+                  {/* Cattle Image on Screen */}
+                  <img
+                    src="/pashux_phone_camera.png"
+                    alt="PashuX Live Camera Screen"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+
+              {/* Front iPhone: Diagnostic Result Card Mockup */}
+              <div className="absolute right-2 sm:right-8 top-0 w-[230px] sm:w-[275px] rounded-[44px] bg-slate-900 p-2.5 sm:p-3 shadow-2xl border-4 border-slate-800 rotate-3 z-10 transition-transform hover:rotate-0 duration-500">
+                <div className="relative rounded-[36px] overflow-hidden bg-slate-50 aspect-[9/19.5] border border-slate-300 flex flex-col">
+                  {/* Dynamic Island */}
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 sm:w-20 h-3.5 sm:h-4 bg-black rounded-full z-30" />
+
+                  {/* Phone Header App Name */}
+                  <div className="pt-7 px-3 sm:px-4 pb-2 bg-white border-b border-slate-200 text-slate-900 flex items-center justify-between z-20">
+                    <div className="flex items-center gap-1.5">
+                      <img src="/chimertech_logo.png" alt="Logo" className="w-3.5 sm:w-4 h-3.5 sm:h-4 object-contain" />
+                      <span className="font-black text-xs tracking-tight">PashuX</span>
+                    </div>
+                    <span className="text-[9px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">BCS 3.5</span>
+                  </div>
+
+                  {/* Cattle Image & Live UI */}
+                  <div className="relative flex-1 bg-slate-100 overflow-hidden">
+                    <img
+                      src="/pashux_phone_bcs.png"
+                      alt="PashuX BCS Diagnostic Screen"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Choose Your Analysis - Premium Cards with Realistic Imagery */}
-      <section className="py-16 px-6 max-w-7xl mx-auto">
-        <div className="text-center max-w-xl mx-auto mb-12">
-          <p className="section-label mb-2 text-slate-900 font-black">Module Selection</p>
-          <h2 className="text-display font-black text-slate-900">Choose your analysis</h2>
-          <p className="text-sm text-slate-900 font-bold">Select the type of analysis you want to perform.</p>
+      {/* SECTION 2: ACCORDION FEATURE LIST WITH PHONE PODIUM (Spike Screenshot 2 Style) */}
+      <section className="py-16 sm:py-24 px-4 sm:px-6 bg-slate-50 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          {/* Left Column: Accordion Features */}
+          <div className="lg:col-span-6 space-y-4 text-left">
+            <p className="text-xs font-black uppercase tracking-widest text-emerald-700 mb-1">PLATFORM CAPABILITIES</p>
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight mb-6 sm:mb-8">
+              Everything you need to monitor cattle health in real-time
+            </h2>
+
+            <div className="space-y-3">
+              {ACCORDION_ITEMS.map((item) => {
+                const isOpen = activeAccordion === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    className={`rounded-2xl border transition-all duration-300 bg-white overflow-hidden shadow-sm ${
+                      isOpen ? 'border-sky-300 shadow-md ring-2 ring-sky-100' : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <button
+                      onClick={() => setActiveAccordion(isOpen ? '' : item.id)}
+                      className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-3 font-black text-slate-900 text-sm sm:text-base"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-slate-100 border border-slate-200 flex-shrink-0">
+                          {item.icon}
+                        </div>
+                        <span className="text-slate-900 font-black">{item.title}</span>
+                      </div>
+                      <span className="text-lg font-bold text-slate-400">
+                        {isOpen ? '−' : '+'}
+                      </span>
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-0 text-xs sm:text-sm font-bold text-slate-600 leading-relaxed border-t border-slate-100">
+                        {item.desc}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Column: Phone Podium Container */}
+          <div className="lg:col-span-6 flex justify-center items-center py-4">
+            <div className="relative w-full max-w-md h-[400px] sm:h-[480px] rounded-[36px] sm:rounded-[48px] bg-gradient-to-b from-sky-100/90 via-sky-50 to-teal-50 border border-sky-200 p-6 sm:p-8 flex items-center justify-center shadow-xl overflow-hidden">
+              {/* Background Circular Rings */}
+              <div className="absolute w-[280px] sm:w-[360px] h-[280px] sm:h-[360px] rounded-full border border-sky-300/60 pointer-events-none animate-pulse" />
+              <div className="absolute w-[220px] sm:w-[280px] h-[220px] sm:h-[280px] rounded-full border-2 border-sky-400/40 pointer-events-none" />
+
+              {/* Centered Phone Screen with PashuX App Name */}
+              <div className="relative w-[210px] sm:w-[240px] rounded-[40px] bg-slate-900 p-2.5 sm:p-3 shadow-2xl border-4 border-slate-800 z-10">
+                <div className="relative rounded-[32px] overflow-hidden bg-white aspect-[9/19] border border-slate-200 flex flex-col">
+                  {/* Dynamic Island */}
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 w-14 sm:w-16 h-3.5 bg-black rounded-full z-30" />
+
+                  {/* Phone Header */}
+                  <div className="pt-6 px-3 pb-2 bg-white border-b border-slate-200 flex items-center justify-between z-20">
+                    <span className="text-xs font-black text-slate-900 tracking-tight flex items-center gap-1">
+                      <img src="/chimertech_logo.png" alt="Logo" className="w-3.5 h-3.5 object-contain" />
+                      PashuX
+                    </span>
+                    <span className="text-[9px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">ACTIVE</span>
+                  </div>
+
+                  {/* Image Display */}
+                  <div className="relative flex-1 bg-slate-50">
+                    <img
+                      src="/pashux_phone_bcs.png"
+                      alt="PashuX Screen on Podium"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3: CHOOSE YOUR ANALYSIS (Original 3-Card Design with Real Cattle Images) */}
+      <section className="py-20 px-6 max-w-7xl mx-auto">
+        <div className="text-center max-w-xl mx-auto mb-12 space-y-2">
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Choose your analysis</h2>
+          <p className="text-sm font-bold text-slate-600">Select the type of analysis you want to perform.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {ACTION_CARDS.map(card => (
+          {ANALYSIS_MODULES.map(card => (
             <Link
               key={card.to}
               to={card.to}
-              className="glass-card bg-white border border-slate-300 rounded-[2rem] flex flex-col justify-between overflow-hidden group hover:border-emerald-500 hover:shadow-2xl transition-all duration-300"
+              className="glass-card bg-white border border-slate-300 rounded-[2rem] flex flex-col justify-between overflow-hidden group hover:border-emerald-500 hover:shadow-2xl transition-all duration-300 text-left"
             >
               {/* Card Image Banner */}
               <div className="relative h-48 w-full overflow-hidden bg-slate-100 border-b border-slate-200">
@@ -217,8 +295,8 @@ export default function Landing() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[11px] font-black bg-white/95 backdrop-blur-md text-slate-950 border border-emerald-300 shadow-md flex items-center gap-1.5">
-                  <span className="text-emerald-700">{card.icon}</span>
-                  {card.tag}
+                  {card.icon}
+                  <span>{card.tag}</span>
                 </div>
               </div>
 
@@ -227,12 +305,12 @@ export default function Landing() {
                   <h3 className="text-lg font-black text-slate-900 mb-2 group-hover:text-emerald-700 transition-colors">
                     {card.title}
                   </h3>
-                  <p className="text-xs text-slate-900 font-bold leading-relaxed">
+                  <p className="text-xs text-slate-600 font-bold leading-relaxed">
                     {card.desc}
                   </p>
                 </div>
 
-                <div className="pt-2 flex items-center gap-2 text-xs font-black text-emerald-800 group-hover:text-emerald-900">
+                <div className="pt-2 flex items-center gap-2 text-xs font-black text-emerald-700 group-hover:text-emerald-800">
                   <span>Get started</span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4 group-hover:translate-x-1 transition-transform">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -241,33 +319,6 @@ export default function Landing() {
               </div>
             </Link>
           ))}
-        </div>
-      </section>
-
-      {/* Platform Features Grid */}
-      <section className="py-20 px-6 bg-white border-t border-slate-200">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-xl mx-auto mb-16">
-            <p className="section-label mb-2 text-slate-900 font-black">Capabilities</p>
-            <h2 className="text-display font-black text-slate-900 mb-3">
-              Everything you need to monitor cattle health
-            </h2>
-            <p className="text-sm text-slate-900 font-bold">
-              Powerful AI tools designed for accurate insights and smarter livestock management.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {BENEFITS.map((b, i) => (
-              <div key={i} className="glass-card p-6 bg-white border border-slate-300 hover:border-emerald-400 transition-all rounded-3xl shadow-sm">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-900 flex items-center justify-center mb-4 border border-emerald-300">
-                  {b.icon}
-                </div>
-                <h3 className="text-base font-black text-slate-900 mb-2">{b.title}</h3>
-                <p className="text-xs text-slate-900 font-bold leading-relaxed">{b.desc}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
     </div>

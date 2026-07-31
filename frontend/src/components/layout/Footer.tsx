@@ -10,7 +10,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-1 md:col-span-2 space-y-4 text-left">
             <div className="flex items-center">
-              <img src="/pashux_logo.png" alt="PashuX Logo" className="h-9 w-auto object-contain" />
+              <img src="/pashux_logo.png" alt="PashuX Logo" className="h-12 sm:h-14 lg:h-16 w-auto object-contain" />
             </div>
             <p className="text-xs text-slate-600 max-w-sm leading-relaxed font-semibold">
               BCS AI is an artificial intelligence based livestock assessment tool developed by Chimertech Private Limited.

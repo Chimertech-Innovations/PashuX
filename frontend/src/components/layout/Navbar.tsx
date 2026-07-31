@@ -41,19 +41,19 @@ export default function Navbar() {
           <img
             src="/pashux_logo.png"
             alt="PashuX Logo"
-            className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105"
+            className="h-10 sm:h-12 lg:h-14 w-auto object-contain transition-transform group-hover:scale-105"
           />
         </Link>
 
         {/* Desktop Single-Line Navigation Items */}
-        <div className="hidden lg:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-2">
           {/* Home */}
           <Link
             to="/"
-            className={`px-3 py-2 rounded-xl text-xs font-black transition-all duration-150 whitespace-nowrap ${
+            className={`px-3 py-2 text-xs font-black transition-colors duration-150 whitespace-nowrap ${
               pathname === '/'
-                ? 'text-emerald-950 bg-emerald-100/90 border border-emerald-300 shadow-xs'
-                : 'text-slate-800 hover:text-emerald-700 hover:bg-slate-100/80'
+                ? 'text-emerald-600 font-black'
+                : 'text-slate-800 font-bold hover:text-emerald-600'
             }`}
           >
             Home
@@ -62,10 +62,10 @@ export default function Navbar() {
           {/* Live 10s Scan */}
           <Link
             to="/live"
-            className={`px-3 py-2 rounded-xl text-xs font-black transition-all duration-150 whitespace-nowrap flex items-center gap-1.5 ${
+            className={`px-3 py-2 text-xs font-black transition-colors duration-150 whitespace-nowrap flex items-center gap-1.5 ${
               pathname === '/live'
-                ? 'text-emerald-950 bg-emerald-100/90 border border-emerald-300 shadow-xs'
-                : 'text-slate-800 hover:text-emerald-700 hover:bg-slate-100/80'
+                ? 'text-emerald-600 font-black'
+                : 'text-slate-800 font-bold hover:text-emerald-600'
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-sm flex-shrink-0" />
@@ -80,10 +80,10 @@ export default function Navbar() {
           >
             <button
               onClick={() => setAiDropdownOpen(o => !o)}
-              className={`px-3 py-2 rounded-xl text-xs font-black transition-all duration-150 whitespace-nowrap flex items-center gap-1 ${
+              className={`px-3 py-2 text-xs font-black transition-colors duration-150 whitespace-nowrap flex items-center gap-1 ${
                 aiDropdownOpen || AI_MODULES.some(i => pathname === i.to)
-                  ? 'text-emerald-950 bg-emerald-100/90 border border-emerald-300 shadow-xs'
-                  : 'text-slate-800 hover:text-emerald-700 hover:bg-slate-100/80'
+                  ? 'text-emerald-600 font-black'
+                  : 'text-slate-800 font-bold hover:text-emerald-600'
               }`}
             >
               <span>AI Detection</span>
@@ -103,7 +103,7 @@ export default function Navbar() {
                         to={item.to}
                         onClick={() => setAiDropdownOpen(false)}
                         className={`block px-3.5 py-2 rounded-xl transition-all duration-150 ${
-                          isCurrent ? 'bg-emerald-100/90 text-emerald-950' : 'hover:bg-slate-100 text-slate-800 hover:text-emerald-800'
+                          isCurrent ? 'bg-emerald-50 text-emerald-700 font-black' : 'hover:bg-slate-50 text-slate-800 hover:text-emerald-700'
                         }`}
                       >
                         <div className="text-xs font-black whitespace-nowrap">{item.label}</div>
@@ -119,10 +119,10 @@ export default function Navbar() {
           {/* Products */}
           <Link
             to="/products"
-            className={`px-3 py-2 rounded-xl text-xs font-black transition-all duration-150 whitespace-nowrap ${
+            className={`px-3 py-2 text-xs font-black transition-colors duration-150 whitespace-nowrap ${
               pathname === '/products'
-                ? 'text-emerald-950 bg-emerald-100/90 border border-emerald-300 shadow-xs'
-                : 'text-slate-800 hover:text-emerald-700 hover:bg-slate-100/80'
+                ? 'text-emerald-600 font-black'
+                : 'text-slate-800 font-bold hover:text-emerald-600'
             }`}
           >
             Products
@@ -136,10 +136,10 @@ export default function Navbar() {
           >
             <button
               onClick={() => setSubmenuOpen(o => !o)}
-              className={`px-3 py-2 rounded-xl text-xs font-black transition-all duration-150 whitespace-nowrap flex items-center gap-1 ${
+              className={`px-3 py-2 text-xs font-black transition-colors duration-150 whitespace-nowrap flex items-center gap-1 ${
                 submenuOpen || SUBMENU_ITEMS.some(i => pathname === i.to)
-                  ? 'text-emerald-950 bg-emerald-100/90 border border-emerald-300 shadow-xs'
-                  : 'text-slate-800 hover:text-emerald-700 hover:bg-slate-100/80'
+                  ? 'text-emerald-600 font-black'
+                  : 'text-slate-800 font-bold hover:text-emerald-600'
               }`}
             >
               <span>About & Standards</span>
@@ -158,10 +158,10 @@ export default function Navbar() {
                         key={item.to}
                         to={item.to}
                         onClick={() => setSubmenuOpen(false)}
-                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-black transition-all duration-150 ${
+                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition-all duration-150 ${
                           isCurrent
-                            ? 'text-emerald-950 bg-emerald-100/90 font-black'
-                            : 'text-slate-800 hover:bg-slate-100/90 hover:text-emerald-800 hover:translate-x-1'
+                            ? 'bg-emerald-50 text-emerald-700 font-black'
+                            : 'text-slate-800 font-bold hover:bg-slate-50 hover:text-emerald-700 hover:translate-x-1'
                         }`}
                       >
                         <span className="whitespace-nowrap">{item.label}</span>
@@ -177,10 +177,10 @@ export default function Navbar() {
           {/* Contact Us Page Link */}
           <Link
             to="/contact"
-            className={`px-3 py-2 rounded-xl text-xs font-black transition-all duration-150 whitespace-nowrap ${
+            className={`px-3 py-2 text-xs font-black transition-colors duration-150 whitespace-nowrap ${
               pathname === '/contact'
-                ? 'text-emerald-950 bg-emerald-100/90 border border-emerald-300 shadow-xs'
-                : 'text-slate-800 hover:text-emerald-700 hover:bg-slate-100/80'
+                ? 'text-emerald-600 font-black'
+                : 'text-slate-800 font-bold hover:text-emerald-600'
             }`}
           >
             Contact Us

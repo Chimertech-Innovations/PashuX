@@ -37,17 +37,12 @@ export default function Navbar() {
 
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
         {/* Brand Logo - PashuX */}
-        <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group flex-shrink-0">
-          <div className="p-1 sm:p-1.5 rounded-2xl bg-white border-2 border-emerald-200/80 shadow-sm group-hover:border-emerald-400 group-hover:shadow-md transition-all">
-            <img
-              src="/chimertech_logo.png"
-              alt="PashuX Logo"
-              className="h-7 sm:h-8 w-auto object-contain"
-            />
-          </div>
-          <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 group-hover:text-emerald-700 transition-colors">
-            PashuX
-          </span>
+        <Link to="/" className="flex items-center group flex-shrink-0">
+          <img
+            src="/pashux_logo.png"
+            alt="PashuX Logo"
+            className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105"
+          />
         </Link>
 
         {/* Desktop Single-Line Navigation Items */}

@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { CHIMERTECH_LOGO_BASE64 } from './logoBase64';
+import { PASHUX_LOGO_BASE64 } from './pashuxLogoBase64';
 import { IHERD_LOGO_BASE64, GOOGLE_PLAY_BASE64 } from './iherdLogoBase64';
 
 export interface ReportPDFData {
@@ -58,7 +58,7 @@ export function generateHealthReportPDF(data: ReportPDFData) {
     doc.rect(0, 0, pageWidth, 28, 'F');
 
     try {
-      doc.addImage(CHIMERTECH_LOGO_BASE64, 'PNG', 14, 4, 38, 20);
+      doc.addImage(PASHUX_LOGO_BASE64, 'PNG', 14, 5, 42, 18);
     } catch (e) {
       console.warn('Could not embed logo image in PDF:', e);
     }
@@ -381,7 +381,7 @@ function fallbackHTMLPrintReport(data: ReportPDFData) {
     <body>
       <button onclick="window.print()" style="background:#10b981;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:bold;cursor:pointer;margin-bottom:20px;">Download / Print PDF</button>
       <div class="header">
-        <img src="${CHIMERTECH_LOGO_BASE64}" alt="PashuX Logo" />
+        <img src="${PASHUX_LOGO_BASE64}" alt="PashuX Logo" />
         <div>
           <h1>PASHUX DIAGNOSTIC SYSTEM</h1>
           <p>CATTLE HEALTH & BCS DIAGNOSTIC REPORT</p>

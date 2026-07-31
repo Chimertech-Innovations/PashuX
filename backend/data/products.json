@@ -1,107 +1,5 @@
 [
   {
-    "id": "VDD1-101-A01-500M",
-    "name": "Chimertech CMT Kit 500 ml",
-    "category": "Detection and Diagnostics",
-    "description": "The California Mastitis Test (CMT) is a diagnostic tool designed to aid in the quick and simple diagnosis of mastitis in various...",
-    "image_url": "https://drive.google.com/file/d/1JuqKucNLnmqZOtn6I2o1yBBz2oKbT90S/view?usp=drive_link",
-    "price": 499,
-    "product_page_url": "https://chimertech.shop/products/chimertech-cmt-kit-500-ml",
-    "recommended_for": [
-      "detection",
-      "disease management",
-      "prevents milk loss",
-      "early mastitis detection",
-      "accurate results",
-      "fast-acting"
-    ]
-  },
-  {
-    "id": "VDD1-101-B01-500M",
-    "name": "Chimertech CMT Kit 500 ml with paddle",
-    "category": "Detection and Diagnostics",
-    "description": "The California Mastitis Test (CMT) is a diagnostic tool designed to aid in the quick and simple diagnosis of mastitis in various...",
-    "image_url": "https://drive.google.com/file/d/1z0IA8C4kaYAD4OO6R2s5EueMMd1Yus-B/view?usp=drive_link",
-    "price": 549,
-    "product_page_url": "https://chimertech.shop/products/chimertech-cmt-kit-500-ml-with-paddle",
-    "recommended_for": [
-      "detection",
-      "disease management",
-      "prevents milk loss",
-      "early mastitis detection",
-      "accurate results",
-      "fast-acting"
-    ]
-  },
-  {
-    "id": "VDD1-101-A01-001L",
-    "name": "Chimertech CMT Kit 1 litre",
-    "category": "Detection and Diagnostics",
-    "description": "The California Mastitis Test (CMT) is a diagnostic tool designed to aid in the quick and simple diagnosis of mastitis in various...",
-    "image_url": "https://drive.google.com/file/d/1q39_b_LeH6a48yGsj5XgsOmaxFLftInb/view?usp=drive_link",
-    "price": 899,
-    "product_page_url": "https://chimertech.shop/products/chimertech-cmt-kit-1-litre",
-    "recommended_for": [
-      "detection",
-      "disease management",
-      "prevents milk loss",
-      "early mastitis detection",
-      "accurate results",
-      "fast-acting"
-    ]
-  },
-  {
-    "id": "VDD1-101-B01-001L",
-    "name": "Chimertech CMT Kit 1 Litre with Paddle and dispenser",
-    "category": "Detection and Diagnostics",
-    "description": "The California Mastitis Test (CMT) is a diagnostic tool designed to aid in the quick and simple diagnosis of mastitis in various...",
-    "image_url": "https://drive.google.com/file/d/10NQHPdHHHXjQnViGLr5WFG014fn62DqK/view?usp=drive_link",
-    "price": 999,
-    "product_page_url": "https://chimertech.shop/products/chimertech-cmt-kit-1-litre-with-paddle-and-dispenser",
-    "recommended_for": [
-      "detection",
-      "disease management",
-      "prevents milk loss",
-      "early mastitis detection",
-      "accurate results",
-      "fast-acting"
-    ]
-  },
-  {
-    "id": "VDD1-101-A01-005L",
-    "name": "Chimertech CMT Kit 5 litre",
-    "category": "Detection and Diagnostics",
-    "description": "The California Mastitis Test (CMT) is a diagnostic tool designed to aid in the quick and simple diagnosis of mastitis in various...",
-    "image_url": "https://drive.google.com/file/d/1TVOToOWb09kYVgg-STCsgOdkraew7OkQ/view?usp=drive_link",
-    "price": 3800,
-    "product_page_url": "https://chimertech.shop/products/chimertech-cmt-kit-5-litre",
-    "recommended_for": [
-      "detection",
-      "disease management",
-      "prevents milk loss",
-      "early mastitis detection",
-      "accurate results",
-      "fast-acting"
-    ]
-  },
-  {
-    "id": "VDD1-101-A01-020L",
-    "name": "Chimertech CMT Kit 20 litre",
-    "category": "Detection and Diagnostics",
-    "description": "The California Mastitis Test (CMT) is a diagnostic tool designed to aid in the quick and simple diagnosis of mastitis in various...",
-    "image_url": "https://drive.google.com/file/d/1b5IgHu0YoCoFJUZkAqe_pNVSsxiXBrdT/view?usp=drive_link",
-    "price": 10500,
-    "product_page_url": "https://chimertech.shop/products/chimertech-cmt-kit-20-litre",
-    "recommended_for": [
-      "detection",
-      "disease management",
-      "prevents milk loss",
-      "early mastitis detection",
-      "accurate results",
-      "fast-acting"
-    ]
-  },
-  {
     "id": "VDD1-102-A01-1UNT",
     "name": "CMT Paddle 1 unit",
     "category": "Detection and Diagnostics",
@@ -481,7 +379,7 @@
     "recommended_for": [
       "detection",
       "disease management",
-      "quick, easy-to-use strip format — no lab setup required.",
+      "quick, easy-to-use strip format \u2014 no lab setup required.",
       "early intervention ensures herd safety and farmer profit."
     ]
   },
@@ -496,7 +394,7 @@
     "recommended_for": [
       "detection",
       "disease management",
-      "quick, easy-to-use strip format — no lab setup required.",
+      "quick, easy-to-use strip format \u2014 no lab setup required.",
       "early intervention ensures herd safety and farmer profit."
     ]
   },
@@ -986,7 +884,7 @@
     "recommended_for": [
       "supplement",
       "nutrition",
-      "easy to administer, farmer – friendly and reduces the chance of post-calving complications",
+      "easy to administer, farmer \u2013 friendly and reduces the chance of post-calving complications",
       "can be conveniently mixed with feed or given orally, making it simple to use at the farm level during critical stages of parturition"
     ]
   },
@@ -1032,9 +930,9 @@
       "supplement",
       "nutrition",
       "why choose servatec?",
-      "balanced growth support – optimized protein and fat levels to promote steady, uniform growth",
-      "digestive safety – designed for easy digestion and reduced digestive stress",
-      "easy mixing & feeding – simple preparation and smooth consumption"
+      "balanced growth support \u2013 optimized protein and fat levels to promote steady, uniform growth",
+      "digestive safety \u2013 designed for easy digestion and reduced digestive stress",
+      "easy mixing & feeding \u2013 simple preparation and smooth consumption"
     ]
   },
   {
@@ -1049,9 +947,9 @@
       "supplement",
       "nutrition",
       "why choose servatec?",
-      "balanced growth support – optimized protein and fat levels to promote steady, uniform growth",
-      "digestive safety – designed for easy digestion and reduced digestive stress",
-      "easy mixing & feeding – simple preparation and smooth consumption"
+      "balanced growth support \u2013 optimized protein and fat levels to promote steady, uniform growth",
+      "digestive safety \u2013 designed for easy digestion and reduced digestive stress",
+      "easy mixing & feeding \u2013 simple preparation and smooth consumption"
     ]
   },
   {
@@ -1168,17 +1066,17 @@
     "id": "VBG1-805-A01-1UNT",
     "name": "Portable Liquid Nitrogen [LN2] Container for Cattle Semen Storage 2 Litre",
     "category": "Reproductive Management",
-    "description": "Ideal for farms, AI centers, and veterinarians on the move. Lightweight and rugged – built to handle tough field conditions....",
+    "description": "Ideal for farms, AI centers, and veterinarians on the move. Lightweight and rugged \u2013 built to handle tough field conditions....",
     "image_url": "https://drive.google.com/file/d/1AdEHmp23OFMBZW1emgfp3kakqB_2bWC0/view?usp=drive_link",
     "price": 8850,
     "product_page_url": "https://chimertech.shop/products/portable-liquid-nitrogen-ln2-container-for-cattle-semen-storage-2-litre",
     "recommended_for": [
       "ai equipment",
       "breeding",
-      "high-quality construction – made from stainless steel or aluminum alloy for durability and corrosion resistance.",
-      "vacuum insulated design – provides long-term ln₂ retention with minimal evaporation.",
-      "multiple capacities available – ranges from 2l to 200l+ for different applications.",
-      "portable & lightweight – smaller models are easy to transport for field use."
+      "high-quality construction \u2013 made from stainless steel or aluminum alloy for durability and corrosion resistance.",
+      "vacuum insulated design \u2013 provides long-term ln\u2082 retention with minimal evaporation.",
+      "multiple capacities available \u2013 ranges from 2l to 200l+ for different applications.",
+      "portable & lightweight \u2013 smaller models are easy to transport for field use."
     ]
   },
   {
@@ -1273,7 +1171,7 @@
     "id": "VDG1-902-A01-1UNT",
     "name": "Milking Machine Nano milk 150 BS",
     "category": "Farm Equipment - Milking",
-    "description": "Introducing the NANOMILK 150BS Milking Machine by Chimertech Pvt Ltd – Your Trusted Partner in Smart Dairy Farming Take your dairy...",
+    "description": "Introducing the NANOMILK 150BS Milking Machine by Chimertech Pvt Ltd \u2013 Your Trusted Partner in Smart Dairy Farming Take your dairy...",
     "image_url": "https://drive.google.com/file/d/1ntuCW5dV_YXF_0j83aipY3YbIaHxXJOh/view?usp=drive_link",
     "price": 20000,
     "product_page_url": "https://chimertech.shop/products/milking-machine-nano-milk-150-bs",
@@ -1307,7 +1205,7 @@
     "id": "VDG1-902-C01-1UNT",
     "name": "Milking Machine Dairy Flow 200",
     "category": "Farm Equipment - Milking",
-    "description": "Chimertech Dairy Flow 200 Milking Machine – Empowering Your Dairy Farm with Innovation At Chimertech Pvt Ltd, we bring cutting-edge...",
+    "description": "Chimertech Dairy Flow 200 Milking Machine \u2013 Empowering Your Dairy Farm with Innovation At Chimertech Pvt Ltd, we bring cutting-edge...",
     "image_url": "https://drive.google.com/file/d/1UKJbFg2HnHCdz86sRVBQSp3wsmWNCnLY/view?usp=drive_link",
     "price": 27500,
     "product_page_url": "https://chimertech.shop/products/milking-machine-dairy-flow-200",
@@ -1315,16 +1213,16 @@
       "milking",
       "farm equipments",
       "the dairy flow 200 is perfect for farmers who want to",
-      "✔ increase efficiency and reduce labor in their dairy operations.",
-      "✔ streamline milking with a durable and reliable machine.",
-      "✔ enhance milk productivity while maintaining high hygiene standards"
+      "\u2714 increase efficiency and reduce labor in their dairy operations.",
+      "\u2714 streamline milking with a durable and reliable machine.",
+      "\u2714 enhance milk productivity while maintaining high hygiene standards"
     ]
   },
   {
     "id": "VDG1-902-D01-1UNT",
     "name": "Milking Machine Dairy Flow 450",
     "category": "Farm Equipment - Milking",
-    "description": "Introducing the Dairy Flow Pro 450 – Efficient & High-Performance Milking by Chimertech Pvt Ltd The Dairy Flow Pro 450 is your...",
+    "description": "Introducing the Dairy Flow Pro 450 \u2013 Efficient & High-Performance Milking by Chimertech Pvt Ltd The Dairy Flow Pro 450 is your...",
     "image_url": "https://drive.google.com/file/d/1UKJbFg2HnHCdz86sRVBQSp3wsmWNCnLY/view?usp=drive_link",
     "price": 35000,
     "product_page_url": "https://chimertech.shop/products/milking-machine-dairy-flow-450",
@@ -1332,16 +1230,16 @@
       "milking",
       "farm equipments",
       "the dairy flow 450 is perfect for farmers who want to",
-      "✔ increase efficiency and reduce labor in their dairy operations.",
-      "✔ streamline milking with a durable and reliable machine.",
-      "✔ enhance milk productivity while maintaining high hygiene standards"
+      "\u2714 increase efficiency and reduce labor in their dairy operations.",
+      "\u2714 streamline milking with a durable and reliable machine.",
+      "\u2714 enhance milk productivity while maintaining high hygiene standards"
     ]
   },
   {
     "id": "VDG1-903-A01-1UNT",
     "name": "Chaff Cutter Dairy Cutter 1.5",
     "category": "Farm Equipment - Fodder",
-    "description": "Dairy Cutter 1.5 – Precision-Engineered Chaff Cutter by Chimertech Pvt Ltd One of its key features is its impressive feed capacity,...",
+    "description": "Dairy Cutter 1.5 \u2013 Precision-Engineered Chaff Cutter by Chimertech Pvt Ltd One of its key features is its impressive feed capacity,...",
     "image_url": "https://drive.google.com/file/d/1mmYpi48YmW3MgPYjs698GNBYHK7xb9J0/view?usp=drive_link",
     "price": 24800,
     "product_page_url": "https://chimertech.shop/products/chaff-cutter-dairy-cutter-1-5",
@@ -1355,35 +1253,35 @@
     "id": "VDG1-903-B01-1UNT",
     "name": "Chaff Cutter FARM PRO 200",
     "category": "Farm Equipment - Fodder",
-    "description": "Farm Pro 200 – The Ultimate Micro Chaff Cutter by Chimertech Pvt Ltd One of its standout features is the adjustable cutting size,...",
+    "description": "Farm Pro 200 \u2013 The Ultimate Micro Chaff Cutter by Chimertech Pvt Ltd One of its standout features is the adjustable cutting size,...",
     "image_url": "https://drive.google.com/file/d/15O0-RgS1uj5mPzjNIkQugBMkDo7kIB_a/view?usp=drive_link",
     "price": 25000,
     "product_page_url": "https://chimertech.shop/products/chaff-cutter-farm-pro-200",
     "recommended_for": [
       "fodder",
       "farm equipments",
-      "powered by a 1.5 hp motor with adjustable cutting size from 19–25 mm. capable of handling up to 500 kg/hour of green fodder. maintenance-free transmission system with sturdy construction. designed for continuous farm operation with high efficiency, operator safety, and long service life."
+      "powered by a 1.5 hp motor with adjustable cutting size from 19\u201325 mm. capable of handling up to 500 kg/hour of green fodder. maintenance-free transmission system with sturdy construction. designed for continuous farm operation with high efficiency, operator safety, and long service life."
     ]
   },
   {
     "id": "VDG1-903-C01-1UNT",
     "name": "Chaff Cutter Power Slice 600X",
     "category": "Farm Equipment - Fodder",
-    "description": "At Chimertech Pvt Ltd, we are proud to introduce our latest innovation in animal feed processing – the PowerSlice 600X. Designed and...",
+    "description": "At Chimertech Pvt Ltd, we are proud to introduce our latest innovation in animal feed processing \u2013 the PowerSlice 600X. Designed and...",
     "image_url": "https://drive.google.com/file/d/15O0-RgS1uj5mPzjNIkQugBMkDo7kIB_a/view?usp=drive_link",
     "price": 38000,
     "product_page_url": "https://chimertech.shop/products/chaff-cutter-power-slice-600x",
     "recommended_for": [
       "fodder",
       "farm equipments",
-      "high-capacity fodder cutter designed for 20–30 animal farms. heavy-duty blades ensure uniform cutting and high throughput. rugged frame construction with smooth feeding mechanism. supports consistent fodder size for improved digestibility and feed efficiency. suitable for daily farm use with minimal downtime."
+      "high-capacity fodder cutter designed for 20\u201330 animal farms. heavy-duty blades ensure uniform cutting and high throughput. rugged frame construction with smooth feeding mechanism. supports consistent fodder size for improved digestibility and feed efficiency. suitable for daily farm use with minimal downtime."
     ]
   },
   {
     "id": "VDG1-904-A01-1UNT",
     "name": "Petrol Engine 6.5 HP",
     "category": "Farm Equipment - Fodder",
-    "description": "6.5 HP Petrol Engine – High-Performance Power Solution by Chimertech Pvt Ltd Introducing our high-performance 6.5 HP petrol engine,...",
+    "description": "6.5 HP Petrol Engine \u2013 High-Performance Power Solution by Chimertech Pvt Ltd Introducing our high-performance 6.5 HP petrol engine,...",
     "image_url": "https://drive.google.com/file/d/1Od1Cr-SN3B7m5B0woRZSdvxCrqQp98l_/view?usp=drive_link",
     "price": 9000,
     "product_page_url": "https://chimertech.shop/products/petrol-engine-6-5-hp",
@@ -1439,7 +1337,7 @@
     "id": "VDG1-907-A01-1UNT",
     "name": "Calf nose band.",
     "category": "Farm Equipment - Management",
-    "description": "Calf Nose Band – Chimertech Pvt Ltd The calf nose band is an essential tool designed to help in weaning calves efficiently and...",
+    "description": "Calf Nose Band \u2013 Chimertech Pvt Ltd The calf nose band is an essential tool designed to help in weaning calves efficiently and...",
     "image_url": "https://drive.google.com/file/d/1OrGwX1NKPOsb5vzvl5coWsZEpxfHrlbF/view?usp=drive_link",
     "price": 350,
     "product_page_url": "https://chimertech.shop/products/calf-nose-band",
@@ -1623,7 +1521,7 @@
     "id": "VDG1-917-A01-1UNT",
     "name": "Power Sprayer.",
     "category": "Farm Equipment - Farm Maintenance",
-    "description": "Power Sprayers – Chimertech Pvt Ltd Providing powerful and efficient solutions for agricultural needs, our advanced power sprayers are...",
+    "description": "Power Sprayers \u2013 Chimertech Pvt Ltd Providing powerful and efficient solutions for agricultural needs, our advanced power sprayers are...",
     "image_url": "https://drive.google.com/file/d/159_1ReEzJCF_tXU8Tlvtove3Xg_bnuir/view?usp=drive_link",
     "price": 11500,
     "product_page_url": "https://chimertech.shop/products/power-sprayer",
@@ -1637,7 +1535,7 @@
     "id": "VDG1-918-A01-1UNT",
     "name": "Calf feeding bottle.",
     "category": "Farm Equipment - Supplement",
-    "description": "Plastic Feeding Bottle for Cows – Chimertech Pvt Ltd Ensuring that calves receive proper nutrition is essential for their growth and...",
+    "description": "Plastic Feeding Bottle for Cows \u2013 Chimertech Pvt Ltd Ensuring that calves receive proper nutrition is essential for their growth and...",
     "image_url": "https://drive.google.com/file/d/1SqsXyQ2JgdXRul4Qytf5iEMO1RHUqiQ7/view?usp=drive_link",
     "price": 410,
     "product_page_url": "https://chimertech.shop/products/calf-feeding-bottle",
@@ -1651,7 +1549,7 @@
     "id": "VDG1-919-A01-1UNT",
     "name": "Anti kick bar.",
     "category": "Farm Equipment - Farm Maintenance",
-    "description": "Anti-Kick Bar – Chimertech Pvt Ltd Ensure safety and efficiency in your dairy operations with the Anti-Kick Bar from Chimertech Pvt...",
+    "description": "Anti-Kick Bar \u2013 Chimertech Pvt Ltd Ensure safety and efficiency in your dairy operations with the Anti-Kick Bar from Chimertech Pvt...",
     "image_url": "https://drive.google.com/file/d/1ry3Lm75Q6dv7UtClwXJk478JMEmFa9M8/view?usp=drive_link",
     "price": 1850,
     "product_page_url": "https://chimertech.shop/products/anti-kick-bar",
@@ -1710,7 +1608,7 @@
     "id": "VDG1-923-A01-1UNT",
     "name": "Liner for milking machine.",
     "category": "Farm Equipment - Farm Maintenance",
-    "description": "27mm Diameter, 318mm Length Milking Machine Line – Chimertech Pvt Ltd Chimertech Pvt Ltd introduces the 27mm diameter, 318mm length...",
+    "description": "27mm Diameter, 318mm Length Milking Machine Line \u2013 Chimertech Pvt Ltd Chimertech Pvt Ltd introduces the 27mm diameter, 318mm length...",
     "image_url": "https://drive.google.com/file/d/1fyufDUlHnO17qzjE-qNVR-cpJgN8Del9/view?usp=drive_link",
     "price": 470,
     "product_page_url": "https://chimertech.shop/products/liner-for-milking-machine",
@@ -1724,7 +1622,7 @@
     "id": "VDG1-924-A01-1UNT",
     "name": "Pulsator 60-40.",
     "category": "Farm Equipment - Farm Maintenance",
-    "description": "Pulsator 60-40 Spare Parts for Milking Machines – Chimertech Pvt Ltd Enhance your milking efficiency with the Pulsator 60-40 spare...",
+    "description": "Pulsator 60-40 Spare Parts for Milking Machines \u2013 Chimertech Pvt Ltd Enhance your milking efficiency with the Pulsator 60-40 spare...",
     "image_url": "https://drive.google.com/file/d/1ShM1R6zJcMeuQBwrh2gW3-C10a6LXaDc/view?usp=drive_link",
     "price": 1550,
     "product_page_url": "https://chimertech.shop/products/pulsator-60-40",
@@ -1738,7 +1636,7 @@
     "id": "VDG1-925-A01-1UNT",
     "name": "Teat cups for milking machine.",
     "category": "Farm Equipment - Farm Maintenance",
-    "description": "Teat Cups for Milking Machines – Chimertech Pvt Ltd Upgrade your milking experience with Chimertech Pvt Ltd’s teat cups for milking...",
+    "description": "Teat Cups for Milking Machines \u2013 Chimertech Pvt Ltd Upgrade your milking experience with Chimertech Pvt Ltd\u2019s teat cups for milking...",
     "image_url": "https://drive.google.com/file/d/1epbBQ4VQws42BJbaPcXQHkymmBh_PfpZ/view?usp=drive_link",
     "price": 1550,
     "product_page_url": "https://chimertech.shop/products/teat-cups-for-milking-machine",
@@ -1811,7 +1709,7 @@
     "id": "VDG1-930-A01-1UNT",
     "name": "Drinking bowl.",
     "category": "Farm Equipment - Supplement",
-    "description": "Cow Drinking Bowl – Reliable Hydration Solution by Chimertech Pvt Ltd The cow drinking bowl is designed to provide a constant and...",
+    "description": "Cow Drinking Bowl \u2013 Reliable Hydration Solution by Chimertech Pvt Ltd The cow drinking bowl is designed to provide a constant and...",
     "image_url": "https://drive.google.com/file/d/1LFz0BL-YqC2fHSivglx3CYOQNifUjkK0/view?usp=drive_link",
     "price": 1800,
     "product_page_url": "https://chimertech.shop/products/drinking-bowl",

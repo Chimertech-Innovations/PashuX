@@ -23,24 +23,28 @@ export function useVideoAnalysis(analysisType: AnalysisType) {
 
   const reset = useCallback(() => setState(INITIAL), []);
 
-  // Phase 1: Video upload + Frame Extraction + Blur Filter + Dedup Filter + Rank
+  // End-to-end automated pipeline: Upload -> Extract/Process -> Direct AI Analysis (Fast & Continuous)
   const run = useCallback(async (file: File, userId?: string) => {
     update({ ...INITIAL, status: 'uploading', error: null });
 
     try {
-      // Step 1–2: Upload
+      // Step 1: Upload media
       const uploadRes = await uploadVideo(file, analysisType, userId);
       update({ requestId: uploadRes.request_id, status: 'extracting' });
 
-      // Step 3–5: Process (blur filter → dedup → rank)
-      update({ status: 'filtering_blur' });
+      // Step 2: Extract & clean frames
       const processRes = await processVideo(uploadRes.request_id, uploadRes.video_path, userId);
 
-      // ✅ Frames are cleaned & uploaded to Supabase — show them to user FIRST
+      const framePaths = processRes.frame_paths || [];
+      if (!framePaths.length) {
+        throw new Error('No clean frames could be extracted from the uploaded video.');
+      }
+
+      // Step 3: Fast Automatic AI Analysis (No waiting for user button click!)
       update({
-        status: 'frames_ready',
+        status: 'sending_ai',
         requestId: uploadRes.request_id,
-        framePaths: processRes.frame_paths,
+        framePaths,
         frameUrls: processRes.frame_urls ?? [],
         clarityScores: processRes.clarity_scores ?? [],
         processStats: {
@@ -50,12 +54,30 @@ export function useVideoAnalysis(analysisType: AnalysisType) {
           topFrames: processRes.top_frames_selected,
         },
       });
+
+      if (analysisType === 'combined') {
+        const res = await analyseCombined(uploadRes.request_id, framePaths, userId);
+        update({
+          bcsResult: res.bcs_result,
+          diseaseResult: res.disease_result,
+          status: 'completed',
+        });
+      } else if (analysisType === 'bcs') {
+        const res = await analyseBCS(uploadRes.request_id, framePaths, userId);
+        update({ bcsResult: res.result as any, status: 'completed' });
+      } else {
+        const res = await analyseDisease(uploadRes.request_id, framePaths, userId);
+        update({ diseaseResult: res.result as any, status: 'completed' });
+      }
     } catch (err: any) {
-      update({ status: 'error', error: err.message || 'An unexpected error occurred during video processing.' });
+      update({
+        status: 'error',
+        error: err.message || 'An unexpected error occurred during processing & analysis.',
+      });
     }
   }, [analysisType, update]);
 
-  // Phase 2: User triggers AI Analysis on the selected cleaned frames
+  // Retry trigger if needed
   const startAnalysis = useCallback(async (userId?: string) => {
     if (!state.requestId || !state.framePaths.length) return;
 
@@ -77,14 +99,12 @@ export function useVideoAnalysis(analysisType: AnalysisType) {
         update({ diseaseResult: res.result as any, status: 'completed' });
       }
     } catch (err: any) {
-      // Don't wipe framePaths or frameUrls on AI error — allow user to see frames and retry!
       update({
         status: 'error',
         error: err.message || 'AI analysis failed. You can retry with the button below.',
       });
     }
   }, [analysisType, state.requestId, state.framePaths, update]);
-
 
   return { state, run, startAnalysis, reset };
 }

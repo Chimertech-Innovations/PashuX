@@ -5,28 +5,13 @@ import { getProducts } from '@/lib/api';
 import VideoUploader from '@/components/ui/VideoUploader';
 import ProcessingProgress from '@/components/ui/ProcessingProgress';
 import BCSResultCard from '@/components/ui/BCSResultCard';
-import FrameGallery from '@/components/ui/FrameGallery';
 import ProductCard from '@/components/ui/ProductCard';
 import ChatBot from '@/components/ui/ChatBot';
 import Disclaimer from '@/components/ui/Disclaimer';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import type { Product } from '@/types';
 import { generateHealthReportPDF } from '@/utils/pdfGenerator';
-
-
-// Rule-based BCS product recommendations
-function getBCSProducts(score: number, allProducts: Product[]): Product[] {
-  if (score < 2.5) {
-    return allProducts.filter(p =>
-      p.recommended_for?.some(r => ['low bcs', 'body condition', 'nutrition', 'supplement'].includes(r.toLowerCase()))
-    );
-  }
-  return [];
-}
-
-const FRAMES_READY_STATUSES = new Set([
-  'frames_ready', 'sending_ai', 'analysing', 'completed', 'error'
-]);
+import { getBCSProductRecommendations } from '@/utils/bcsProducts';
 
 export default function BCSDetection() {
   const { user } = useAuth();
@@ -38,27 +23,29 @@ export default function BCSDetection() {
   }, []);
 
   const isProcessing = ['uploading','extracting','filtering_blur','removing_duplicates','ranking','sending_ai','analysing'].includes(state.status);
-  const framesReady  = FRAMES_READY_STATUSES.has(state.status) && state.frameUrls.length > 0;
-  const recProducts  = state.bcsResult ? getBCSProducts(state.bcsResult.bcs_score, allProducts) : [];
 
-  const frames = state.frameUrls.map((url, i) => ({
-    url,
-    frameNumber: i + 1,
-    clarityScore: state.clarityScores[i],
-  }));
+  const bcsRecInfo = state.bcsResult
+    ? getBCSProductRecommendations(state.bcsResult.bcs_score, allProducts)
+    : { products: [], guidance: '' };
+
+  const recProducts = bcsRecInfo.products;
 
   return (
-    <div className="min-h-screen pt-24 pb-24 px-6">
+    <div className="min-h-screen pt-24 pb-24 px-6 bg-slate-50">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-10 animate-fade-up">
-          <p className="section-label mb-3">Cattle Analysis</p>
-          <h1 className="text-display font-black text-slate-900 mb-3">BCS Score Detection</h1>
-          <p className="text-slate-600 text-sm max-w-xl leading-relaxed font-medium">
-            Upload cattle photo or video (up to 60s). Our algorithm extracts, de-blurs, and de-duplicates frames into high-clarity shots before AI assessment.
-          </p>
+        {/* Header with Realistic Banner Image */}
+        <div className="glass-card p-6 sm:p-8 bg-white border border-slate-300 rounded-[2.5rem] shadow-md flex flex-col md:flex-row items-center gap-6 mb-10 animate-fade-up">
+          <div className="flex-1 space-y-2">
+            <p className="section-label text-slate-900 font-black">Cattle Analysis</p>
+            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 leading-tight">BCS Score Detection</h1>
+            <p className="text-slate-900 text-xs sm:text-sm max-w-xl leading-relaxed font-bold">
+              Upload cattle photo or video (up to 60s). Instant end-to-end frame extraction, AI vision assessment, and PDF report generation.
+            </p>
+          </div>
+          <div className="w-full md:w-64 h-40 rounded-2xl overflow-hidden border-2 border-emerald-300 shadow-md flex-shrink-0 relative group">
+            <img src="/bcs_banner.png" alt="BCS Detection AI" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          </div>
         </div>
-
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left column */}
@@ -71,63 +58,27 @@ export default function BCSDetection() {
             )}
 
             {/* Processing progress indicator */}
-            {state.status !== 'idle' && state.status !== 'completed' && (
+            {state.status !== 'idle' && state.status !== 'completed' && state.status !== 'error' && (
               <ProcessingProgress status={state.status} />
-            )}
-
-            {/* ✅ Cleaned Frame Gallery — Shown to user as soon as frames are cleaned & ready */}
-            {framesReady && (
-              <div className="animate-fade-in space-y-4">
-                <FrameGallery
-                  frames={frames}
-                  label={
-                    state.status === 'completed' ? 'Frames Used for Analysis' :
-                    state.status === 'frames_ready' ? 'Cleaned & Deduplicated Frames (Ready for AI)' :
-                    'Cleaned Frames — AI Analysing…'
-                  }
-                  isLoading={state.status === 'sending_ai' || state.status === 'analysing'}
-                />
-
-                {/* Step to trigger AI analysis explicitly */}
-                {state.status === 'frames_ready' && (
-                  <div className="glass-card p-5 border-emerald-300 bg-emerald-50 text-center space-y-3 animate-fade-in">
-                    <div>
-                      <p className="text-sm font-bold text-emerald-800">Frames successfully cleaned & stored</p>
-                      <p className="text-xs text-slate-600 font-medium mt-1">
-                        Review your {frames.length} high-clarity frames above. Click below to start AI BCS scoring.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => startAnalysis(user?.id)}
-                      className="btn-primary text-sm py-2.5 px-6 font-bold shadow-md flex items-center justify-center gap-2 mx-auto"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                      </svg>
-                      Analyse Frames with AI
-                    </button>
-                  </div>
-                )}
-              </div>
             )}
 
             {/* Error Message with Retry */}
             {state.status === 'error' && (
-              <div className="glass-card p-6 border-rose-200 bg-rose-50 animate-fade-in space-y-3">
+              <div className="glass-card p-6 border-rose-200 bg-rose-50 animate-fade-in space-y-3 rounded-3xl">
                 <div className="flex items-start gap-3">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                   </svg>
                   <div>
-                    <p className="text-sm font-bold text-rose-700 mb-1">Analysis Issue</p>
-                    <p className="text-xs text-slate-600">{state.error}</p>
+                    <p className="text-sm font-black text-rose-900 mb-1">Analysis Issue</p>
+                    <p className="text-xs text-slate-900 font-bold">{state.error}</p>
                   </div>
                 </div>
                 <div className="flex gap-3 pt-2">
                   {state.framePaths.length > 0 && (
                     <button
                       onClick={() => startAnalysis(user?.id)}
-                      className="btn-primary text-xs py-2 px-4 font-bold flex items-center gap-1.5"
+                      className="btn-primary text-xs py-2 px-4 font-black flex items-center gap-1.5"
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
@@ -135,8 +86,8 @@ export default function BCSDetection() {
                       Retry AI Analysis
                     </button>
                   )}
-                  <button onClick={reset} className="btn-secondary text-xs py-2 px-4">
-                    Upload New Video
+                  <button onClick={reset} className="btn-secondary text-xs py-2 px-4 text-slate-900 font-black">
+                    Upload New Media
                   </button>
                 </div>
               </div>
@@ -145,10 +96,10 @@ export default function BCSDetection() {
             {/* Result */}
             {state.status === 'completed' && state.bcsResult ? (
               <>
-                <div className="flex justify-between items-center bg-emerald-50 border border-emerald-200 p-4 rounded-2xl">
+                <div className="flex justify-between items-center bg-emerald-50 border border-emerald-300 p-4 rounded-3xl shadow-sm">
                   <div>
-                    <h3 className="text-sm font-black text-emerald-900">BCS Analysis Complete</h3>
-                    <p className="text-xs text-emerald-700">Health report is ready to save and print.</p>
+                    <h3 className="text-sm font-black text-emerald-950">BCS Analysis Complete</h3>
+                    <p className="text-xs text-slate-900 font-bold">Health report is ready to save and print.</p>
                   </div>
                   <button
                     onClick={() => {
@@ -162,7 +113,13 @@ export default function BCSDetection() {
                         bcsConfidence: state.bcsResult.confidence,
                         observations: state.bcsResult.observations,
                         recommendations: state.bcsResult.recommendations,
-                        recommendedProducts: recProducts,
+                        recommendedProducts: recProducts.map(p => ({
+                          name: p.name,
+                          category: p.category,
+                          price: p.price,
+                          description: p.description,
+                          product_page_url: p.product_page_url,
+                        })),
                       });
                     }}
                     className="btn-primary py-2.5 px-5 text-xs font-black flex items-center gap-2 shadow-md shadow-emerald-500/20"
@@ -173,26 +130,34 @@ export default function BCSDetection() {
 
                 <BCSResultCard result={state.bcsResult} />
                 <Disclaimer type="ai" />
-                {recProducts.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900 mb-4">Recommended Products</h3>
+
+                {recProducts.length > 0 ? (
+                  <div className="space-y-4 pt-2">
+                    <div>
+                      <h3 className="text-base font-black text-slate-900">Targeted Product Recommendations</h3>
+                      <p className="text-xs font-bold text-slate-900 mt-0.5">{bcsRecInfo.guidance}</p>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {recProducts.map(p => (
                         <ProductCard
                           key={p.id}
                           product={p}
-                          reason={`Helpful for improving body condition (BCS ${state.bcsResult!.bcs_score.toFixed(1)})`}
+                          reason={bcsRecInfo.guidance}
                         />
                       ))}
                     </div>
                   </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300">
+                    <p className="text-xs font-black text-amber-950">{bcsRecInfo.guidance}</p>
+                  </div>
                 )}
-                <button onClick={reset} className="btn-ghost text-xs text-slate-500 font-bold">
-                  ← Analyse another video
+
+                <button onClick={reset} className="btn-ghost text-xs text-slate-900 font-black hover:text-emerald-700">
+                  ← Analyse another video / photo
                 </button>
               </>
             ) : state.status === 'completed' && !state.bcsResult ? (
-
               <SkeletonCard />
             ) : null}
           </div>
@@ -200,20 +165,18 @@ export default function BCSDetection() {
           {/* Right column: info panel */}
           {state.status === 'idle' && (
             <div className="lg:col-span-2 space-y-4 animate-fade-in">
-              <div className="glass-card p-5 bg-white border border-slate-200 shadow-sm">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 mb-4">Processing Pipeline</h3>
+              <div className="glass-card p-5 bg-white border border-slate-300 shadow-sm rounded-3xl">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 mb-4">Automated Pipeline</h3>
                 <ol className="space-y-3">
                   {[
-                    'Video uploaded securely',
-                    'Extract 1 frame per second',
-                    'Remove blurry frames (edge sharpness filter)',
-                    'Remove duplicate frames (pHash filter)',
-                    'Select top 10 frames by clarity',
-                    'Review cleaned frames in UI',
-                    'Send to Chimertech AI Vision Engine for BCS score',
+                    'Video / Image uploaded securely',
+                    'Automated frame extraction & sharpness filtering',
+                    'Multi-spectral duplicate removal (pHash/dHash)',
+                    'Instant Chimertech AI Vision scoring',
+                    'Download official PDF Diagnostic Report',
                   ].map((step, i) => (
-                    <li key={i} className="flex items-start gap-3 text-xs text-slate-600 font-medium">
-                      <span className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
+                    <li key={i} className="flex items-start gap-3 text-xs text-slate-900 font-bold">
+                      <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-950 border border-emerald-300 flex items-center justify-center flex-shrink-0 text-[10px] font-black">
                         {i + 1}
                       </span>
                       {step}
@@ -223,27 +186,26 @@ export default function BCSDetection() {
               </div>
 
               {/* BCS scale */}
-              <div className="glass-card p-5 bg-white border border-slate-200 shadow-sm">
+              <div className="glass-card p-5 bg-white border border-slate-300 shadow-sm rounded-3xl">
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 mb-4">BCS Scale Reference</h3>
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {[
-                    [1, 'Emaciated', '#ef4444'],
-                    [2, 'Thin', '#f59e0b'],
-                    [3, 'Ideal', '#10b981'],
-                    [4, 'Fat', '#f59e0b'],
-                    [5, 'Obese', '#ef4444'],
-                  ].map(([score, label, color]) => (
-                    <div key={String(score)} className="flex items-center gap-3">
-                      <span className="text-sm font-black" style={{ color: color as string }}>{score}</span>
-                      <span className="text-xs font-bold text-slate-600 flex-1">{label}</span>
-                      <div className="h-1.5 w-20 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
-                        <div className="h-full rounded-full" style={{ width: `${(Number(score)/5)*100}%`, backgroundColor: color as string }} />
+                    [1, 'Emaciated', '#ef4444', 'NutraKine Gain + parasite assessment'],
+                    [2, 'Thin', '#f59e0b', 'NutraKine Gain + Liver Tonic / Phos+'],
+                    [3, 'Ideal', '#10b981', 'Milk Booster / Fertility Booster / Calcdex'],
+                    [4, 'Fat', '#f59e0b', 'Ration correction required'],
+                    [5, 'Obese', '#ef4444', 'Veterinary review required'],
+                  ].map(([score, label, color, rule]) => (
+                    <div key={String(score)} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-black" style={{ color: color as string }}>BCS {score}</span>
+                        <span className="text-xs font-black text-slate-900 flex-1">{label}</span>
                       </div>
+                      <p className="text-[10px] font-bold text-slate-900 mt-1">{rule as string}</p>
                     </div>
                   ))}
                 </div>
               </div>
-
 
               <Disclaimer type="ai" />
             </div>

@@ -35,13 +35,14 @@ export default function Navbar() {
         <Link to="/live" className="underline hover:text-emerald-300 font-black ml-0.5 flex-shrink-0">Try Scan →</Link>
       </div>
 
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-        {/* Brand Logo - PashuX */}
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 min-h-[72px] py-2 flex items-center justify-between gap-3">
+        {/* Brand Logo - PashuX (Direct CSS style control: change height/width below as desired) */}
         <Link to="/" className="flex items-center group flex-shrink-0">
           <img
-            src="/pashux_logo.png"
+            src="/Pashuxlogo.png"
             alt="PashuX Logo"
-            className="h-10 sm:h-12 lg:h-14 w-auto object-contain transition-transform group-hover:scale-105"
+            className="w-auto object-contain transition-transform group-hover:scale-105"
+            style={{ height: '90px', maxHeight: '130px', width: 'auto' }}
           />
         </Link>
 

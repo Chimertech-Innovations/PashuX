@@ -19,6 +19,7 @@ import VeterinaryDisclaimer from '@/pages/VeterinaryDisclaimer';
 import ICARStandards from '@/pages/ICARStandards';
 import AITransparency from '@/pages/AITransparency';
 import DataConsent from '@/pages/DataConsent';
+import ContactUs from '@/pages/ContactUs';
 
 export default function App() {
   return (
@@ -38,6 +39,8 @@ export default function App() {
               <Route path="/disease"        element={<DiseaseDetection />} />
               <Route path="/history"        element={<AnalysisHistory />} />
               <Route path="/products"       element={<Products />} />
+              <Route path="/contact font-black" element={<ContactUs />} />
+              <Route path="/contact"        element={<ContactUs />} />
               <Route path="/profile"         element={<Profile />} />
               <Route path="/privacy"        element={<PrivacyPolicy />} />
               <Route path="/terms"          element={<TermsOfService />} />

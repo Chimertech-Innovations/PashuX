@@ -52,6 +52,7 @@ export default function Footer() {
                 ['Analysis History', '/history'],
                 ['Products Catalogue', '/products'],
                 ['AI Transparency', '/ai-transparency'],
+                ['Contact Us', '/contact'],
               ].map(([label, to]) => (
                 <li key={to}>
                   <Link to={to} className="text-xs text-slate-600 hover:text-slate-950 font-medium transition-colors">{label}</Link>

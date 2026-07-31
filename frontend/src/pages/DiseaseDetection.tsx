@@ -9,46 +9,9 @@ import ProductCard from '@/components/ui/ProductCard';
 import ChatBot from '@/components/ui/ChatBot';
 import Disclaimer from '@/components/ui/Disclaimer';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
-import type { DiseaseResult, Product } from '@/types';
+import type { Product } from '@/types';
 import { generateHealthReportPDF } from '@/utils/pdfGenerator';
-
-function getDiseaseProducts(result: DiseaseResult, allProducts: Product[]): Product[] {
-  const condition = result.possible_condition.toLowerCase();
-  const signs = result.visible_signs.map(s => s.toLowerCase()).join(' ');
-  const combined = `${condition} ${signs}`;
-
-  const matched = allProducts.filter(p => {
-    const name = p.name.toLowerCase();
-    const cat = p.category.toLowerCase();
-
-    if (combined.includes('mastitis') || combined.includes('udder') || combined.includes('teat')) {
-      if (name.includes('cmt') || name.includes('finekine') || name.includes('iogiene') || name.includes('udderon') || name.includes('mastovita')) return true;
-    }
-    if (combined.includes('tick') || combined.includes('parasite') || combined.includes('worm') || combined.includes('skin') || combined.includes('nodule')) {
-      if (name.includes('wormer') || name.includes('finekine') || name.includes('iogiene')) return true;
-    }
-    if (combined.includes('theileria') || combined.includes('anemia') || combined.includes('blood') || combined.includes('weakness')) {
-      if (name.includes('theileria') || name.includes('liver tonic') || name.includes('phos+')) return true;
-    }
-    if (combined.includes('salmonella') || combined.includes('listeria') || combined.includes('ibr') || combined.includes('respiratory')) {
-      if (name.includes('salmonella') || name.includes('listeria') || name.includes('ibr') || name.includes('liver tonic')) return true;
-    }
-    if (combined.includes('milk') || combined.includes('adulteration') || combined.includes('quality')) {
-      if (cat.includes('milk quality') || name.includes('lacto') || name.includes('aqua')) return true;
-    }
-    if (combined.includes('lameness') || combined.includes('calcium') || combined.includes('locomotion')) {
-      if (name.includes('calcdex') || name.includes('phos+')) return true;
-    }
-
-    return false;
-  });
-
-  if (matched.length > 0) return matched.slice(0, 4);
-
-  return allProducts.filter(p => 
-    p.category === 'Udder Hygiene and Disease Prevention' || p.category === 'Detection and Diagnostics'
-  ).slice(0, 3);
-}
+import { getDiseaseProductRecommendations } from '@/utils/diseaseProducts';
 
 export default function DiseaseDetection() {
   const { user } = useAuth();
@@ -60,7 +23,7 @@ export default function DiseaseDetection() {
   }, []);
 
   const isProcessing = ['uploading','extracting','filtering_blur','removing_duplicates','ranking','sending_ai','analysing'].includes(state.status);
-  const recProducts  = state.diseaseResult ? getDiseaseProducts(state.diseaseResult, allProducts) : [];
+  const recProducts  = state.diseaseResult ? getDiseaseProductRecommendations(state.diseaseResult, allProducts) : [];
 
   return (
     <div className="min-h-screen pt-24 pb-24 px-6 bg-slate-50">
@@ -163,13 +126,13 @@ export default function DiseaseDetection() {
 
                 {recProducts.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-black text-slate-900 mb-4">Recommended Diagnostic & Veterinary Products</h3>
+                    <h3 className="text-sm font-black text-slate-900 mb-4">Recommended Chimertech Products</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {recProducts.map(p => (
                         <ProductCard
                           key={p.id}
                           product={p}
-                          reason={`Relevant to detected: ${state.diseaseResult!.possible_condition}`}
+                          reason={`Recommended for screened condition: ${state.diseaseResult!.possible_condition}`}
                         />
                       ))}
                     </div>
@@ -191,13 +154,13 @@ export default function DiseaseDetection() {
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 mb-4">What We Screen For</h3>
                 <ul className="space-y-2.5">
                   {[
-                    'Mastitis (udder swelling & quarter asymmetry)',
-                    'Lumpy Skin Disease (cutaneous nodules)',
-                    'Foot & Mouth Disease (vesicular lesions)',
-                    'Skin conditions & tick infestation',
-                    'Lameness & locomotion issues',
-                    'Respiratory distress signs',
-                    'Eye conditions & corneal opacity',
+                    'Mastitis (swollen udder, abnormal milk)',
+                    'Lumpy Skin Disease (nodules, scabs)',
+                    'Foot & Mouth Disease (drooling, blisters)',
+                    'Tick Infestation & parasite control',
+                    'Suspected Theileriosis & anemia',
+                    'IBR & Respiratory conditions',
+                    'Bovine TB, Brucellosis & HS suspicion',
                   ].map(item => (
                     <li key={item} className="flex items-start gap-2.5 text-xs text-slate-900 font-bold">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 mt-0.5 flex-shrink-0" />

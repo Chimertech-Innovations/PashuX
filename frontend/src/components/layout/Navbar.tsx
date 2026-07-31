@@ -13,10 +13,20 @@ const NAV_LINKS = [
   { to: '/products',   label: 'Products' },
 ];
 
+const SUBMENU_ITEMS = [
+  { to: '/ai-transparency', label: 'AI Transparency & Architecture' },
+  { to: '/icar-standards',  label: 'ICAR Standards & BCS Scale' },
+  { to: '/disclaimer',      label: 'Veterinary Disclaimer' },
+  { to: '/data-consent',    label: 'Data Consent & Terms' },
+  { to: '/privacy',         label: 'Privacy Policy' },
+  { to: '/terms',           label: 'Terms of Service' },
+];
+
 export default function Navbar() {
   const { pathname } = useLocation();
   const { user, isAdmin, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [submenuOpen, setSubmenuOpen] = useState(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm">
@@ -30,7 +40,7 @@ export default function Navbar() {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Brand Logo - PashuX */}
         <Link to="/" className="flex items-center gap-2.5 sm:gap-3.5 group flex-shrink-0">
-          <div className="p-1 sm:p-1.5 rounded-2xl bg-white border-2 border-emerald-200/80 shadow-sm group-hover:border-emerald-400 transition-all">
+          <div className="p-1 sm:p-1.5 rounded-2xl bg-white border-2 border-emerald-200/80 shadow-sm group-hover:border-emerald-400 group-hover:shadow-md transition-all">
             <img
               src="/chimertech_logo.png"
               alt="PashuX Logo"
@@ -52,15 +62,61 @@ export default function Navbar() {
                 to={to}
                 className={`relative px-3.5 py-2 rounded-xl text-xs font-black transition-all duration-200 flex items-center gap-1.5 ${
                   active
-                    ? 'text-emerald-950 bg-emerald-100/90 border border-emerald-300 shadow-sm'
-                    : 'text-slate-900 hover:text-emerald-700 hover:bg-slate-100'
+                    ? 'text-emerald-950 bg-emerald-100/90 border border-emerald-300 shadow-xs'
+                    : 'text-slate-800 hover:text-emerald-700 hover:bg-slate-100/80 hover:shadow-xs'
                 }`}
               >
-                {isLive && <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />}
+                {isLive && <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-sm" />}
                 {label}
               </Link>
             );
           })}
+
+          {/* Desktop Interactive Submenu: About & Standards */}
+          <div
+            className="relative"
+            onMouseEnter={() => setSubmenuOpen(true)}
+            onMouseLeave={() => setSubmenuOpen(false)}
+          >
+            <button
+              onClick={() => setSubmenuOpen(o => !o)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all duration-200 flex items-center gap-1.5 ${
+                submenuOpen || SUBMENU_ITEMS.some(i => pathname === i.to)
+                  ? 'text-emerald-900 bg-emerald-50 border border-emerald-200/80 shadow-xs'
+                  : 'text-slate-800 hover:text-emerald-700 hover:bg-slate-100/80'
+              }`}
+            >
+              <span>About & Standards</span>
+              <svg className={`w-3.5 h-3.5 transition-transform duration-300 ${submenuOpen ? 'rotate-180 text-emerald-600' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {submenuOpen && (
+              <div className="absolute top-full left-0 w-64 pt-2 animate-fade-in z-50">
+                <div className="bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-2 shadow-2xl shadow-slate-900/15 space-y-1">
+                  {SUBMENU_ITEMS.map((item) => {
+                    const isCurrent = pathname === item.to;
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        onClick={() => setSubmenuOpen(false)}
+                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-black transition-all duration-150 ${
+                          isCurrent
+                            ? 'text-emerald-950 bg-emerald-100/90 font-black'
+                            : 'text-slate-800 hover:bg-slate-100/90 hover:text-emerald-800 hover:translate-x-1'
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                        {isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 flex-shrink-0" />}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Actions: iHerd Mobile App Download + Auth */}
@@ -69,7 +125,7 @@ export default function Navbar() {
             href={IHERD_PLAY_STORE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3.5 py-2 rounded-xl text-xs font-black bg-white border-2 border-emerald-300 text-slate-900 shadow-sm hover:border-emerald-500 transition-all flex items-center gap-2 group hover:scale-105"
+            className="px-3.5 py-2 rounded-xl text-xs font-black bg-white border-2 border-emerald-300 text-slate-900 shadow-sm hover:border-emerald-500 hover:bg-emerald-50/40 hover:shadow-md transition-all flex items-center gap-2 group hover:scale-[1.02]"
           >
             <img src="/iherd_logo.png" alt="iHerd Logo" className="w-4 h-4 rounded-md object-contain bg-slate-50 p-0.5 border border-slate-200" />
             <span>Download iHerd App</span>
@@ -130,6 +186,21 @@ export default function Navbar() {
               <span>{label}</span>
             </Link>
           ))}
+
+          {/* Submenu details for mobile */}
+          <div className="pt-2 pb-1 border-t border-slate-200 space-y-1">
+            <p className="px-4 text-[10px] uppercase font-black tracking-widest text-slate-400">About & Standards</p>
+            {SUBMENU_ITEMS.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={() => setMenuOpen(false)}
+                className="block px-4 py-2 rounded-xl text-xs font-black text-slate-800 hover:bg-slate-100"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
 
           {isAdmin && (
             <Link

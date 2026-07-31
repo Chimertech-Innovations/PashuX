@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import ScrollToTop from '@/components/utils/ScrollToTop';
+import ConsentBanner from '@/components/ui/ConsentBanner';
 import Landing from '@/pages/Landing';
 import Auth from '@/pages/Auth';
 import BCSDetection from '@/pages/BCSDetection';
@@ -11,25 +13,38 @@ import AnalysisHistory from '@/pages/AnalysisHistory';
 import Products from '@/pages/Products';
 import Profile from '@/pages/Profile';
 import Admin from '@/pages/Admin';
+import PrivacyPolicy from '@/pages/PrivacyPolicy';
+import TermsOfService from '@/pages/TermsOfService';
+import VeterinaryDisclaimer from '@/pages/VeterinaryDisclaimer';
+import ICARStandards from '@/pages/ICARStandards';
+import AITransparency from '@/pages/AITransparency';
+import DataConsent from '@/pages/DataConsent';
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
+        <ConsentBanner />
         <div className="relative noise-overlay">
           <Navbar />
           <main>
             <Routes>
-              <Route path="/"        element={<Landing />} />
-              <Route path="/auth"    element={<Auth />} />
-              <Route path="/admin"   element={<Admin />} />
-              <Route path="/live"    element={<LiveDetection />} />
-              <Route path="/bcs"     element={<BCSDetection />} />
-              <Route path="/disease" element={<DiseaseDetection />} />
-              <Route path="/history" element={<AnalysisHistory />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/profile"  element={<Profile />} />
-
+              <Route path="/"               element={<Landing />} />
+              <Route path="/auth"           element={<Auth />} />
+              <Route path="/admin"          element={<Admin />} />
+              <Route path="/live"           element={<LiveDetection />} />
+              <Route path="/bcs"            element={<BCSDetection />} />
+              <Route path="/disease"        element={<DiseaseDetection />} />
+              <Route path="/history"        element={<AnalysisHistory />} />
+              <Route path="/products"       element={<Products />} />
+              <Route path="/profile"         element={<Profile />} />
+              <Route path="/privacy"        element={<PrivacyPolicy />} />
+              <Route path="/terms"          element={<TermsOfService />} />
+              <Route path="/disclaimer"     element={<VeterinaryDisclaimer />} />
+              <Route path="/icar-standards" element={<ICARStandards />} />
+              <Route path="/ai-transparency" element={<AITransparency />} />
+              <Route path="/data-consent"    element={<DataConsent />} />
 
               {/* 404 fallback */}
               <Route path="*" element={

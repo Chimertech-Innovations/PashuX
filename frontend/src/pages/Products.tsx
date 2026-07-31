@@ -43,7 +43,7 @@ export default function Products() {
   }, [category, search, products]);
 
   return (
-    <div className="min-h-screen pt-24 pb-24 px-6 bg-slate-50">
+    <div className="min-h-screen pt-28 sm:pt-32 lg:pt-36 pb-24 px-4 sm:px-6 bg-slate-50">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-10 animate-fade-up">

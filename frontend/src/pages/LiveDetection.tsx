@@ -53,21 +53,21 @@ export default function LiveDetection() {
   const combinedRecs = Array.from(new Set([...bcsRecs, ...diseaseRecs]));
 
   return (
-    <div className="min-h-screen pt-20 sm:pt-24 pb-20 sm:pb-24 px-3 sm:px-6 max-w-full overflow-x-hidden bg-slate-50">
+    <div className="min-h-screen pt-28 sm:pt-32 lg:pt-36 pb-20 sm:pb-24 px-3 sm:px-6 max-w-full overflow-x-hidden bg-slate-50">
       <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
         {/* Page Header with Realistic Banner Image */}
-        <div className="glass-card p-6 sm:p-8 bg-white border border-slate-300 rounded-[2.5rem] shadow-md flex flex-col md:flex-row items-center gap-6 animate-fade-up">
+        <div className="glass-card p-6 sm:p-8 lg:p-10 bg-white border border-slate-200/90 rounded-3xl sm:rounded-[2.5rem] shadow-xl shadow-slate-200/50 flex flex-col md:flex-row items-center gap-6 lg:gap-8 transition-all duration-300 hover:border-slate-300">
           <div className="flex-1 space-y-3">
             <div className="flex items-center gap-2">
-              <span className="section-label text-slate-900 font-black">Real-Time Camera Scan</span>
+              <span className="section-label text-emerald-700 font-extrabold tracking-widest uppercase text-[11px]">Real-Time Camera Scan</span>
               <span className="badge-green text-[10px] uppercase font-bold tracking-wider animate-pulse">Live 10s Auto-Shutoff</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 leading-tight">Live BCS & Disease Detection</h1>
-            <p className="text-slate-900 text-xs sm:text-sm max-w-xl leading-relaxed font-bold">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-tight tracking-tight">Live BCS & Disease Detection</h1>
+            <p className="text-slate-600 text-xs sm:text-sm max-w-xl leading-relaxed font-semibold">
               Turn on the camera stream to scan your cattle. Results for Body Condition Score (BCS) & Disease Screening appear directly below the live video container in real time!
             </p>
           </div>
-          <div className="w-full md:w-64 h-40 rounded-2xl overflow-hidden border-2 border-emerald-300 shadow-md flex-shrink-0 relative group">
+          <div className="w-full md:w-64 lg:w-72 h-44 sm:h-48 rounded-2xl overflow-hidden border-2 border-emerald-300/80 shadow-lg shadow-emerald-500/10 flex-shrink-0 relative group">
             <img src="/live_banner.png" alt="Live Scanner AI" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           </div>
         </div>

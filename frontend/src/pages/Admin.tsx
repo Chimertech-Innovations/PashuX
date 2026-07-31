@@ -393,7 +393,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen pt-28 pb-20 px-6 bg-slate-900 text-slate-100">
+    <div className="min-h-screen pt-28 sm:pt-32 lg:pt-36 pb-20 px-4 sm:px-6 bg-slate-900 text-slate-100">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Header */}

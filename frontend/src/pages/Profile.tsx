@@ -23,7 +23,7 @@ export default function Profile() {
   const initial = name.charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen pt-24 pb-24 px-6">
+    <div className="min-h-screen pt-28 sm:pt-32 lg:pt-36 pb-24 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto">
         <div className="mb-10 animate-fade-up">
           <p className="section-label mb-3">Account</p>

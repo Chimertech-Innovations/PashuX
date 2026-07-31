@@ -48,7 +48,7 @@ export default function AnalysisHistory() {
   }
 
   return (
-    <div className="min-h-screen pt-32 pb-24 px-6 bg-slate-50">
+    <div className="min-h-screen pt-32 lg:pt-36 pb-24 px-4 sm:px-6 bg-slate-50">
       <div className="max-w-4xl mx-auto">
         <div className="mb-10 animate-fade-up">
           <p className="section-label mb-2">Your Data</p>

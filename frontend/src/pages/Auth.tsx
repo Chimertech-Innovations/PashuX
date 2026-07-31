@@ -46,7 +46,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 pt-24 pb-12">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 pt-28 sm:pt-32 lg:pt-36 pb-12">
       <div className="w-full max-w-md animate-fade-up">
         {/* Card */}
         <div className="glass-card p-8">

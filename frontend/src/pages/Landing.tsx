@@ -91,7 +91,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans overflow-x-hidden">
       {/* SECTION 1: HERO SECTION (Populated STRICTLY with PashuX Project Data) */}
-      <section className="relative pt-28 sm:pt-32 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden bg-gradient-to-b from-sky-50/60 via-white to-slate-50 border-b border-slate-200">
+      <section className="relative pt-32 sm:pt-36 lg:pt-40 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden bg-gradient-to-b from-sky-50/60 via-white to-slate-50 border-b border-slate-200">
         {/* Soft Radial Background Glow */}
         <div className="absolute top-10 right-10 w-[300px] sm:w-[700px] h-[300px] sm:h-[700px] bg-gradient-to-br from-cyan-400/20 via-sky-300/15 to-emerald-300/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[250px] sm:w-[500px] h-[250px] sm:h-[500px] bg-gradient-to-tr from-sky-200/20 to-teal-300/10 rounded-full blur-3xl pointer-events-none" />

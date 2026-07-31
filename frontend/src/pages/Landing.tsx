@@ -101,7 +101,7 @@ export default function Landing() {
           <div className="lg:col-span-6 space-y-5 sm:space-y-6 text-left">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 border border-emerald-300 animate-fade-in shadow-sm">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
-              <span className="text-[11px] sm:text-xs font-black text-slate-900 tracking-wide uppercase">PashuX AI • OpenAI Vision Inside</span>
+              <span className="text-[11px] sm:text-xs font-black text-slate-900 tracking-wide uppercase">PashuX AI</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.12] tracking-tight">

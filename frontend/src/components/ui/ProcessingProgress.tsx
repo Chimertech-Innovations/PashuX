@@ -11,7 +11,7 @@ const STEPS: Step[] = [
   { id: 'extracting',         label: 'Extracting frames',           description: 'Pulling high-clarity frames from footage' },
   { id: 'filtering_blur',     label: 'Removing blurry frames',      description: 'Using Laplacian variance to filter unclear frames' },
   { id: 'removing_duplicates',label: 'Removing duplicate frames',   description: 'Perceptual hashing to eliminate near-identical shots' },
-  { id: 'ranking',            label: 'Selecting best 10 frames',    description: 'Ranking by image clarity and selecting top frames' },
+  { id: 'ranking',            label: 'Selecting best frames',    description: 'Ranking by image clarity and selecting top frames' },
   { id: 'sending_ai',         label: 'Sending frames to AI',        description: 'Transmitting selected frames to Chimertech AI Vision Engine' },
   { id: 'analysing',          label: 'Calculating result',          description: 'AI analysing cattle condition and generating report' },
 ];

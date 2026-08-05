@@ -50,6 +50,8 @@ origins = [o.strip().rstrip("/") for o in raw_origins if o.strip()]
 
 default_origins = [
     "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
     "http://localhost:3000",
     "https://bcs-nine.vercel.app",
 ]

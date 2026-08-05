@@ -1,0 +1,266 @@
+import { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+
+export default function MuzzleCheck() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [traceMap, setTraceMap] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth', { state: { message: 'Please log in to identify cattle' } });
+    }
+  }, [user, navigate]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      const previewUrl = URL.createObjectURL(selectedFile);
+      
+      setFile(selectedFile);
+      setPreview(previewUrl);
+      
+      setResult(null);
+      setError(null);
+      setTraceMap(null);
+    }
+  };
+
+  const removeFile = () => {
+    setFile(null); 
+    setPreview(null); 
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleReset = () => {
+    removeFile();
+    setResult(null);
+    setError(null);
+    setTraceMap(null);
+  };
+
+  const handleIdentify = async () => {
+    if (!file) {
+      setError('Please upload a muzzle image.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    setTraceMap(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('http://localhost:8000/api/muzzle/identify', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setResult(data);
+        if (data.trace_maps && data.trace_maps[0]) setTraceMap(data.trace_maps[0]);
+      } else {
+        setError(data.detail || 'Identification failed');
+        // If OpenAI told them to retake the photo, clear the preview so they can try again
+        if (data.detail && (data.detail.toLowerCase().includes('retake') || data.detail.toLowerCase().includes('blurry') || data.detail.toLowerCase().includes('valid'))) {
+           handleReset(); // clears file and preview
+           setError(data.detail); // restore error since handleReset clears it
+        }
+      }
+    } catch (err) {
+      setError('Network error connecting to backend.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="pt-24 pb-20 min-h-screen bg-slate-50">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-3 tracking-tight">AI Muzzle Identification</h1>
+          <p className="text-slate-500 font-medium max-w-xl mx-auto text-sm sm:text-base">
+            Instantly identify cattle by scanning their unique multi-angle muzzle pattern.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Scanner Side */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 border border-slate-200">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <span className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                    1
+                </span>
+                Scan Muzzle (1 Image)
+                </h2>
+                {traceMap && (
+                    <button type="button" onClick={handleReset} className="text-xs font-bold text-emerald-600 hover:text-emerald-700">
+                        + Scan Another Cattle
+                    </button>
+                )}
+            </div>
+            
+            <div className="space-y-4">
+              <div className="max-w-xs mx-auto">
+                <div className={`relative border-2 ${traceMap ? 'border-emerald-500 bg-slate-900 border-solid' : 'border-dashed'} rounded-xl p-3 text-center transition-all flex flex-col justify-center min-h-[200px] ${
+                  !traceMap && (preview ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-300 hover:border-emerald-400 bg-slate-50')
+                }`}>
+                  {traceMap ? (
+                    <div className="flex flex-col items-center">
+                      <p className="text-[10px] text-emerald-400 font-black tracking-widest mb-2">PATTERN TRACE</p>
+                      <img src={traceMap} alt="Trace" className="max-h-32 w-auto object-contain rounded-md" />
+                    </div>
+                  ) : preview ? (
+                    <div className="flex flex-col items-center">
+                      <img src={preview} alt="Preview" className={`max-h-32 w-auto object-contain rounded-md mb-2 ${loading ? 'opacity-50' : ''}`} />
+                      {!loading && (
+                        <button type="button" onClick={removeFile} className="text-[12px] font-bold text-rose-500 hover:text-rose-600 uppercase">Remove</button>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-2 text-emerald-500 shadow-sm">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      </div>
+                      <p className="text-[12px] font-bold text-slate-700 uppercase">Tap to Upload</p>
+                    </div>
+                  )}
+                  {!traceMap && (
+                    <input type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" ref={fileInputRef} disabled={!!preview || loading} style={{ display: preview ? 'none' : 'block' }} />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              {preview && !loading && !result && (
+                <button 
+                  onClick={handleReset}
+                  className="px-4 py-3 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-100 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+              
+              <button 
+                onClick={handleIdentify}
+                disabled={loading || !file || !!result}
+                className="flex-1 btn-primary py-3.5 shadow-md flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span>Analyzing...</span>
+                  </>
+                ) : result ? (
+                  <span>Analysis Complete</span>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <span>Identify Cattle</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Results Side */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 border border-slate-200 flex flex-col">
+            <h2 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                2
+              </span>
+              Match Results
+            </h2>
+            
+            <div className="flex-1 flex flex-col justify-center">
+              {loading ? (
+                <div className="text-center">
+                  <div className="w-16 h-16 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-slate-500 font-bold text-sm">Validating & searching database...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center p-6 bg-rose-50 rounded-2xl border border-rose-100">
+                  <div className="w-12 h-12 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  </div>
+                  <p className="text-rose-800 font-black mb-1">{error}</p>
+                </div>
+              ) : result ? (
+                result.status === 'not_found' ? (
+                  <div className="text-center p-6 bg-amber-50 rounded-2xl border border-amber-200">
+                    <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <h3 className="text-amber-900 font-black text-lg mb-2">No Match Found</h3>
+                    <p className="text-amber-700/80 font-medium text-sm mb-6 leading-relaxed">
+                      This muzzle pattern does not exist in your database. The AI requires a registered pattern to identify cattle.
+                    </p>
+                    <Link to="/farm" className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl transition-colors text-sm shadow-md">
+                      Register this Cattle
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="bg-emerald-50 rounded-2xl border border-emerald-200 p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-md">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                      </div>
+                      <div>
+                        <h3 className="text-emerald-900 font-black text-xl leading-none">Match Found!</h3>
+                        <p className="text-emerald-700 font-bold text-xs mt-1">
+                          Similarity Score: {((result.cattle.similarity || 0) * 100).toFixed(1)}%
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
+                        <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Name / Tag</p>
+                        <p className="text-slate-900 font-black text-lg">{result.cattle.name}</p>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Breed</p>
+                          <p className="text-slate-900 font-bold">{result.cattle.breed || 'Unknown'}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">ID Hash</p>
+                          <p className="text-slate-600 font-mono text-xs break-all">{result.cattle.id.split('-')[0]}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className="text-center text-slate-400 flex flex-col items-center">
+                  <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  <p className="font-medium text-sm">Upload 3 scans on the left to see results</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -15,7 +15,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-from routers import upload, process, analyse, chat, products, results, admin
+from routers import upload, process, analyse, chat, products, results, admin, muzzle
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -77,7 +77,7 @@ app.include_router(chat.router,     prefix="/api", tags=["Chat"])
 app.include_router(products.router, prefix="/api", tags=["Products"])
 app.include_router(results.router,  prefix="/api", tags=["Results"])
 app.include_router(admin.router,    prefix="/api/admin", tags=["Admin"])
-
+app.include_router(muzzle.router,   prefix="/api", tags=["Muzzle"])
 
 # ── Health check ──────────────────────────────────────────────────────────────
 

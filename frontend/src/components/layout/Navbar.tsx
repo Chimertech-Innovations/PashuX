@@ -5,6 +5,8 @@ import { useState } from 'react';
 const IHERD_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.chimertech.iherd&hl=en_IN';
 
 const AI_MODULES = [
+  { to: '/farm',    label: 'Farm Management',     desc: 'Register cattle with AI Muzzle Scan' },
+  { to: '/muzzle-check', label: 'Muzzle Identity Check', desc: 'Identify cattle by muzzle pattern' },
   { to: '/bcs',     label: 'BCS Score Detection', desc: 'Body condition score AI analysis' },
   { to: '/disease', label: 'Disease Detection',   desc: 'Visible cattle health screening' },
   { to: '/history', label: 'Analysis History',    desc: 'Past diagnostic reports & scans' },

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useVideoAnalysis } from '@/hooks/useVideoAnalysis';
 import { useAuth } from '@/contexts/AuthContext';
 import { getProducts } from '@/lib/api';
@@ -14,9 +15,16 @@ import { generateHealthReportPDF } from '@/utils/pdfGenerator';
 import { getDiseaseProductRecommendations } from '@/utils/diseaseProducts';
 
 export default function DiseaseDetection() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const { state, run, startAnalysis, reset } = useVideoAnalysis('disease');
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth', { state: { message: 'Please log in to use Disease Screening.' } });
+    }
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     getProducts().then(setAllProducts).catch(() => {});
@@ -24,6 +32,16 @@ export default function DiseaseDetection() {
 
   const isProcessing = ['uploading','extracting','filtering_blur','removing_duplicates','ranking','sending_ai','analysing'].includes(state.status);
   const recProducts  = state.diseaseResult ? getDiseaseProductRecommendations(state.diseaseResult, allProducts) : [];
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen pt-24 pb-20 bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin h-10 w-10 border-4 border-emerald-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen pt-28 sm:pt-32 lg:pt-36 pb-24 px-4 sm:px-6 bg-slate-50">

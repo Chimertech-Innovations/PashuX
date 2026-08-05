@@ -160,6 +160,34 @@ async def upload_frame_to_storage(
     return public_url
 
 
+import asyncio
+import re
+
+async def upload_muzzle_image(
+    image_bytes: bytes,
+    cattle_name: str,
+) -> str:
+    """
+    Upload a muzzle image to Supabase Storage and return the public URL.
+    Bucket name: 'muzzles' (must be created in Supabase Dashboard with public=true)
+    """
+    sb = get_client()
+    bucket = "muzzles"
+    safe_name = re.sub(r'[^A-Za-z0-9]', '_', cattle_name)
+    storage_path = f"{uuid.uuid4()}_{safe_name}.jpg"
+
+    def _do_upload():
+        sb.storage.from_(bucket).upload(
+            storage_path,
+            image_bytes,
+            {"content-type": "image/jpeg"},
+        )
+        return sb.storage.from_(bucket).get_public_url(storage_path)
+
+    public_url = await asyncio.to_thread(_do_upload)
+    return public_url
+
+
 
 async def upload_video_to_storage(
     video_path: str,

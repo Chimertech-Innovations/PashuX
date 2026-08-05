@@ -137,7 +137,70 @@ RULES:
 """
 
 
+MUZZLE_VALIDATION_PROMPT = """\
+You are an expert cattle biometric validator.
+Your task is to analyze the provided image and determine if it is a valid, clear photo of a cattle's muzzle (nose/snout) suitable for biometric scanning.
 
+CRITICAL RULES:
+1. If the image is NOT a cattle or NOT a muzzle (e.g. it's a dog, human, tractor, grass), set "valid": false and explain why.
+2. If the image is a cattle muzzle but is EXTREMELY blurry, completely dark, or too far away, set "valid": false and ask the user to retake a clear, close-up photo.
+3. If it is a clear, well-lit cattle muzzle, set "valid": true.
+
+OUTPUT FORMAT (Return raw JSON only):
+{
+  "valid": <true or false>,
+  "message": "<If valid, say 'Valid'. If invalid, explain exactly what is wrong and kindly ask to retake the photo>"
+}
+"""
+
+async def validate_muzzle_image(image_bytes: bytes) -> dict:
+    """Send image bytes to OpenAI Vision to validate if it is a clear cattle muzzle."""
+    import json
+    client = _get_client()
+    
+    b64 = base64.b64encode(image_bytes).decode("utf-8")
+    
+    messages = [
+        {"role": "system", "content": MUZZLE_VALIDATION_PROMPT},
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Please validate this muzzle image."},
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}}
+            ]
+        }
+    ]
+    
+    models_to_try = get_openai_models()
+    last_error = None
+    
+    for model in models_to_try:
+        try:
+            logger.info(f"Validating muzzle image using OpenAI model: {model}")
+            response = await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.0,
+                max_tokens=150,
+            )
+            raw_text = response.choices[0].message.content.strip()
+            
+            # Clean JSON if wrapped in markdown
+            if raw_text.startswith("```json"):
+                raw_text = raw_text.split("```json")[1].split("```")[0].strip()
+            elif raw_text.startswith("```"):
+                raw_text = raw_text.split("```")[1].split("```")[0].strip()
+                
+            return json.loads(raw_text)
+            
+        except Exception as exc:
+            last_error = exc
+            logger.warning(f"OpenAI model {model} failed for muzzle validation: {exc}")
+            
+    # If all models fail, we return valid to not block the user, but log the error
+    logger.error(f"OpenAI Muzzle Validation failed across all models: {last_error}. Bypassing validation.")
+    return {"valid": True, "message": "Bypassed AI validation due to API error."}
+    
 async def _generate_openai_vision(
     frame_paths: List[str],
     system_instruction: str,
@@ -275,3 +338,4 @@ async def chat(
             continue
 
     raise RuntimeError(f"OpenAI Chat failed across all models: {last_error}")
+

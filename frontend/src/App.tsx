@@ -20,6 +20,8 @@ import ICARStandards from '@/pages/ICARStandards';
 import AITransparency from '@/pages/AITransparency';
 import DataConsent from '@/pages/DataConsent';
 import ContactUs from '@/pages/ContactUs';
+import FarmManagement from '@/pages/FarmManagement';
+import MuzzleCheck from '@/pages/MuzzleCheck';
 
 export default function App() {
   return (
@@ -34,6 +36,8 @@ export default function App() {
               <Route path="/"               element={<Landing />} />
               <Route path="/auth"           element={<Auth />} />
               <Route path="/admin"          element={<Admin />} />
+              <Route path="/farm"           element={<FarmManagement />} />
+              <Route path="/muzzle-check"   element={<MuzzleCheck />} />
               <Route path="/live"           element={<LiveDetection />} />
               <Route path="/bcs"            element={<BCSDetection />} />
               <Route path="/disease"        element={<DiseaseDetection />} />

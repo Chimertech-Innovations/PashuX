@@ -40,6 +40,20 @@ class DiseaseResult(BaseModel):
     next_steps: List[str]
 
 
+# ── Video Analysis ────────────────────────────────────────────────────────────
+
+class VideoAnalysisResult(BaseModel):
+    bcs_score: float = Field(..., ge=0.0, le=5.0)
+    disease_status: str
+    breed: str
+    weight_kg: float
+    height_cm: float
+    coat_color: str
+    estimated_value: str
+    observations: List[str]
+
+
+
 # ── Chat ──────────────────────────────────────────────────────────────────────
 
 class ChatMessageRole(str, Enum):

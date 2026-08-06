@@ -244,8 +244,30 @@ export default function MuzzleCheck() {
                           <p className="text-slate-900 font-bold">{result.cattle.breed || 'Unknown'}</p>
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">ID Hash</p>
-                          <p className="text-slate-600 font-mono text-xs break-all">{result.cattle.id.split('-')[0]}</p>
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">BCS Score</p>
+                          <p className="text-slate-900 font-bold">{result.cattle.bcs_score || 'N/A'}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Est. Weight</p>
+                          <p className="text-slate-900 font-bold">{result.cattle.weight_kg ? `${result.cattle.weight_kg} kg` : 'N/A'}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Height</p>
+                          <p className="text-slate-900 font-bold">{result.cattle.height_cm ? `${result.cattle.height_cm} cm` : 'N/A'}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm col-span-2">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Health Status</p>
+                          <p className={`font-bold ${result.cattle.disease && result.cattle.disease.toLowerCase() !== 'healthy' ? 'text-rose-600' : 'text-emerald-600'}`}>
+                              {result.cattle.disease || 'Healthy'}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Color</p>
+                          <p className="text-slate-900 font-bold">{result.cattle.color || 'Unknown'}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Est. Value</p>
+                          <p className="text-slate-900 font-bold">{result.cattle.estimated_value || 'N/A'}</p>
                         </div>
                       </div>
                     </div>

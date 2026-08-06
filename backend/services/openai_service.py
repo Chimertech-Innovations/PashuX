@@ -339,3 +339,79 @@ async def chat(
 
     raise RuntimeError(f"OpenAI Chat failed across all models: {last_error}")
 
+VIDEO_ANALYSIS_SYSTEM_PROMPT = """
+You are an expert veterinary AI specializing in livestock health and breed identification.
+You will be given multiple clear frames extracted from a 15-second video of an animal (Cattle or Water Buffalo).
+Please analyze the frames to determine:
+1. BCS Score (1.0 - 5.0)
+2. Disease/Health Status (e.g. Healthy, Lumpy Skin Disease, FMD, etc.)
+3. Breed/Species (CRITICAL: Explicitly specify whether it is a Water Buffalo or Cattle, e.g., "Murrah Buffalo", "Holstein Cattle", "Indigenous Buffalo", etc.)
+4. Estimated Weight in kg (number only)
+5. Estimated Height in cm (number only)
+6. Coat Color (e.g. Solid Black, Brown, Black and White, etc.)
+7. Estimated Value (e.g. '$1,200')
+
+Return ONLY a raw JSON object (without markdown code blocks) matching this schema:
+{
+  "bcs_score": 3.0,
+  "disease_status": "Healthy",
+  "breed": "Murrah Buffalo",
+  "weight_kg": 550.0,
+  "height_cm": 140.0,
+  "coat_color": "Solid Black",
+  "estimated_value": "$1,500",
+  "observations": ["Clear eyes", "Good posture"]
+}
+"""
+
+async def analyse_video_stats(frame_paths: List[str]) -> Any:
+    """Send video frames to OpenAI to extract cattle stats using gpt-4o-mini explicitly."""
+    from models.schemas import VideoAnalysisResult
+    import base64
+    import json
+    
+    image_contents = []
+    for path in frame_paths:
+        try:
+            with open(path, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("utf-8")
+                image_contents.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{b64}"}
+                })
+        except Exception as e:
+            logger.warning(f"Failed to load frame {path}: {e}")
+
+    if not image_contents:
+        raise ValueError("No valid image frames found to process.")
+
+    messages = [
+        {"role": "system", "content": VIDEO_ANALYSIS_SYSTEM_PROMPT},
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Analyze these video frames carefully and return the required JSON response."},
+                *image_contents
+            ]
+        }
+    ]
+
+    client = _get_client()
+    model = "gpt-4o-mini"
+    logger.info(f"Using model {model} for Video Analysis...")
+
+    try:
+        res = await client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_tokens=600,
+        )
+        content = res.choices[0].message.content
+        if content:
+            content = _strip_fences(content)
+            data = json.loads(content)
+            return VideoAnalysisResult(**data)
+    except Exception as exc:
+        logger.error(f"OpenAI Video Analysis failed: {exc}")
+    
+    raise ValueError("Failed to analyze video stats using OpenAI")

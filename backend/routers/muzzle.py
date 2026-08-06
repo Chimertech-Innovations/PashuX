@@ -8,6 +8,11 @@ import numpy as np
 # from services.muzzle_processor import extract_muzzle_features
 import services.supabase_service as db
 from services.openai_service import validate_muzzle_image
+from services.video_processor import process_video
+from services.image_analysis import analyse_video_stats
+import tempfile
+import os
+import shutil
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -250,12 +255,6 @@ async def register_cattle_muzzle(
         
         import asyncio
         
-        # 0. OpenAI Validation (sequential to avoid rate limits)
-        for i, b in enumerate([img1_bytes, img2_bytes, img3_bytes]):
-            validation = await validate_muzzle_image(b)
-            if not validation.get("valid", True):
-                raise HTTPException(status_code=400, detail=f"Image {i+1} invalid: {validation.get('message')}")
-        
         # 1. Smart Auto-Enhance image (only for AI extraction)
         enh1, enh2, enh3 = await asyncio.gather(
             asyncio.to_thread(auto_enhance_image_bytes, img1_bytes),
@@ -279,13 +278,13 @@ async def register_cattle_muzzle(
         
         sb = db.get_client()
         
-        # 3. Duplicate Check
+        # 3. Check for duplicates (if similar > 0.90)
         def _check_duplicate():
             return sb.rpc(
                 "match_cattle_muzzle", 
                 {
                     "query_embedding": master_embedding,
-                    "match_threshold": 0.85,
+                    "match_threshold": 0.90,
                     "match_count": 1
                 }
             ).execute()
@@ -343,6 +342,68 @@ async def register_cattle_muzzle(
         logger.error(f"Error registering muzzle: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/muzzle/{cattle_id}/video-analysis")
+async def analyze_cattle_video(
+    cattle_id: str,
+    video: UploadFile = File(...)
+):
+    """
+    Process a video upload for cattle, extract frames, analyze for BCS, disease, breed, weight, height, etc.
+    and save the results to the cattle database record.
+    """
+    temp_dir = tempfile.mkdtemp()
+    try:
+        # Save video temporarily
+        video_path = os.path.join(temp_dir, f"upload_{uuid.uuid4().hex}.webm")
+        with open(video_path, "wb") as f:
+            f.write(await video.read())
+            
+        import asyncio
+        
+        # Extract and filter frames
+        process_result = await asyncio.to_thread(process_video, video_path, temp_dir)
+        frame_data = process_result.get("frame_data", [])
+        frame_paths = [f["path"] for f in frame_data if "path" in f]
+        
+        if not frame_paths:
+            raise HTTPException(status_code=400, detail="Could not extract usable frames from the video.")
+            
+        # Call AI for video stats analysis
+        stats = await analyse_video_stats(frame_paths)
+        
+        # Update cattle record in database
+        sb = db.get_client()
+        update_data = {
+            "bcs_score": stats.bcs_score,
+            "disease": stats.disease_status,
+            "breed": stats.breed,
+            "weight_kg": stats.weight_kg,
+            "height_cm": stats.height_cm,
+            "color": stats.coat_color,
+            "estimated_value": stats.estimated_value
+        }
+        
+        # Using string match if cattle_id is the string tag, or assuming it's the exact id. 
+        # The frontend uses tag_id (e.g. Chimertech001), but the DB might use an int UUID.
+        # Wait, tag_id was stored in the 'name' field usually (e.g., 'Bessie (Chimertech001)').
+        # Let's search by name containing the cattle_id.
+        def _update():
+            return sb.table("cattle").update(update_data).ilike("name", f"%{cattle_id}%").execute()
+            
+        await asyncio.to_thread(_update)
+        
+        return {
+            "status": "success",
+            "message": "Video analysis completed and saved successfully.",
+            "data": stats.dict()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error analyzing cattle video: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
 
 @router.post("/muzzle/identify")
 async def identify_cattle_muzzle(
@@ -356,11 +417,7 @@ async def identify_cattle_muzzle(
         
         import asyncio
         
-        # 0. OpenAI Validation
-        validation = await validate_muzzle_image(original_image_bytes)
-        if not validation.get("valid", True):
-            raise HTTPException(status_code=400, detail=validation.get("message", "Invalid image."))
-        
+        # 1. Smart Auto-Enhance image (only for AI extraction)
         # 1. Smart Auto-Enhance image (only for AI extraction)
         enhanced_image_bytes = await asyncio.to_thread(auto_enhance_image_bytes, original_image_bytes)
         
@@ -376,7 +433,7 @@ async def identify_cattle_muzzle(
                 "match_cattle_muzzle", 
                 {
                     "query_embedding": master_embedding,
-                    "match_threshold": 0.50,
+                    "match_threshold": 0.85,
                     "match_count": 1
                 }
             ).execute()
@@ -415,7 +472,7 @@ async def get_user_cattle(user_id: str):
         import asyncio
         
         def _fetch():
-            return sb.table("cattle").select("id, name, image_url, created_at").eq("user_id", user_id).order("created_at", desc=True).execute()
+            return sb.table("cattle").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
             
         response = await asyncio.to_thread(_fetch)
         

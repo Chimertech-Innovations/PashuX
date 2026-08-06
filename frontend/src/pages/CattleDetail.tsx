@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { useAuth } from '@/contexts/AuthContext';
 
 /* ── Types ───────────────────────────────────────────────────────────────────── */
 interface CattleData {
@@ -14,31 +15,67 @@ interface CattleData {
   bcs_score?: number;
   weight_kg?: number;
   height_cm?: number;
-  disease_status?: string;
-  coat_color?: string;
+  disease?: string;         // raw disease field from DB
+  disease_status?: string;  // alias
+  color?: string;           // coat color from DB 'color' column
+  coat_color?: string;      // alias
   estimated_value?: string;
   confidence?: number;
   age_estimate?: string;
   body_length_cm?: number;
   body_condition_detail?: string;
+  muzzle_id?: string;       // the short tag like Chimertech001
 }
 
-/* ── Colour helpers ──────────────────────────────────────────────────────────── */
-const BCS_COLORS  = ['#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#059669','#047857'];
-const HEALTH_COLORS: Record<string, string> = {
-  Healthy: '#10b981',
-  'Mild Issue': '#f59e0b',
-  'Moderate Issue': '#f97316',
-  Diseased: '#ef4444',
-  Unknown: '#94a3b8',
+/* ── BCS 1-5 scale colours (1=red … 5=deep green) ────────────────────────── */
+const BCS5_COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#047857'];
+const BCS5_LABELS = ['Emaciated', 'Thin', 'Ideal', 'Fat', 'Obese'];
+
+/* ── Health colours ──────────────────────────────────────────────────────────── */
+const HEALTH_COLOR = (status: string): string => {
+  const s = status.toLowerCase();
+  if (s.includes('healthy') || s.includes('no visible')) return '#10b981';
+  if (s.includes('mild')) return '#f59e0b';
+  if (s.includes('moderate')) return '#f97316';
+  if (s.includes('severe') || s.includes('disease') || s.includes('issue')) return '#ef4444';
+  return '#94a3b8';
 };
+
+/* ── Coat CSS colour approximation ──────────────────────────────────────────── */
+const COAT_SWATCH: Record<string, string> = {
+  black: '#1e293b', white: '#f8fafc', brown: '#92400e', red: '#b91c1c',
+  grey: '#94a3b8', gray: '#94a3b8', yellow: '#ca8a04', cream: '#fef3c7',
+  dun: '#d97706', roan: '#9f1239', spotted: 'linear-gradient(135deg,#1e293b 50%,#f8fafc 50%)',
+};
+function coatSwatch(color?: string): string {
+  if (!color) return '#94a3b8';
+  const lc = color.toLowerCase();
+  for (const [k, v] of Object.entries(COAT_SWATCH)) {
+    if (lc.includes(k)) return v;
+  }
+  return '#94a3b8';
+}
+
+/* ── Helpers ─────────────────────────────────────────────────────────────────── */
+function shortId(id: string) {
+  return id.replace(/-/g, '').substring(0, 8).toUpperCase();
+}
+function muzzleTag(name: string, id: string): string {
+  // Extract tag embedded in name like "Bessie (Chimertech001)"
+  const m = name.match(/\(([^)]+)\)/);
+  if (m) return m[1];
+  return `MUZZ-${shortId(id)}`;
+}
+function userId(uid: string): string {
+  return `USR-${shortId(uid)}`;
+}
 
 /* ── Custom Tooltip ──────────────────────────────────────────────────────────── */
 const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
+  if (active && payload?.length) {
     return (
       <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-3 text-xs font-bold text-slate-700">
-        <p style={{ color: payload[0].payload.fill }}>{payload[0].name}: {payload[0].value}%</p>
+        <p style={{ color: payload[0].payload.fill }}>{payload[0].name}: {payload[0].value}</p>
       </div>
     );
   }
@@ -54,9 +91,10 @@ function StatCard({ label, value, icon, color = 'emerald' }: { label: string; va
     rose:    'bg-rose-50 text-rose-600 border-rose-100',
     purple:  'bg-purple-50 text-purple-600 border-purple-100',
     slate:   'bg-slate-50 text-slate-600 border-slate-100',
+    teal:    'bg-teal-50 text-teal-600 border-teal-100',
   };
   return (
-    <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
       <div className={`inline-flex items-center justify-center w-9 h-9 rounded-xl mb-3 border ${colorMap[color] || colorMap.emerald}`}>
         {icon}
       </div>
@@ -66,111 +104,123 @@ function StatCard({ label, value, icon, color = 'emerald' }: { label: string; va
   );
 }
 
-/* ── BCS Chart ───────────────────────────────────────────────────────────────── */
-function BCSChart({ score }: { score: number }) {
-  const data = Array.from({ length: 9 }, (_, i) => ({
-    name: `BCS ${i + 1}`,
-    value: 11,
-    fill: BCS_COLORS[i],
-    active: i + 1 === Math.round(score),
+/* ── BCS 1–5 Chart ───────────────────────────────────────────────────────────── */
+function BCS5Chart({ score }: { score: number }) {
+  // score is 1.0–5.0; snap to nearest segment
+  const activeIdx = Math.min(Math.max(Math.round(score) - 1, 0), 4);
+  const activeColor = BCS5_COLORS[activeIdx];
+  const activeLabel = BCS5_LABELS[activeIdx];
+
+  const data = BCS5_LABELS.map((label, i) => ({
+    name: `${i + 1} – ${label}`,
+    value: 20, // equal segments
+    fill: BCS5_COLORS[i],
   }));
 
   return (
     <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
       <h3 className="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">BCS Score</h3>
-      <p className="text-xs text-slate-500 mb-4">Body Condition Score — ICAR 1–9 scale</p>
+      <p className="text-xs text-slate-500 mb-4">Body Condition Score — Veterinary 1–5 scale</p>
       <div className="flex items-center gap-6">
-        <div className="relative">
-          <ResponsiveContainer width={160} height={160}>
+        {/* Donut */}
+        <div className="relative flex-shrink-0">
+          <ResponsiveContainer width={164} height={164}>
             <PieChart>
               <Pie
                 data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={45}
-                outerRadius={70}
-                paddingAngle={2}
+                cx="50%" cy="50%"
+                innerRadius={46} outerRadius={72}
+                paddingAngle={3}
                 dataKey="value"
-                startAngle={90}
-                endAngle={-270}
+                startAngle={90} endAngle={-270}
               >
-                {data.map((entry, index) => (
-                  <Cell key={index} fill={entry.fill} opacity={entry.active ? 1 : 0.22} stroke={entry.active ? entry.fill : 'none'} strokeWidth={entry.active ? 2 : 0} />
+                {data.map((entry, i) => (
+                  <Cell
+                    key={i}
+                    fill={entry.fill}
+                    opacity={i === activeIdx ? 1 : 0.18}
+                    stroke={i === activeIdx ? entry.fill : 'none'}
+                    strokeWidth={i === activeIdx ? 2 : 0}
+                  />
                 ))}
               </Pie>
             </PieChart>
           </ResponsiveContainer>
+          {/* Centre label */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-3xl font-black" style={{ color: BCS_COLORS[Math.round(score) - 1] }}>{score.toFixed(1)}</span>
-            <span className="text-[10px] text-slate-500 font-bold">/ 9.0</span>
+            <span className="text-3xl font-black leading-none" style={{ color: activeColor }}>{score.toFixed(1)}</span>
+            <span className="text-[10px] text-slate-500 font-bold mt-0.5">/ 5.0</span>
           </div>
         </div>
+
+        {/* Legend */}
         <div className="flex-1 space-y-1.5">
-          {[
-            { range: '1–3', label: 'Thin', color: '#ef4444' },
-            { range: '4–5', label: 'Moderate', color: '#f59e0b' },
-            { range: '6–7', label: 'Good', color: '#22c55e' },
-            { range: '8–9', label: 'Fat', color: '#6366f1' },
-          ].map(b => {
-            const lo = parseInt(b.range);
-            const hi = parseInt(b.range.split('–')[1]);
-            const isCurrent = Math.round(score) >= lo && Math.round(score) <= hi;
+          {BCS5_LABELS.map((label, i) => {
+            const isCurr = i === activeIdx;
             return (
-              <div key={b.range} className={`flex items-center gap-2 text-xs px-2 py-1 rounded-lg ${isCurrent ? 'bg-slate-50 border border-slate-200' : ''}`}>
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: b.color }} />
-                <span className="text-slate-500">{b.range}</span>
-                <span className="font-bold text-slate-700">{b.label}</span>
-                {isCurrent && <span className="ml-auto text-[9px] font-black px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Current</span>}
+              <div key={label} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-xl ${isCurr ? 'bg-slate-50 border border-slate-200' : ''}`}>
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: BCS5_COLORS[i] }} />
+                <span className="text-slate-500 w-4 font-mono">{i + 1}</span>
+                <span className={`font-bold ${isCurr ? 'text-slate-900' : 'text-slate-500'}`}>{label}</span>
+                {isCurr && <span className="ml-auto text-[9px] font-black px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Current</span>}
               </div>
             );
           })}
+          <div className="pt-2 mt-2 border-t border-slate-100">
+            <p className="text-lg font-black" style={{ color: activeColor }}>{activeLabel}</p>
+            <p className="text-[10px] text-slate-400">Condition at BCS {score.toFixed(1)}</p>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/* ── Health Pie ──────────────────────────────────────────────────────────────── */
+/* ── Health Status Pie ───────────────────────────────────────────────────────── */
 function HealthPieChart({ status, confidence }: { status: string; confidence: number }) {
-  const healthColor = HEALTH_COLORS[status] || HEALTH_COLORS.Unknown;
+  const hColor = HEALTH_COLOR(status);
+  const isHealthy = hColor === '#10b981';
   const data = [
-    { name: status, value: confidence, fill: healthColor },
+    { name: status, value: confidence, fill: hColor },
     { name: 'Uncertainty', value: 100 - confidence, fill: '#e2e8f0' },
   ];
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+    <div className={`rounded-2xl p-6 border shadow-sm ${isHealthy ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200'}`}>
       <h3 className="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Health Status</h3>
-      <p className="text-xs text-slate-500 mb-4">AI confidence in diagnosis</p>
+      <p className="text-xs text-slate-500 mb-4">AI-assessed health confidence</p>
       <div className="flex items-center gap-4">
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <ResponsiveContainer width={160} height={160}>
             <PieChart>
-              <Pie data={data} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" startAngle={90} endAngle={-270}>
+              <Pie data={data} cx="50%" cy="50%" innerRadius={46} outerRadius={70} dataKey="value" startAngle={90} endAngle={-270}>
                 {data.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-2xl font-black" style={{ color: healthColor }}>{confidence}%</span>
+            <span className="text-2xl font-black" style={{ color: hColor }}>{confidence}%</span>
             <span className="text-[10px] text-slate-500 font-bold">sure</span>
           </div>
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-3 h-3 rounded-full" style={{ background: healthColor }} />
-            <span className="text-base font-black text-slate-900">{status}</span>
+          {/* Health badge */}
+          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl mb-3 border ${
+            isHealthy ? 'bg-emerald-100 border-emerald-300 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
+          }`}>
+            <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: hColor }} />
+            <span className="font-black text-sm">{status}</span>
           </div>
-          <div className="h-2 rounded-full bg-slate-100 overflow-hidden mb-2">
-            <div className="h-2 rounded-full transition-all duration-1000" style={{ width: `${confidence}%`, background: healthColor }} />
+          <div className="h-2 rounded-full bg-white/70 overflow-hidden mb-2 border border-slate-200">
+            <div className="h-2 rounded-full transition-all duration-1000" style={{ width: `${confidence}%`, background: hColor }} />
           </div>
-          <p className="text-[10px] text-slate-500">{confidence}% confidence score</p>
+          <p className="text-[10px] text-slate-500">{confidence}% AI confidence</p>
           <div className="mt-4 space-y-1">
-            {Object.entries(HEALTH_COLORS).filter(([k]) => k !== 'Unknown').map(([k, c]) => (
+            {[['Healthy','#10b981'],['Mild Issue','#f59e0b'],['Moderate Issue','#f97316'],['Diseased','#ef4444']].map(([k,c]) => (
               <div key={k} className="flex items-center gap-2 text-xs">
                 <span className="w-2 h-2 rounded-full" style={{ background: c }} />
-                <span className={k === status ? 'font-black text-slate-900' : 'text-slate-400'}>{k}</span>
+                <span className={status.toLowerCase().includes(k.toLowerCase()) ? 'font-black text-slate-900' : 'text-slate-400'}>{k}</span>
               </div>
             ))}
           </div>
@@ -180,21 +230,18 @@ function HealthPieChart({ status, confidence }: { status: string; confidence: nu
   );
 }
 
-/* ── Body Metrics Bar Chart (SVG) ────────────────────────────────────────────── */
+/* ── Body Metrics Chart ──────────────────────────────────────────────────────── */
 function BodyMetricsChart({ weight, height, bodyLength }: { weight?: number; height?: number; bodyLength?: number }) {
   const items = [
     { name: 'Weight', value: weight || 0, unit: 'kg', color: '#10b981', max: 900 },
     { name: 'Height', value: height || 0, unit: 'cm', color: '#3b82f6', max: 200 },
-    { name: 'Body Length', value: bodyLength || 0, unit: 'cm', color: '#8b5cf6', max: 250 },
+    { name: 'Length', value: bodyLength || 0, unit: 'cm', color: '#8b5cf6', max: 250 },
   ].filter(d => d.value > 0);
 
-  if (items.length === 0) return null;
+  if (!items.length) return null;
 
-  const pieData = items.map(d => ({
-    name: `${d.name} (${d.value}${d.unit})`,
-    value: Math.round((d.value / items.reduce((s, x) => s + x.value, 0)) * 100),
-    fill: d.color,
-  }));
+  const total = items.reduce((s, d) => s + d.value, 0);
+  const pieData = items.map(d => ({ name: `${d.name} (${d.value}${d.unit})`, value: Math.round((d.value / total) * 100), fill: d.color }));
 
   return (
     <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
@@ -217,7 +264,7 @@ function BodyMetricsChart({ weight, height, bodyLength }: { weight?: number; hei
                 <span className="font-black" style={{ color: d.color }}>{d.value} {d.unit}</span>
               </div>
               <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                <div className="h-2 rounded-full" style={{ width: `${Math.min((d.value / d.max) * 100, 100)}%`, background: d.color }} />
+                <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min((d.value / d.max) * 100, 100)}%`, background: d.color }} />
               </div>
             </div>
           ))}
@@ -227,7 +274,7 @@ function BodyMetricsChart({ weight, height, bodyLength }: { weight?: number; hei
   );
 }
 
-/* ── Breed Confidence Chart ──────────────────────────────────────────────────── */
+/* ── Breed Chart ─────────────────────────────────────────────────────────────── */
 function BreedChart({ breed }: { breed: string }) {
   const data = [
     { name: breed, value: 82, fill: '#10b981' },
@@ -236,12 +283,12 @@ function BreedChart({ breed }: { breed: string }) {
   return (
     <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
       <h3 className="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Breed Identification</h3>
-      <p className="text-xs text-slate-500 mb-4">AI breed classification result</p>
+      <p className="text-xs text-slate-500 mb-4">AI breed classification confidence</p>
       <div className="flex items-center gap-4">
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <ResponsiveContainer width={160} height={160}>
             <PieChart>
-              <Pie data={data} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" startAngle={90} endAngle={-270}>
+              <Pie data={data} cx="50%" cy="50%" innerRadius={46} outerRadius={70} dataKey="value" startAngle={90} endAngle={-270}>
                 {data.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
               </Pie>
             </PieChart>
@@ -255,10 +302,10 @@ function BreedChart({ breed }: { breed: string }) {
           <p className="text-xl font-black text-emerald-700 mb-1">{breed}</p>
           <p className="text-xs text-slate-500 mb-3">Identified breed</p>
           {data.map(d => (
-            <div key={d.name} className="flex items-center gap-2 text-xs mb-1">
+            <div key={d.name} className="flex items-center gap-2 text-xs mb-1.5">
               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: d.fill }} />
-              <span className="text-slate-600">{d.name}</span>
-              <span className="ml-auto font-black text-slate-700">{d.value}%</span>
+              <span className="text-slate-600 flex-1">{d.name}</span>
+              <span className="font-black text-slate-700">{d.value}%</span>
             </div>
           ))}
         </div>
@@ -271,14 +318,16 @@ function BreedChart({ breed }: { breed: string }) {
 export default function CattleDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [cattle, setCattle] = useState<CattleData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError]   = useState('');
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    fetch(`http://localhost:8000/api/muzzle/${id}`)
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    fetch(`${apiBase}/api/muzzle/${id}`)
       .then(r => r.json())
       .then(d => {
         if (d.data) setCattle(d.data);
@@ -288,6 +337,7 @@ export default function CattleDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  /* ── Loading / Error states ─────────────────────────────────────────────── */
   if (loading) return (
     <div className="min-h-screen pt-24 pb-20 flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
@@ -308,18 +358,31 @@ export default function CattleDetail() {
     </div>
   );
 
-  const bcsScore = cattle.bcs_score ?? 0;
-  const healthStatus = cattle.disease_status || 'Unknown';
-  const confidence = cattle.confidence ? Math.round(cattle.confidence * 100) : (healthStatus === 'Healthy' ? 94 : 72);
+  /* ── Derived values ─────────────────────────────────────────────────────── */
+  const bcsScore    = cattle.bcs_score ?? 0;
+  const coatColor   = cattle.color || cattle.coat_color || '';
+  const rawStatus   = cattle.disease || cattle.disease_status || 'Unknown';
+  // Normalize: backend sometimes saves full condition text in 'disease'
+  const healthStatus = rawStatus.toLowerCase().includes('no visible') || rawStatus.toLowerCase().includes('healthy')
+    ? 'Healthy'
+    : rawStatus;
+  const isHealthy   = HEALTH_COLOR(healthStatus) === '#10b981';
+  const confidence  = cattle.confidence ? Math.round(cattle.confidence * 100) : (isHealthy ? 94 : 72);
+
   const registeredDate = new Date(cattle.created_at).toLocaleDateString('en-IN', {
     day: '2-digit', month: 'short', year: 'numeric',
   });
+
+  const muzzleID  = muzzleTag(cattle.name, cattle.id);
+  const userShort = user ? userId(user.id) : 'USR---------';
+  const swatchBg  = coatSwatch(coatColor);
+  const isSwatch  = swatchBg.startsWith('linear');
 
   return (
     <div className="pt-24 pb-20 min-h-screen bg-slate-50">
       <div className="max-w-5xl mx-auto px-4">
 
-        {/* ── Back button ─────────────────────────────────────────────────── */}
+        {/* ── Back ─────────────────────────────────────────────────────────── */}
         <button
           onClick={() => navigate('/farm')}
           className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 font-bold text-sm mb-6 transition-colors group"
@@ -330,81 +393,153 @@ export default function CattleDetail() {
           Back to Farm Management
         </button>
 
-        {/* ── Hero Header ─────────────────────────────────────────────────── */}
+        {/* ── Hero Card ────────────────────────────────────────────────────── */}
         <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-xl shadow-slate-200/60 mb-8">
-          <div className="h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-600" />
+          {/* Colour stripe based on health */}
+          <div className={`h-2 w-full ${isHealthy ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-600' : 'bg-gradient-to-r from-rose-400 via-orange-400 to-rose-600'}`} />
+
           <div className="p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-start">
-            {/* Photo */}
-            <div className="w-full sm:w-48 h-48 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0 relative shadow-md">
-              <img src={cattle.display_image} alt={cattle.name} className="w-full h-full object-cover" />
-              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-900/70 to-transparent px-3 py-2">
-                <span className="text-white text-[10px] font-black tracking-widest">AI VERIFIED</span>
+            {/* Muzzle image */}
+            <div className="w-full sm:w-52 h-52 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0 relative shadow-md">
+              {cattle.display_image ? (
+                <img src={cattle.display_image} alt={cattle.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-5xl">🐄</div>
+              )}
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-900/80 to-transparent px-3 py-2">
+                <span className="text-emerald-400 text-[10px] font-black tracking-widest">AI VERIFIED</span>
+              </div>
+              {/* Coat color swatch in corner */}
+              {coatColor && (
+                <div className="absolute top-2 right-2 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 border border-white shadow-sm">
+                  <div
+                    className="w-3 h-3 rounded-full border border-white shadow-sm flex-shrink-0"
+                    style={{ background: isSwatch ? 'conic-gradient(#1e293b, #f8fafc)' : swatchBg }}
+                  />
+                  <span className="text-[9px] font-black text-slate-700 uppercase tracking-wider">{coatColor.split(' ').slice(0, 2).join(' ')}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Identity block */}
+            <div className="flex-1 min-w-0">
+              {/* Badges row */}
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <span className="badge-green">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Registered
+                </span>
+                {cattle.breed && <span className="badge-grey">{cattle.breed}</span>}
+                {/* Health badge — green if healthy, red if not */}
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border ${
+                  isHealthy
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800'
+                    : 'bg-rose-100 border-rose-300 text-rose-800'
+                }`}>
+                  <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: HEALTH_COLOR(healthStatus) }} />
+                  {healthStatus}
+                </span>
+              </div>
+
+              {/* Name */}
+              <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-3">{cattle.name}</h1>
+
+              {/* ── Identity box: User ID + Muzzle ID ─── */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 mb-4 space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Owner User ID</p>
+                    <p className="text-xs font-mono font-black text-slate-700">{userShort}</p>
+                  </div>
+                </div>
+                <div className="h-px bg-slate-200" />
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Muzzle Biometric ID</p>
+                    <p className="text-xs font-mono font-black text-emerald-700">{muzzleID}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick stats chips */}
+              <div className="flex flex-wrap gap-2">
+                {bcsScore > 0 && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-1.5 text-center">
+                    <span className="text-xl font-black text-emerald-700">{bcsScore.toFixed(1)}</span>
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider ml-1">BCS/5</span>
+                  </div>
+                )}
+                {cattle.weight_kg && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5 text-center">
+                    <span className="text-xl font-black text-blue-700">{cattle.weight_kg}</span>
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-wider ml-1">kg</span>
+                  </div>
+                )}
+                {cattle.height_cm && (
+                  <div className="bg-purple-50 border border-purple-200 rounded-xl px-3 py-1.5 text-center">
+                    <span className="text-xl font-black text-purple-700">{cattle.height_cm}</span>
+                    <span className="text-[10px] font-black text-purple-600 uppercase tracking-wider ml-1">cm</span>
+                  </div>
+                )}
+                {coatColor && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded-full border border-amber-300 shadow-sm flex-shrink-0"
+                      style={{ background: isSwatch ? 'conic-gradient(#1e293b, #f8fafc)' : swatchBg }}
+                    />
+                    <span className="text-sm font-black text-amber-800">{coatColor}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Identity */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="badge-green">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      Registered
-                    </span>
-                    {cattle.breed && <span className="badge-grey">{cattle.breed}</span>}
-                    <span className={healthStatus === 'Healthy' ? 'badge-green' : healthStatus === 'Unknown' ? 'badge-grey' : 'badge-red'}>
-                      {healthStatus}
-                    </span>
-                  </div>
-                  <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">{cattle.name}</h1>
-                  <p className="text-slate-400 font-mono text-xs">ID: {cattle.id}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Registered</p>
-                  <p className="text-slate-700 font-bold text-sm">{registeredDate}</p>
-                </div>
-              </div>
-
-              {/* Quick stats */}
-              {bcsScore > 0 && (
-                <div className="flex flex-wrap gap-3">
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2 text-center">
-                    <p className="text-2xl font-black text-emerald-700">{bcsScore.toFixed(1)}</p>
-                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">BCS Score</p>
-                  </div>
-                  {cattle.weight_kg && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2 text-center">
-                      <p className="text-2xl font-black text-blue-700">{cattle.weight_kg}</p>
-                      <p className="text-[10px] font-black text-blue-600 uppercase tracking-wider">kg Weight</p>
-                    </div>
-                  )}
-                  {cattle.height_cm && (
-                    <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-2 text-center">
-                      <p className="text-2xl font-black text-purple-700">{cattle.height_cm}</p>
-                      <p className="text-[10px] font-black text-purple-600 uppercase tracking-wider">cm Height</p>
-                    </div>
-                  )}
-                </div>
-              )}
+            {/* Registered date */}
+            <div className="text-right flex-shrink-0">
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Registered</p>
+              <p className="text-slate-700 font-bold text-sm">{registeredDate}</p>
             </div>
           </div>
         </div>
 
-        {/* ── Charts Grid ─────────────────────────────────────────────────── */}
+        {/* ── Charts ───────────────────────────────────────────────────────── */}
         {bcsScore > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <BCSChart score={bcsScore} />
+            <BCS5Chart score={bcsScore} />
             <HealthPieChart status={healthStatus} confidence={confidence} />
           </div>
         )}
 
-        {/* Body Metrics + Breed */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {(cattle.weight_kg || cattle.height_cm || cattle.body_length_cm) && (
             <BodyMetricsChart weight={cattle.weight_kg} height={cattle.height_cm} bodyLength={cattle.body_length_cm} />
           )}
           {cattle.breed && <BreedChart breed={cattle.breed} />}
         </div>
+
+        {/* ── Coat Color section ───────────────────────────────────────────── */}
+        {coatColor && (
+          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm mb-8 flex items-center gap-5">
+            <div
+              className="w-16 h-16 rounded-2xl flex-shrink-0 border-2 border-white shadow-md"
+              style={{ background: isSwatch ? 'conic-gradient(#1e293b 50%, #f8fafc 50%)' : swatchBg }}
+            />
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Coat Color (AI Detected)</p>
+              <p className="text-2xl font-black text-slate-900">{coatColor}</p>
+              <p className="text-xs text-slate-500 mt-0.5">Determined from video frame analysis</p>
+            </div>
+          </div>
+        )}
 
         {/* ── Full Stats Grid ──────────────────────────────────────────────── */}
         <h2 className="text-lg font-black text-slate-900 mb-4">Cattle Profile</h2>
@@ -430,8 +565,8 @@ export default function CattleDetail() {
               </svg>
             } />
           )}
-          {cattle.coat_color && (
-            <StatCard label="Coat Color" value={cattle.coat_color} color="amber" icon={
+          {coatColor && (
+            <StatCard label="Coat Color" value={coatColor} color="amber" icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
               </svg>
@@ -451,20 +586,19 @@ export default function CattleDetail() {
               </svg>
             } />
           )}
-          {cattle.body_length_cm && (
-            <StatCard label="Body Length" value={`${cattle.body_length_cm} cm`} color="purple" icon={
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-              </svg>
-            } />
-          )}
           {bcsScore > 0 && (
-            <StatCard label="BCS Score" value={`${bcsScore.toFixed(1)} / 9.0`} color="emerald" icon={
+            <StatCard label="BCS Score" value={`${bcsScore.toFixed(1)} / 5.0`} color="emerald" icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             } />
           )}
+          {/* Muzzle ID always shown */}
+          <StatCard label="Muzzle ID" value={muzzleID} color="teal" icon={
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+            </svg>
+          } />
         </div>
 
         {/* ── Muzzle Photo Gallery ─────────────────────────────────────────── */}
@@ -476,7 +610,7 @@ export default function CattleDetail() {
                 <div key={i} className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm aspect-square bg-slate-100 relative group">
                   <img src={img} alt={`Muzzle ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-900/70 to-transparent px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-white text-xs font-bold">{['Straight-on', 'Slight Left', 'Slight Right'][i] || `View ${i + 1}`}</p>
+                    <p className="text-white text-xs font-bold">{['Straight-on','Slight Left','Slight Right'][i] ?? `Angle ${i + 1}`}</p>
                   </div>
                 </div>
               ))}

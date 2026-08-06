@@ -12,7 +12,6 @@ export default function MuzzleCheck() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [traceMap, setTraceMap] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -32,7 +31,6 @@ export default function MuzzleCheck() {
       
       setResult(null);
       setError(null);
-      setTraceMap(null);
     }
   };
 
@@ -46,7 +44,6 @@ export default function MuzzleCheck() {
     removeFile();
     setResult(null);
     setError(null);
-    setTraceMap(null);
   };
 
   const handleIdentify = async () => {
@@ -58,13 +55,13 @@ export default function MuzzleCheck() {
     setLoading(true);
     setError(null);
     setResult(null);
-    setTraceMap(null);
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const res = await fetch('http://localhost:8000/api/muzzle/identify', {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const res = await fetch(`${apiBase}/api/muzzle/identify`, {
         method: 'POST',
         body: formData,
       });
@@ -72,7 +69,6 @@ export default function MuzzleCheck() {
 
       if (res.ok) {
         setResult(data);
-        if (data.trace_maps && data.trace_maps[0]) setTraceMap(data.trace_maps[0]);
       } else {
         setError(data.detail || 'Identification failed');
         // If OpenAI told them to retake the photo, clear the preview so they can try again
@@ -104,33 +100,26 @@ export default function MuzzleCheck() {
           {/* Scanner Side */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 border border-slate-200">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                    1
-                </span>
-                Scan Muzzle (1 Image)
-                </h2>
-                {traceMap && (
-                    <button type="button" onClick={handleReset} className="text-xs font-bold text-emerald-600 hover:text-emerald-700">
-                        + Scan Another Cattle
-                    </button>
-                )}
-            </div>
+              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                  1
+              </span>
+              Scan Muzzle (1 Image)
+              </h2>
+              {result && (
+                  <button type="button" onClick={handleReset} className="text-xs font-bold text-emerald-600 hover:text-emerald-700">
+                      + Scan Another Cattle
+                  </button>
+              )}
+          </div>
             
             <div className="space-y-4">
               <div className="max-w-xs mx-auto">
-                <div className={`relative border-2 ${traceMap ? 'border-emerald-500 bg-slate-900 border-solid' : 'border-dashed'} rounded-xl p-3 text-center transition-all flex flex-col justify-center min-h-[200px] ${
-                  !traceMap && (preview ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-300 hover:border-emerald-400 bg-slate-50')
-                }`}>
-                  {traceMap ? (
-                    <div className="flex flex-col items-center">
-                      <p className="text-[10px] text-emerald-400 font-black tracking-widest mb-2">PATTERN TRACE</p>
-                      <img src={traceMap} alt="Trace" className="max-h-32 w-auto object-contain rounded-md" />
-                    </div>
-                  ) : preview ? (
+                <div className={`relative border-2 ${preview ? 'border-emerald-500 bg-emerald-50/30 border-solid' : 'border-dashed border-slate-300 hover:border-emerald-400 bg-slate-50'} rounded-xl p-3 text-center transition-all flex flex-col justify-center min-h-[200px]`}>
+                  {preview ? (
                     <div className="flex flex-col items-center">
                       <img src={preview} alt="Preview" className={`max-h-32 w-auto object-contain rounded-md mb-2 ${loading ? 'opacity-50' : ''}`} />
-                      {!loading && (
+                      {!loading && !result && (
                         <button type="button" onClick={removeFile} className="text-[12px] font-bold text-rose-500 hover:text-rose-600 uppercase">Remove</button>
                       )}
                     </div>
@@ -142,8 +131,8 @@ export default function MuzzleCheck() {
                       <p className="text-[12px] font-bold text-slate-700 uppercase">Tap to Upload</p>
                     </div>
                   )}
-                  {!traceMap && (
-                    <input type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" ref={fileInputRef} disabled={!!preview || loading} style={{ display: preview ? 'none' : 'block' }} />
+                  {!preview && (
+                    <input type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" ref={fileInputRef} disabled={loading} />
                   )}
                 </div>
               </div>
@@ -270,13 +259,28 @@ export default function MuzzleCheck() {
                           <p className="text-slate-900 font-bold">{result.cattle.estimated_value || 'N/A'}</p>
                         </div>
                       </div>
+
+                      {result.cattle.id && (
+                        <button
+                          onClick={() => navigate(`/cattle/${result.cattle.id}`)}
+                          className="w-full mt-2 flex items-center justify-center gap-2 px-5 py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black rounded-2xl transition-all duration-200 shadow-lg shadow-emerald-500/30 text-sm group"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          View Full Cattle Profile
+                          <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   </div>
                 )
               ) : (
                 <div className="text-center text-slate-400 flex flex-col items-center">
                   <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                  <p className="font-medium text-sm">Upload 3 scans on the left to see results</p>
+                  <p className="font-medium text-sm">Upload a muzzle scan on the left to see results</p>
                 </div>
               )}
             </div>

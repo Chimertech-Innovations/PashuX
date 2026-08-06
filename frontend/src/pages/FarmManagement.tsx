@@ -50,7 +50,8 @@ export default function FarmManagement() {
   const fetchCattle = async () => {
     if (!user) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/muzzle/user/${user.id}`);
+      const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const res = await fetch(`${apiBase}/api/muzzle/user/${user.id}`);
       const data = await res.json();
       if (res.ok) {
         setCattleList(data.data);
@@ -116,7 +117,8 @@ export default function FarmManagement() {
     formData.append('file3', file3);
 
     try {
-      const res = await fetch('http://localhost:8000/api/muzzle/register', {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const res = await fetch(`${apiBase}/api/muzzle/register`, {
         method: 'POST',
         body: formData,
       });
@@ -124,6 +126,7 @@ export default function FarmManagement() {
 
       if (res.ok) {
         setMessage({ type: 'success', text: `Cattle registered successfully! Proceeding to Step 2...` });
+        // data.cattle_id is now the real UUID from the database
         setCurrentCattleId(data.cattle_id);
         fetchCattle();
         setTimeout(() => {
@@ -172,7 +175,8 @@ export default function FarmManagement() {
       formData.append('video', videoFile);
 
       try {
-          const res = await fetch(`http://localhost:8000/api/muzzle/${currentCattleId}/video-analysis`, {
+          const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+          const res = await fetch(`${apiBase}/api/muzzle/${currentCattleId}/video-analysis`, {
               method: 'POST',
               body: formData
           });
@@ -208,8 +212,18 @@ export default function FarmManagement() {
   return (
     <div className="pt-24 pb-20 min-h-screen bg-slate-50">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-3xl font-black text-slate-900 mb-2">Farm Management</h1>
-        <p className="text-slate-500 font-medium mb-8">Register new cattle using AI Muzzle Scanning and Video Analysis.</p>
+        <h1 className="text-3xl font-black text-slate-900 mb-1">Farm Management</h1>
+        <p className="text-slate-500 font-medium mb-2">Register new cattle using AI Muzzle Scanning and Video Analysis.</p>
+        {/* User ID chip */}
+        {user && (
+          <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm mb-8">
+            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">User ID:</span>
+            <span className="font-mono font-black text-xs text-slate-700">USR-{user.id.replace(/-/g,'').substring(0,8).toUpperCase()}</span>
+          </div>
+        )}
 
         {/* WIZARD PROGRESS */}
         <div className="flex items-center justify-center gap-4 mb-8">
@@ -501,7 +515,11 @@ export default function FarmManagement() {
         
         {cattleList.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {cattleList.map(cattle => (
+            {cattleList.map(cattle => {
+              // Extract muzzle tag from name e.g. "Bessie (MUZZ-AB12-0001)"
+              const tagMatch = cattle.name.match(/\(([^)]+)\)/);
+              const muzzleTag = tagMatch ? tagMatch[1] : cattle.id.substring(0, 8).toUpperCase();
+              return (
               <div
                 key={cattle.id}
                 onClick={() => navigate(`/cattle/${cattle.id}`)}
@@ -513,11 +531,20 @@ export default function FarmManagement() {
                   </div>
                   <img src={cattle.display_image} alt={cattle.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 </div>
-                <h3 className="text-lg font-black text-slate-900 w-full truncate text-center">{cattle.name}</h3>
-                <p className="text-slate-500 font-mono text-xs uppercase mt-1">ID: {cattle.name.split('(')[1]?.replace(')', '') || cattle.id.substring(0, 8)}</p>
+                {/* Cattle name (without tag) */}
+                <h3 className="text-base font-black text-slate-900 w-full truncate text-center">
+                  {cattle.name.replace(/\s*\([^)]*\)/, '')}
+                </h3>
+                {/* Muzzle ID badge */}
+                <div className="mt-1.5 flex items-center gap-1 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-0.5">
+                  <svg className="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+                  </svg>
+                  <span className="font-mono font-black text-[10px] text-emerald-700 tracking-wider">{muzzleTag}</span>
+                </div>
                 <p className="text-emerald-600 text-xs font-bold mt-2 opacity-0 group-hover:opacity-100 transition-opacity">View Profile →</p>
               </div>
-            ))}
+            );})}
           </div>
         ) : (
           <div className="bg-white rounded-2xl p-8 text-center border-2 border-dashed border-slate-200 text-slate-500">

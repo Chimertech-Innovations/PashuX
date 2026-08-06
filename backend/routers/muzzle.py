@@ -278,31 +278,35 @@ async def register_cattle_muzzle(
         
         sb = db.get_client()
         
-        # 3. Check for duplicates (if similar > 0.90)
+        # 3. Check for global duplicates across ALL users in the system (biometric uniqueness)
         def _check_duplicate():
             return sb.rpc(
-                "match_cattle_muzzle", 
+                "match_cattle_muzzle",
                 {
                     "query_embedding": master_embedding,
-                    "match_threshold": 0.90,
+                    "match_threshold": 0.85,
                     "match_count": 1
                 }
             ).execute()
         duplicate_check = await asyncio.to_thread(_check_duplicate)
-        
+
         if duplicate_check.data and len(duplicate_check.data) > 0:
             existing = duplicate_check.data[0]
+            existing_name = existing.get("name", "Existing Cattle")
             raise HTTPException(
-                status_code=409, 
-                detail=f"Cattle already exists in database! Matched with '{existing['name']}' (ID: {existing['id']})"
+                status_code=409,
+                detail=f"This cattle's muzzle pattern is already registered in the system as '{existing_name}'. Duplicate muzzle registrations are not allowed!"
             )
-            
-        # 4. Generate Chimertech ID based on count
-        def _get_count():
+
+        # 4. Fetch user's existing cattle count for tag ID generation
+        def _get_user_cattle_ids():
             return sb.table("cattle").select("id").eq("user_id", user_id).execute()
-        count_data = await asyncio.to_thread(_get_count)
-        next_num = len(count_data.data) + 1 if count_data.data else 1
-        tag_id = f"Chimertech{next_num:03d}"
+        user_cattle = await asyncio.to_thread(_get_user_cattle_ids)
+        user_cattle_ids = [c["id"] for c in (user_cattle.data or [])]
+
+        # Generate Chimertech Muzzle ID based on user's cattle count
+        next_num = len(user_cattle_ids) + 1
+        tag_id = f"MUZZ-{user_id[:4].upper()}-{next_num:04d}"
         
         final_name = f"{name} ({tag_id})"
             
@@ -328,11 +332,13 @@ async def register_cattle_muzzle(
         }
         
         result = sb.table("cattle").insert(record).execute()
+        new_id = result.data[0]["id"] if result.data else None
         
         return {
             "status": "success",
-            "message": "Cattle registered successfully with Multi-Angle Scan!",
-            "cattle_id": tag_id,
+            "message": "Cattle registered successfully with Multi-Angle Muzzle Scan!",
+            "cattle_id": new_id,   # real UUID for video-analysis step
+            "muzzle_tag": tag_id,  # readable muzzle ID e.g. MUZZ-AB12-0001
             "trace_maps": [trace_map1, trace_map2, trace_map3]
         }
         
@@ -383,14 +389,18 @@ async def analyze_cattle_video(
             "estimated_value": stats.estimated_value
         }
         
-        # Using string match if cattle_id is the string tag, or assuming it's the exact id. 
-        # The frontend uses tag_id (e.g. Chimertech001), but the DB might use an int UUID.
-        # Wait, tag_id was stored in the 'name' field usually (e.g., 'Bessie (Chimertech001)').
-        # Let's search by name containing the cattle_id.
-        def _update():
+        # cattle_id from frontend is now the real UUID after our register fix.
+        # Try UUID first, fall back to name-match for legacy records.
+        def _update_by_uuid():
+            return sb.table("cattle").update(update_data).eq("id", cattle_id).execute()
+
+        def _update_by_name():
             return sb.table("cattle").update(update_data).ilike("name", f"%{cattle_id}%").execute()
-            
-        await asyncio.to_thread(_update)
+
+        update_result = await asyncio.to_thread(_update_by_uuid)
+        if not update_result.data:
+            # Fallback: cattle_id might be a tag string (legacy)
+            await asyncio.to_thread(_update_by_name)
         
         return {
             "status": "success",
@@ -524,6 +534,16 @@ async def get_cattle_by_id(cattle_id: str):
         urls = [u.strip() for u in raw_urls.split(",") if u.strip()]
         cattle["display_image"] = urls[0] if urls else ""
         cattle["muzzle_images"] = urls  # all 3 angles
+
+        # Normalise field aliases for frontend compatibility
+        cattle["coat_color"]    = cattle.get("color") or cattle.get("coat_color") or ""
+        cattle["disease_status"] = cattle.get("disease") or cattle.get("disease_status") or "Unknown"
+
+        # Extract muzzle_id from name field e.g. "Bessie (MUZZ-AB12-0001)"
+        name = cattle.get("name", "")
+        import re
+        m = re.search(r'\(([^)]+)\)', name)
+        cattle["muzzle_id"] = m.group(1) if m else f"MUZZ-{cattle_id[:8].upper()}"
 
         return {"status": "success", "data": cattle}
 

@@ -452,6 +452,16 @@ async def identify_cattle_muzzle(
             }
             
         best_match = matches[0]
+        
+        # Fetch the complete cattle record to ensure we have all newly added stats (bcs_score, weight, etc.)
+        def _get_full():
+            return sb.table("cattle").select("*").eq("id", best_match.get("id")).execute()
+        
+        if best_match.get("id"):
+            full_cattle = await asyncio.to_thread(_get_full)
+            if full_cattle.data and len(full_cattle.data) > 0:
+                best_match.update(full_cattle.data[0])
+                
         return {
             "status": "match_found",
             "cattle": best_match,

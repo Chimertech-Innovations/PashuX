@@ -499,3 +499,36 @@ async def get_user_cattle(user_id: str):
     except Exception as e:
         logger.error(f"Error fetching user cattle: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/muzzle/{cattle_id}")
+async def get_cattle_by_id(cattle_id: str):
+    """
+    Fetch a single registered cattle by its ID, including all muzzle images and video analysis data.
+    """
+    try:
+        sb = db.get_client()
+        import asyncio
+
+        def _fetch():
+            return sb.table("cattle").select("*").eq("id", cattle_id).single().execute()
+
+        response = await asyncio.to_thread(_fetch)
+
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Cattle not found")
+
+        cattle = response.data
+
+        # Build muzzle image list from the comma-separated image_url field
+        raw_urls = cattle.get("image_url", "")
+        urls = [u.strip() for u in raw_urls.split(",") if u.strip()]
+        cattle["display_image"] = urls[0] if urls else ""
+        cattle["muzzle_images"] = urls  # all 3 angles
+
+        return {"status": "success", "data": cattle}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching cattle {cattle_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

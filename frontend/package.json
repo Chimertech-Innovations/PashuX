@@ -19,6 +19,7 @@
     "react-dom": "^19.2.7",
     "react-dropzone": "^19.1.1",
     "react-router-dom": "^7.18.2",
+    "recharts": "^3.10.1",
     "uuid": "^14.0.1"
   },
   "devDependencies": {

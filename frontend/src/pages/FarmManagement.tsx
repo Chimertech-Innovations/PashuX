@@ -502,15 +502,20 @@ export default function FarmManagement() {
         {cattleList.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {cattleList.map(cattle => (
-              <div key={cattle.id} className="bg-white rounded-2xl p-5 shadow-lg shadow-slate-200/50 border border-slate-200 flex flex-col items-center">
+              <div
+                key={cattle.id}
+                onClick={() => navigate(`/cattle/${cattle.id}`)}
+                className="bg-white rounded-2xl p-5 shadow-lg shadow-slate-200/50 border border-slate-200 flex flex-col items-center cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-300 hover:shadow-emerald-100/60 group"
+              >
                 <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 mb-4 border border-slate-200/60 relative">
                   <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-emerald-400 text-[10px] font-black tracking-widest px-2 py-0.5 rounded border border-emerald-500/30">
                     AI VERIFIED
                   </div>
-                  <img src={cattle.display_image} alt={cattle.name} className="w-full h-full object-cover" />
+                  <img src={cattle.display_image} alt={cattle.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 </div>
                 <h3 className="text-lg font-black text-slate-900 w-full truncate text-center">{cattle.name}</h3>
                 <p className="text-slate-500 font-mono text-xs uppercase mt-1">ID: {cattle.name.split('(')[1]?.replace(')', '') || cattle.id.substring(0, 8)}</p>
+                <p className="text-emerald-600 text-xs font-bold mt-2 opacity-0 group-hover:opacity-100 transition-opacity">View Profile →</p>
               </div>
             ))}
           </div>

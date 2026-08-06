@@ -22,6 +22,7 @@ import DataConsent from '@/pages/DataConsent';
 import ContactUs from '@/pages/ContactUs';
 import FarmManagement from '@/pages/FarmManagement';
 import MuzzleCheck from '@/pages/MuzzleCheck';
+import CattleDetail from '@/pages/CattleDetail';
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
               <Route path="/auth"           element={<Auth />} />
               <Route path="/admin"          element={<Admin />} />
               <Route path="/farm"           element={<FarmManagement />} />
+              <Route path="/cattle/:id"     element={<CattleDetail />} />
               <Route path="/muzzle-check"   element={<MuzzleCheck />} />
               <Route path="/live"           element={<LiveDetection />} />
               <Route path="/bcs"            element={<BCSDetection />} />

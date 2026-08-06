@@ -52,18 +52,18 @@ export default function Auth() {
         <div className="glass-card p-8">
           {/* Logo */}
           <div className="flex items-center gap-2.5 mb-8">
-            <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4 text-black">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-md">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4 text-white">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <span className="font-bold text-white">Chimertech</span>
+            <span className="font-bold text-slate-900">Chimertech</span>
           </div>
 
-          <h1 className="text-heading-xl font-bold text-white mb-1">
+          <h1 className="text-2xl font-black text-slate-900 mb-1">
             {mode === 'signin' ? 'Welcome back' : 'Create account'}
           </h1>
-          <p className="text-sm text-grey-500 mb-8">
+          <p className="text-sm text-slate-500 mb-8">
             {mode === 'signin'
               ? 'Sign in to access your analysis history'
               : 'Start monitoring your cattle health today'}
@@ -72,7 +72,7 @@ export default function Auth() {
           <form onSubmit={submit} className="space-y-4">
             {mode === 'signup' && (
               <div>
-                <label className="block text-xs text-grey-400 mb-1.5">Full name</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Full name</label>
                 <input
                   id="auth-fullname"
                   type="text"
@@ -86,7 +86,7 @@ export default function Auth() {
             )}
 
             <div>
-              <label className="block text-xs text-grey-400 mb-1.5">Email address</label>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email address</label>
               <input
                 id="auth-email"
                 type="email"
@@ -99,7 +99,7 @@ export default function Auth() {
             </div>
 
             <div>
-              <label className="block text-xs text-grey-400 mb-1.5">Password</label>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Password</label>
               <input
                 id="auth-password"
                 type="password"
@@ -113,14 +113,14 @@ export default function Auth() {
             </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20">
-                <p className="text-xs text-red-400">{error}</p>
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200">
+                <p className="text-xs font-bold text-rose-700">{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="p-3 rounded-xl bg-green-500/10 border border-green-900/40">
-                <p className="text-xs text-green-400">{success}</p>
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                <p className="text-xs font-bold text-emerald-700">{success}</p>
               </div>
             )}
 
@@ -143,11 +143,11 @@ export default function Auth() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-xs text-grey-500">
+            <p className="text-xs text-slate-500">
               {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
               <button
                 onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setSuccess(''); }}
-                className="text-white font-medium hover:text-grey-200 transition-colors"
+                className="text-emerald-600 font-bold hover:text-emerald-700 transition-colors"
               >
                 {mode === 'signin' ? 'Sign up' : 'Sign in'}
               </button>
@@ -155,8 +155,8 @@ export default function Auth() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-grey-700 mt-6">
-          <Link to="/" className="hover:text-grey-400 transition-colors">← Back to home</Link>
+        <p className="text-center text-xs text-slate-400 mt-6">
+          <Link to="/" className="hover:text-slate-600 transition-colors">← Back to home</Link>
         </p>
       </div>
     </div>

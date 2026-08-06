@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { BASE_URL } from '@/lib/api';
 import { generateHealthReportPDF } from '@/utils/pdfGenerator';
 import { Link } from 'react-router-dom';
 
@@ -227,6 +228,7 @@ export default function Admin() {
 
   const [reports, setReports] = useState<ReportRecord[]>(() => {
     try {
+
       const cached = sessionStorage.getItem('cached_admin_reports');
       return cached ? JSON.parse(cached) : DEMO_REPORTS;
     } catch {
@@ -234,21 +236,19 @@ export default function Admin() {
     }
   });
 
+
   const [loading, setLoading] = useState(false);
   const [collapsedReports, setCollapsedReports] = useState<Set<string>>(new Set());
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-
   const [useTestingData, setUseTestingData] = useState<boolean>(false);
-
-  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
   useEffect(() => {
     let isMounted = true;
     async function loadAdminData() {
       try {
         const [usersRes, reportsRes] = await Promise.all([
-          fetch(`${apiBase}/api/admin/users`).then(r => r.ok ? r.json() : { users: [] }).catch(() => ({ users: [] })),
-          fetch(`${apiBase}/api/admin/reports`).then(r => r.ok ? r.json() : { reports: [] }).catch(() => ({ reports: [] })),
+          fetch(`${BASE_URL}/api/admin/users`).then(r => r.ok ? r.json() : { users: [] }).catch(() => ({ users: [] })),
+          fetch(`${BASE_URL}/api/admin/reports`).then(r => r.ok ? r.json() : { reports: [] }).catch(() => ({ reports: [] })),
         ]);
 
         if (!isMounted) return;
@@ -353,7 +353,8 @@ export default function Admin() {
 
     loadAdminData();
     return () => { isMounted = false; };
-  }, [apiBase]);
+  }, []);
+
 
   // Combine DB and Demo reports if desired, sorting newest first
   const activeReportsList = useTestingData

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { BASE_URL } from '@/lib/api';
 
 export default function FarmManagement() {
   const { user, loading: authLoading } = useAuth();
@@ -50,8 +51,7 @@ export default function FarmManagement() {
   const fetchCattle = async () => {
     if (!user) return;
     try {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      const res = await fetch(`${apiBase}/api/muzzle/user/${user.id}`);
+      const res = await fetch(`${BASE_URL}/api/muzzle/user/${user.id}`);
       const data = await res.json();
       if (res.ok) {
         setCattleList(data.data);
@@ -117,8 +117,7 @@ export default function FarmManagement() {
     formData.append('file3', file3);
 
     try {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      const res = await fetch(`${apiBase}/api/muzzle/register`, {
+      const res = await fetch(`${BASE_URL}/api/muzzle/register`, {
         method: 'POST',
         body: formData,
       });
@@ -175,8 +174,7 @@ export default function FarmManagement() {
       formData.append('video', videoFile);
 
       try {
-          const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-          const res = await fetch(`${apiBase}/api/muzzle/${currentCattleId}/video-analysis`, {
+          const res = await fetch(`${BASE_URL}/api/muzzle/${currentCattleId}/video-analysis`, {
               method: 'POST',
               body: formData
           });

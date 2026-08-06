@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { BASE_URL } from '@/lib/api';
 
 export default function MuzzleCheck() {
   const { user } = useAuth();
@@ -60,8 +61,7 @@ export default function MuzzleCheck() {
     formData.append('file', file);
 
     try {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      const res = await fetch(`${apiBase}/api/muzzle/identify`, {
+      const res = await fetch(`${BASE_URL}/api/muzzle/identify`, {
         method: 'POST',
         body: formData,
       });

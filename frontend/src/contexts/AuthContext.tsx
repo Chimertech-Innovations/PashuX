@@ -81,7 +81,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: { full_name: fullName },
       },
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.status === 422 || error.message.toLowerCase().includes('already registered')) {
+        throw new Error('This email is already registered in Supabase Auth. Please click "Sign In" instead.');
+      }
+      throw new Error(error.message);
+    }
 
     // Auto sign-in immediately for direct email & password login
     if (!data.session) {
@@ -91,8 +96,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     setIsAdmin(false);
-    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn("SignOut notice:", e);
+    }
+    localStorage.clear();
+    sessionStorage.clear();
   };
+
 
   return (
     <AuthContext.Provider value={{ session, user, isAdmin, loading, signIn, signUp, signOut }}>

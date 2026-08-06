@@ -10,7 +10,8 @@ import type {
 
 
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-const BASE_URL = rawBaseUrl.replace(/\/+$/, '');
+export const BASE_URL = rawBaseUrl.replace(/\/+$/, '');
+
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;

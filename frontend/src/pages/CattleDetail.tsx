@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
+import { BASE_URL } from '@/lib/api';
 
 /* ── Types ───────────────────────────────────────────────────────────────────── */
 interface CattleData {
@@ -326,8 +327,7 @@ export default function CattleDetail() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-    fetch(`${apiBase}/api/muzzle/${id}`)
+    fetch(`${BASE_URL}/api/muzzle/${id}`)
       .then(r => r.json())
       .then(d => {
         if (d.data) setCattle(d.data);

@@ -740,7 +740,7 @@ export default function FarmManagement() {
                     }}
                     className="flex-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold text-xs py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-slate-200 hover:border-emerald-300"
                   >
-                    <span>📱</span> QR Code
+                    <span></span> QR Code
                   </button>
                   <button
                     onClick={(e) => {

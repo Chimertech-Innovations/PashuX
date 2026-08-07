@@ -182,9 +182,62 @@ def select_top_frames(
     return selected
 
 
+def convert_to_mp4(input_path: str, output_path: str) -> str:
+    """
+    Automatically converts any input video (e.g. .mov, .avi, .webm) into a standard .mp4 video file
+    using OpenCV transcoding while maintaining aspect ratio and downscaling to save memory.
+    """
+    if not os.path.exists(input_path):
+        return input_path
+
+    cap = cv2.VideoCapture(input_path)
+    if not cap.isOpened():
+        logger.warning(f"Could not open video file {input_path} for MP4 conversion.")
+        return input_path
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    if fps <= 0 or fps > 120 or np.isnan(fps):
+        fps = 30.0
+
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    
+    if width <= 0 or height <= 0:
+        cap.release()
+        return input_path
+
+    if width > 1080:
+        scale = 1080 / width
+        width = 1080
+        height = int(height * scale)
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+    frames_written = 0
+    while True:
+        ret, frame = cap.read()
+        if not ret or frame is None or frame.size == 0:
+            break
+
+        if frame.shape[1] != width or frame.shape[0] != height:
+            frame = cv2.resize(frame, (width, height), interpolation=cv2.INTER_AREA)
+
+        out.write(frame)
+        frames_written += 1
+        if frames_written > 1800:  # Cap max conversion to 60 seconds
+            break
+
+    cap.release()
+    out.release()
+    logger.info(f"Converted {input_path} to standard MP4 {output_path} ({frames_written} frames)")
+    return output_path
+
+
 def process_video(video_path: str, work_dir: str) -> dict:
     """
     Full pipeline:
+      0. Convert MOV or non-MP4 video formats into standard MP4
       1. Extract 1 frame/sec
       2. Remove blurry frames (strict relative & absolute blur filter)
       3. Remove near-duplicates using multi-spectral pHash + dHash + MAE similarity
@@ -194,8 +247,14 @@ def process_video(video_path: str, work_dir: str) -> dict:
     frames_dir = os.path.join(work_dir, "frames")
     os.makedirs(frames_dir, exist_ok=True)
 
+    # Convert .mov / non-mp4 files to standard .mp4 before frame extraction
+    effective_video_path = video_path
+    if not video_path.lower().endswith(".mp4"):
+        mp4_target = os.path.join(work_dir, "converted_input.mp4")
+        effective_video_path = convert_to_mp4(video_path, mp4_target)
+
     # Step 1 – Extract
-    all_frames = extract_frames(video_path, frames_dir)
+    all_frames = extract_frames(effective_video_path, frames_dir)
     if not all_frames:
         raise ValueError("Could not extract frames from the video. Please check the video file.")
 

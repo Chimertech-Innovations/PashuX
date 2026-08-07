@@ -81,9 +81,9 @@ export default function CattleQRCodeCard({
               src: logoSrc,
               x: undefined,
               y: undefined,
-              height: 48,
-              width: 48,
-              excavate: false,
+              height: 80,
+              width: 80,
+              excavate: true,
             }}
           />
         </div>
@@ -138,9 +138,9 @@ export default function CattleQRCodeCard({
                 src: logoSrc,
                 x: undefined,
                 y: undefined,
-                height: 64,
-                width: 64,
-                excavate: false,
+                height: 80,
+                width: 80,
+                excavate: true,
               }}
             />
             {/* Green corner accent badges */}

@@ -27,6 +27,8 @@ interface CattleData {
   body_length_cm?: number;
   body_condition_detail?: string;
   muzzle_id?: string;       // the short tag like Chimertech001
+  udder_score?: number;     // 0-5 udder score from video analysis
+  teat_score?: number;      // 0-5 teat score from video analysis
 }
 
 /* ── BCS 1-5 scale colours (1=red … 5=deep green) ────────────────────────── */
@@ -605,6 +607,20 @@ export default function CattleDetail() {
               </svg>
             } />
           )}
+          {(cattle.udder_score !== undefined && cattle.udder_score !== null && cattle.udder_score > 0) && (
+            <StatCard label="Udder Score" value={`${cattle.udder_score.toFixed(1)} / 5.0`} color="purple" icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            } />
+          )}
+          {(cattle.teat_score !== undefined && cattle.teat_score !== null && cattle.teat_score > 0) && (
+            <StatCard label="Teat Score" value={`${cattle.teat_score.toFixed(1)} / 5.0`} color="blue" icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            } />
+          )}
           {/* Muzzle ID always shown */}
           <StatCard label="Muzzle ID" value={muzzleID} color="teal" icon={
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -612,6 +628,79 @@ export default function CattleDetail() {
             </svg>
           } />
         </div>
+
+        {/* ── Udder & Teat Health Section ──────────────────────────────────── */}
+        {((cattle.udder_score && cattle.udder_score > 0) || (cattle.teat_score && cattle.teat_score > 0)) && (() => {
+          const udderScore = cattle.udder_score || 0;
+          const teatScore = cattle.teat_score || 0;
+          const udderLabel = udderScore >= 4.5 ? 'Excellent' : udderScore >= 3.5 ? 'Good' : udderScore >= 2.5 ? 'Average' : udderScore >= 1.5 ? 'Below Average' : 'Poor';
+          const teatLabel = teatScore >= 4.5 ? 'Ideal' : teatScore >= 3.5 ? 'Good' : teatScore >= 2.5 ? 'Average' : teatScore >= 1.5 ? 'Short' : 'Deformed';
+          const udderColor = udderScore >= 3.5 ? '#9333ea' : udderScore >= 2.5 ? '#a855f7' : '#ef4444';
+          const teatColor = teatScore >= 3.5 ? '#2563eb' : teatScore >= 2.5 ? '#3b82f6' : '#ef4444';
+          return (
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-8">
+              <h2 className="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Udder &amp; Teat Health</h2>
+              <p className="text-xs text-slate-500 mb-5">AI-assessed dairy productivity indicators from video analysis</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Udder Score */}
+                {udderScore > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="text-xs font-black text-slate-600 uppercase tracking-wider">Udder Score</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{udderLabel} condition</p>
+                      </div>
+                      <span className="font-black text-2xl leading-none" style={{ color: udderColor }}>
+                        {udderScore.toFixed(1)}<span className="text-sm font-bold text-slate-400">/5</span>
+                      </span>
+                    </div>
+                    <div className="flex gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="h-2.5 flex-1 rounded-full transition-all" style={{ background: i < Math.round(udderScore) ? udderColor : '#e2e8f0' }} />
+                      ))}
+                    </div>
+                    <div className="mt-3 space-y-1">
+                      {[['1','Severe atrophy/scarred'],['2','Asymmetric quarters'],['3','Average — moderate capacity'],['4','Good attachment & balance'],['5','Excellent dairy udder']].map(([s, desc]) => (
+                        <div key={s} className="flex items-center gap-2 text-xs">
+                          <span className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-white flex-shrink-0" style={{ background: Math.round(udderScore) === parseInt(s) ? udderColor : '#e2e8f0', color: Math.round(udderScore) === parseInt(s) ? 'white' : '#94a3b8' }}>{s}</span>
+                          <span className={Math.round(udderScore) === parseInt(s) ? 'font-black text-slate-900' : 'text-slate-400'}>{desc}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Teat Score */}
+                {teatScore > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="text-xs font-black text-slate-600 uppercase tracking-wider">Teat Score</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{teatLabel} condition</p>
+                      </div>
+                      <span className="font-black text-2xl leading-none" style={{ color: teatColor }}>
+                        {teatScore.toFixed(1)}<span className="text-sm font-bold text-slate-400">/5</span>
+                      </span>
+                    </div>
+                    <div className="flex gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="h-2.5 flex-1 rounded-full transition-all" style={{ background: i < Math.round(teatScore) ? teatColor : '#e2e8f0' }} />
+                      ))}
+                    </div>
+                    <div className="mt-3 space-y-1">
+                      {[['1','Inverted/deformed'],['2','Short, uneven placement'],['3','Average — suitable for milking'],['4','Good, uniform cylinders'],['5','Ideal for machine milking']].map(([s, desc]) => (
+                        <div key={s} className="flex items-center gap-2 text-xs">
+                          <span className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black flex-shrink-0" style={{ background: Math.round(teatScore) === parseInt(s) ? teatColor : '#e2e8f0', color: Math.round(teatScore) === parseInt(s) ? 'white' : '#94a3b8' }}>{s}</span>
+                          <span className={Math.round(teatScore) === parseInt(s) ? 'font-black text-slate-900' : 'text-slate-400'}>{desc}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()
+        }
 
         {/* ── Muzzle Photo Gallery ─────────────────────────────────────────── */}
         {cattle.muzzle_images && cattle.muzzle_images.length > 0 && (

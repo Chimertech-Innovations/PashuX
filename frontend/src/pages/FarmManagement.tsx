@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { BASE_URL } from '@/lib/api';
+import CattleQRCodeCard from '@/components/cattle/CattleQRCodeCard';
 
 export default function FarmManagement() {
   const { user, loading: authLoading } = useAuth();
@@ -30,6 +31,7 @@ export default function FarmManagement() {
   const videoInputRef = useRef<HTMLInputElement>(null);
 
   const [cattleList, setCattleList] = useState<any[]>([]);
+  const [selectedQrCattle, setSelectedQrCattle] = useState<any | null>(null);
 
   const fileInputRefCamera1 = useRef<HTMLInputElement>(null);
   const fileInputRefGallery1 = useRef<HTMLInputElement>(null);
@@ -498,6 +500,19 @@ export default function FarmManagement() {
                   </div>
               )}
 
+              {currentCattleId && (
+                <div className="mt-6">
+                  <CattleQRCodeCard
+                    cattleId={currentCattleId}
+                    cattleName={name || 'Registered Cattle'}
+                    muzzleId={`MUZZ-${currentCattleId.slice(0, 8).toUpperCase()}`}
+                    breed={videoStats?.breed}
+                    healthStatus={videoStats?.disease_status || 'Healthy'}
+                    bcsScore={videoStats?.bcs_score}
+                  />
+                </div>
+              )}
+
               <button 
                   onClick={() => handleReset()}
                   className="w-full btn-primary py-4 text-base mt-4 shadow-lg shadow-emerald-500/20"
@@ -540,13 +555,56 @@ export default function FarmManagement() {
                   </svg>
                   <span className="font-mono font-black text-[10px] text-emerald-700 tracking-wider">{muzzleTag}</span>
                 </div>
-                <p className="text-emerald-600 text-xs font-bold mt-2 opacity-0 group-hover:opacity-100 transition-opacity">View Profile →</p>
+
+                <div className="mt-3 flex gap-2 w-full pt-2 border-t border-slate-100">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedQrCattle(cattle);
+                    }}
+                    className="flex-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold text-xs py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-slate-200 hover:border-emerald-300"
+                  >
+                    <span>📱</span> QR Code
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/cattle/${cattle.id}`);
+                    }}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors shadow-sm"
+                  >
+                    View →
+                  </button>
+                </div>
               </div>
             );})}
           </div>
         ) : (
           <div className="bg-white rounded-2xl p-8 text-center border-2 border-dashed border-slate-200 text-slate-500">
             You haven't registered any cattle yet. Upload a muzzle scan above to get started!
+          </div>
+        )}
+
+        {/* QR Code Modal */}
+        {selectedQrCattle && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+            <div className="relative w-full max-w-xl bg-white rounded-3xl p-2 shadow-2xl">
+              <button
+                onClick={() => setSelectedQrCattle(null)}
+                className="absolute top-4 right-4 z-10 w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 font-bold transition-colors"
+              >
+                ✕
+              </button>
+              <CattleQRCodeCard
+                cattleId={selectedQrCattle.id}
+                cattleName={selectedQrCattle.name.replace(/\s*\([^)]*\)/, '')}
+                muzzleId={selectedQrCattle.name.match(/\(([^)]+)\)/)?.[1] || `MUZZ-${selectedQrCattle.id.slice(0, 8).toUpperCase()}`}
+                breed={selectedQrCattle.breed}
+                healthStatus={selectedQrCattle.disease || selectedQrCattle.disease_status || 'Healthy'}
+                bcsScore={selectedQrCattle.bcs_score}
+                cattleImage={selectedQrCattle.display_image}
+              />
+            </div>
           </div>
         )}
 

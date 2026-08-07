@@ -55,11 +55,45 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Chimertech QR Profile Card */}
+        <div className="glass-card p-6 mb-5 animate-fade-up border-emerald-500/30 bg-emerald-950/20" style={{ animationDelay: '0.05s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-md">
+                <img src="/chimertech_logo.png" alt="Chimertech Logo" className="w-full h-full object-contain" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-white">Chimertech QR Profile</h3>
+                <p className="text-xs text-emerald-400 font-medium">Official Biometric Cattle QR Codes</p>
+              </div>
+            </div>
+            <a
+              href="https://chimertech.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 bg-emerald-900/40 px-3 py-1.5 rounded-lg border border-emerald-500/20"
+            >
+              <span>chimertech.com</span>
+              <span>↗</span>
+            </a>
+          </div>
+          <p className="text-xs text-grey-400 mb-4">
+            All registered cattle generate scannable QR codes embedded exclusively with the official Chimertech logo.
+          </p>
+          <Link
+            to="/farm"
+            className="w-full btn-primary text-center text-xs py-2.5 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 border-none"
+          >
+            <span>📱</span> View & Share Cattle QR Codes
+          </Link>
+        </div>
+
         {/* Quick links */}
         <div className="glass-card p-6 mb-5 animate-fade-up" style={{ animationDelay: '0.1s' }}>
           <h3 className="text-sm font-semibold text-white mb-4">Quick Links</h3>
           <div className="space-y-1">
             {[
+              ['🐄', 'My Farm & Cattle QR Codes', '/farm'],
               ['📊', 'Analysis History', '/history'],
               ['🛒', 'Products Catalogue', '/products'],
             ].map(([icon, label, to]) => (

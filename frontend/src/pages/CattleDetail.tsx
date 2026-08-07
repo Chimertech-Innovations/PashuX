@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { BASE_URL } from '@/lib/api';
+import CattleQRCodeCard from '@/components/cattle/CattleQRCodeCard';
 
 /* ── Types ───────────────────────────────────────────────────────────────────── */
 interface CattleData {
@@ -510,6 +511,17 @@ export default function CattleDetail() {
             </div>
           </div>
         </div>
+
+        {/* ── QR Code Section ──────────────────────────────────────────────── */}
+        <CattleQRCodeCard
+          cattleId={cattle.id}
+          cattleName={cattle.name}
+          muzzleId={muzzleID}
+          breed={cattle.breed}
+          healthStatus={healthStatus}
+          bcsScore={bcsScore}
+          cattleImage={cattle.display_image}
+        />
 
         {/* ── Charts ───────────────────────────────────────────────────────── */}
         {bcsScore > 0 && (

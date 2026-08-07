@@ -109,7 +109,7 @@ def extract_frames(video_path: str, output_dir: str) -> List[Tuple[str, float]]:
             second += 1
 
         frame_idx += 1
-        if second >= 8: # Cap at 8 frames max (1 frame per second) for hyper-fast 1-2 second processing
+        if second >= 15: # 1 frame per second for up to 15 seconds (15 frames max)
             break
 
     cap.release()
@@ -276,8 +276,8 @@ def process_video(video_path: str, work_dir: str) -> dict:
                 if len(top_frames) >= 3:
                     break
 
-    # Cap at maximum 10 frames for optimal accuracy
-    top_frames = top_frames[:10]
+    # Cap at maximum 15 frames for 15-second 1 FPS full video coverage
+    top_frames = top_frames[:15]
 
     # Step 5 – Erase/delete all unselected, blurry, and duplicate frame files from disk
     selected_paths = {p for p, _ in top_frames}

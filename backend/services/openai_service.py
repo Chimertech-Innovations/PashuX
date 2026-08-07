@@ -341,15 +341,25 @@ async def chat(
 
 VIDEO_ANALYSIS_SYSTEM_PROMPT = """\
 You are Chimertech AI Veterinary Vision — an advanced livestock analysis system trained on clinical dairy and beef cattle datasets.
-You will receive sequential video frames extracted at 1 frame per second (1 FPS) from a video of an animal (Cattle or Water Buffalo).
+You will receive sequential video frames extracted at 1 frame per second (1 FPS) from a video of cattle or water buffalo.
 
 ANALYZE ALL FRAMES CAREFULLY AT 1 FPS AND RETURN A STRICT, EMPIRICAL ASSESSMENT:
 
 1. MULTI-CATTLE & CALF DETECTION PROTOCOL (CRITICAL):
-   - Determine the exact number of cattle/animals visible in the frame sequence.
+   - Count the total number of cattle visible across all frames (`total_cattle_count`: 1, 2, or more).
    - If TWO animals are present (e.g., 1 adult cow and 1 calf/baby cow):
-     - Explicitly identify both in `observations`: e.g. "Two cattle detected in video: 1 adult female cow (Brown coat) and 1 calf (Brown coat)."
-     - Explicitly state coat colors of each animal in the scene.
+     * Set `total_cattle_count`: 2
+     * Populate `secondary_cattle` object with full details for the 2nd animal/calf:
+       - `label`: e.g. "Calf (Baby Cow)" or "Secondary Cattle"
+       - `breed`: breed of the calf/secondary animal
+       - `age_estimate`: precise age (e.g., "2-4 months", "6 months")
+       - `weight_kg`: estimated weight in kg (e.g., 55.0)
+       - `height_cm`: estimated height in cm (e.g., 75.0)
+       - `coat_color`: coat color (e.g., "Brown", "Solid Black")
+       - `estimated_value`: estimated market value (e.g., "Rs.12,000")
+       - `health_status`: e.g. "Healthy"
+       - `notes`: e.g. "Calf standing next to mother cow, suckling/obscuring udder area"
+     * Explicitly list both animals and their coat colors in `observations`.
 
 2. UDDER & TEAT OBSTRUCTION PROTOCOL (NEVER APPROXIMATE):
    - Examine if the adult cow's udder or teats are COVERED or OBSCURED by:
@@ -361,10 +371,10 @@ ANALYZE ALL FRAMES CAREFULLY AT 1 FPS AND RETURN A STRICT, EMPIRICAL ASSESSMENT:
      * Set `udder_visible`: false and `teat_visible`: false.
      * Set `udder_score`: 0.0 and `teat_score`: 0.0.
      * ALWAYS add "udder" and "teats" to `missing_parts`.
-     * Explicitly add to `observations`: "Udder and teats are obscured by the calf's mouth/body. A clean, unobstructed photo/video is required to assess udder health."
+     * Explicitly add to `observations`: "Udder and teats are obscured by the calf's mouth/body during suckling. Udder score cannot be evaluated without an unobstructed view."
      * Explicitly add to `observations`: "Photo/video retake requested: Please capture a clear shot of the udder area without the calf blocking the view."
 
-3. UDDER & TEAT SCORING (ONLY WHEN FULLY UNBLOCK):
+3. UDDER & TEAT SCORING (ONLY WHEN FULLY UNBLOCKED):
    - Udder Score (0-5 scale):
      * 0 = Udder NOT VISIBLE or COVERED/OBSCURED
      * 1 = Severe atrophy, pendulous, heavily scarred
@@ -380,24 +390,28 @@ ANALYZE ALL FRAMES CAREFULLY AT 1 FPS AND RETURN A STRICT, EMPIRICAL ASSESSMENT:
      * 4 = Good — uniform, well-placed cylindrical teats
      * 5 = Ideal length and spacing for machine milking
 
-4. BODY METRICS & AGE ESTIMATION (NO RANDOM GUESSWORK):
-   - BCS Score (1.0 - 5.0 scale based on ICAR standards)
-   - Estimated Weight (kg) & Height (cm) based on breed standards and frame perspective.
-   - Age Estimate (e.g. "3-4 years") based on body maturity, horn shape, and size relative to calf.
-   - Coat Color: Explicitly describe coat color (e.g. "Brown", "Black and White", etc.)
+4. ACCURATE EMPIRICAL DATA FOR PRIMARY CATTLE:
+   - `bcs_score`: (1.0 - 5.0 scale based on ICAR standards)
+   - `breed`: Specific breed name (e.g. "Gir Cattle", "Murrah Buffalo", "Sahiwal", "Holstein Friesian")
+   - `weight_kg`: Realistic calculated body weight in kg (e.g. 435.0)
+   - `height_cm`: Realistic calculated withers height in cm (e.g. 134.0)
+   - `estimated_value`: Accurate regional market price in Rs./$ based on breed, weight, BCS, and milk yield potential (e.g. "Rs.65,000")
+   - `age_estimate`: Precise age estimate (e.g. "4-5 years")
+   - `coat_color`: Explicit coat color description (e.g. "Brown with white patches")
 
 Return ONLY a raw JSON object (without markdown code blocks) matching exactly this schema:
 {
+  "total_cattle_count": 2,
   "bcs_score": 3.25,
   "disease_status": "Healthy",
-  "breed": "Indigenous Dairy Cattle",
+  "breed": "Indigenous Gir Cattle",
   "weight_kg": 420.0,
   "height_cm": 132.0,
-  "coat_color": "Brown",
-  "estimated_value": "Rs.45,000",
+  "coat_color": "Brown with White Flanks",
+  "estimated_value": "Rs.55,000",
   "age_estimate": "4-5 years",
   "observations": [
-    "Two cattle detected in video: 1 adult cow (Brown coat) and 1 calf (Brown coat).",
+    "Two cattle detected in video: 1 adult female cow (Brown coat) and 1 calf (Brown coat).",
     "Udder and teats are obscured by the calf's mouth/head during nursing.",
     "Photo/video retake requested for udder area."
   ],
@@ -405,7 +419,18 @@ Return ONLY a raw JSON object (without markdown code blocks) matching exactly th
   "teat_score": 0.0,
   "udder_visible": false,
   "teat_visible": false,
-  "missing_parts": ["udder", "teats"]
+  "missing_parts": ["udder", "teats"],
+  "secondary_cattle": {
+    "label": "Calf (Baby Cow)",
+    "breed": "Indigenous Gir Cross",
+    "age_estimate": "3-4 months",
+    "weight_kg": 58.0,
+    "height_cm": 72.0,
+    "coat_color": "Solid Brown",
+    "estimated_value": "Rs.12,000",
+    "health_status": "Healthy",
+    "notes": "Standing next to mother cow, suckling and obscuring udder area."
+  }
 }
 """
 
@@ -435,7 +460,7 @@ async def analyse_video_stats(frame_paths: List[str]) -> Any:
         {
             "role": "user",
             "content": [
-                {"type": "text", "text": "Analyze these sequential 1 FPS video frames thoroughly. Check if multiple cattle (e.g. cow and calf) are present. Check if the udder is covered or blocked by the calf's mouth. If covered, do NOT score the udder — mark udder_visible=false and request a retake. Return the full JSON response."},
+                {"type": "text", "text": "Analyze these sequential 1 FPS video frames thoroughly. Check if multiple cattle (e.g. cow and calf) are present. Extract full accurate details for both primary cow and secondary calf. Check if the udder is covered or blocked by the calf's mouth. If covered, do NOT score the udder — mark udder_visible=false and request a retake. Return the full JSON response."},
                 *image_contents
             ]
         }
@@ -452,14 +477,14 @@ async def analyse_video_stats(frame_paths: List[str]) -> Any:
                 res = await client.chat.completions.create(
                     model=model,
                     messages=messages,
-                    max_completion_tokens=900,
+                    max_completion_tokens=1000,
                 )
             except Exception as param_err:
                 if "max_completion_tokens" in str(param_err) or "unsupported" in str(param_err).lower():
                     res = await client.chat.completions.create(
                         model=model,
                         messages=messages,
-                        max_tokens=900,
+                        max_tokens=1000,
                     )
                 else:
                     raise param_err
@@ -470,6 +495,8 @@ async def analyse_video_stats(frame_paths: List[str]) -> Any:
                 data = json.loads(content)
 
                 # Ensure required fields have safe defaults
+                data.setdefault("total_cattle_count", 1)
+                data.setdefault("secondary_cattle", None)
                 data.setdefault("udder_score", 0.0)
                 data.setdefault("teat_score", 0.0)
                 data.setdefault("udder_visible", False)
@@ -487,6 +514,7 @@ async def analyse_video_stats(frame_paths: List[str]) -> Any:
                 data["teat_score"] = float(data.get("teat_score", 0.0))
                 data["udder_visible"] = bool(data.get("udder_visible", False))
                 data["teat_visible"] = bool(data.get("teat_visible", False))
+                data["total_cattle_count"] = int(data.get("total_cattle_count", 1))
 
                 # Post-processing enforcement: If udder is NOT visible, force score to 0.0 and ensure missing_parts contains 'udder' and 'teats'
                 if not data["udder_visible"] or "udder" in data["missing_parts"]:
@@ -501,7 +529,7 @@ async def analyse_video_stats(frame_paths: List[str]) -> Any:
                     if "teats" not in data["missing_parts"]:
                         data["missing_parts"].append("teats")
 
-                logger.info(f"1 FPS Video Analysis complete. Multi-cattle/Obstruction check -> Udder visible: {data['udder_visible']}, Teat visible: {data['teat_visible']}, Missing parts: {data['missing_parts']}")
+                logger.info(f"1 FPS Video Analysis complete. Total cattle: {data['total_cattle_count']}, Udder visible: {data['udder_visible']}, Teat visible: {data['teat_visible']}, Missing parts: {data['missing_parts']}")
                 return VideoAnalysisResult(**data)
 
         except Exception as exc:

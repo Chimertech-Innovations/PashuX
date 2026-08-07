@@ -42,6 +42,17 @@ class DiseaseResult(BaseModel):
 
 # ── Video Analysis ────────────────────────────────────────────────────────────
 
+class SecondaryCattleInfo(BaseModel):
+    label: str = "Calf / 2nd Cattle"
+    breed: Optional[str] = "Unknown Breed"
+    age_estimate: Optional[str] = "N/A"
+    weight_kg: Optional[float] = 0.0
+    height_cm: Optional[float] = 0.0
+    coat_color: Optional[str] = "Unknown"
+    estimated_value: Optional[str] = "N/A"
+    health_status: Optional[str] = "Healthy"
+    notes: Optional[str] = None
+
 class VideoAnalysisResult(BaseModel):
     bcs_score: float = Field(..., ge=0.0, le=5.0)
     disease_status: str
@@ -60,6 +71,9 @@ class VideoAnalysisResult(BaseModel):
     missing_parts: List[str] = []
     age_estimate: Optional[str] = None
     body_length_cm: Optional[float] = None
+    # Multi-cattle support (e.g. Cow + Calf)
+    total_cattle_count: int = 1
+    secondary_cattle: Optional[SecondaryCattleInfo] = None
 
 
 

@@ -654,6 +654,57 @@ export default function FarmManagement() {
                       </ul>
                     </div>
                   )}
+
+                  {/* Secondary Cattle / Calf Card (when 2 animals detected in video) */}
+                  {videoStats.secondary_cattle && (
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300/70 rounded-2xl p-5 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-7 h-7 rounded-xl bg-amber-500 text-white font-black text-xs flex items-center justify-center shadow-sm">2</span>
+                          <div>
+                            <h4 className="text-amber-950 font-black text-sm">{videoStats.secondary_cattle.label || 'Calf / 2nd Cattle'}</h4>
+                            <p className="text-amber-700 text-[10px] font-bold">Detected in video alongside primary cow</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-black bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full border border-amber-300 uppercase">
+                          {videoStats.secondary_cattle.health_status || 'Healthy'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
+                          <p className="text-[9px] uppercase font-black text-slate-400">Breed</p>
+                          <p className="text-slate-900 font-black text-xs mt-0.5 truncate">{videoStats.secondary_cattle.breed || 'Unknown'}</p>
+                        </div>
+                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
+                          <p className="text-[9px] uppercase font-black text-slate-400">Est. Age</p>
+                          <p className="text-slate-900 font-black text-xs mt-0.5">{videoStats.secondary_cattle.age_estimate || 'N/A'}</p>
+                        </div>
+                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
+                          <p className="text-[9px] uppercase font-black text-slate-400">Est. Weight</p>
+                          <p className="text-slate-900 font-black text-xs mt-0.5">{videoStats.secondary_cattle.weight_kg ? `${videoStats.secondary_cattle.weight_kg} kg` : 'N/A'}</p>
+                        </div>
+                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
+                          <p className="text-[9px] uppercase font-black text-slate-400">Est. Height</p>
+                          <p className="text-slate-900 font-black text-xs mt-0.5">{videoStats.secondary_cattle.height_cm ? `${videoStats.secondary_cattle.height_cm} cm` : 'N/A'}</p>
+                        </div>
+                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
+                          <p className="text-[9px] uppercase font-black text-slate-400">Coat Color</p>
+                          <p className="text-slate-900 font-black text-xs mt-0.5">{videoStats.secondary_cattle.coat_color || 'Unknown'}</p>
+                        </div>
+                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
+                          <p className="text-[9px] uppercase font-black text-slate-400">Est. Value</p>
+                          <p className="text-slate-900 font-black text-xs mt-0.5">{videoStats.secondary_cattle.estimated_value || 'N/A'}</p>
+                        </div>
+                        {videoStats.secondary_cattle.notes && (
+                          <div className="col-span-2 bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
+                            <p className="text-[9px] uppercase font-black text-slate-400">AI Notes</p>
+                            <p className="text-slate-700 text-xs mt-0.5 font-medium">{videoStats.secondary_cattle.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })()}

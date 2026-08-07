@@ -14,3 +14,4 @@ aiofiles>=23.2.1
 slowapi>=0.1.9
 torch>=2.0.0
 torchvision>=0.15.0
+pillow-heif>=0.16.0

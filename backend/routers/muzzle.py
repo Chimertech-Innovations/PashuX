@@ -38,12 +38,37 @@ preprocess = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    pass
+
+def load_image_bytes(image_bytes: bytes) -> Optional[np.ndarray]:
+    """
+    Universal image decoder that handles standard JPEG/PNG/WEBP as well as
+    Apple iPhone HEIC/HEIF images seamlessly. Returns OpenCV BGR image array.
+    """
+    try:
+        pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+    except Exception:
+        np_img = np.frombuffer(image_bytes, np.uint8)
+        return cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+
 def extract_muzzle_features(image_bytes: bytes) -> list[float]:
     """
     Real AI Feature Extraction. 
     Uses ResNet50 to look at the muzzle and generate a unique pattern vector.
     """
-    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    try:
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    except Exception:
+        img_np = load_image_bytes(image_bytes)
+        if img_np is None:
+            raise ValueError("Could not decode image file.")
+        image = Image.fromarray(cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB))
+
     input_tensor = preprocess(image).unsqueeze(0) # Create a mini-batch of 1
     
     with torch.no_grad():
@@ -74,8 +99,7 @@ def auto_enhance_image_bytes(image_bytes: bytes) -> bytes:
     Universal auto-enhancer. Fixes extreme low light and slight blur.
     Runs BEFORE uploading to database and BEFORE AI extraction.
     """
-    np_img = np.frombuffer(image_bytes, np.uint8)
-    img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+    img = load_image_bytes(image_bytes)
     
     if img is None:
         return image_bytes
@@ -121,9 +145,10 @@ def generate_trace_map(image_bytes: bytes) -> str:
     3. Enhances and traces the actual continuous ridges (fingerprints).
     4. Extracts well-distributed keypoints within the valid area.
     """
-    # 1. Convert bytes to OpenCV Image
-    np_img = np.frombuffer(image_bytes, np.uint8)
-    img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+    # 1. Convert bytes to OpenCV Image (supports Apple HEIC/HEIF)
+    img = load_image_bytes(image_bytes)
+    if img is None:
+        return ""
     
     h, w = img.shape[:2]
     

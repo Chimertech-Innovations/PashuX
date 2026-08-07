@@ -284,7 +284,7 @@ async def register_cattle_muzzle(
                 "match_cattle_muzzle",
                 {
                     "query_embedding": master_embedding,
-                    "match_threshold": 0.85,
+                    "match_threshold": 0.94,
                     "match_count": 1
                 }
             ).execute()

@@ -157,6 +157,15 @@ export default function FarmManagement() {
     if (clearMessage) setMessage(null);
   };
 
+  // Go back to video step (Step 2) without clearing the muzzle registration
+  const retakeVideo = () => {
+    setVideoFile(null);
+    setVideoPreview(null);
+    setVideoStats(null);
+    setMessage({ type: 'success', text: 'Please re-record the video showing the udder and teat area clearly from the side or rear.' });
+    setStep(2);
+  };
+
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
           const file = e.target.files[0];
@@ -457,68 +466,235 @@ export default function FarmManagement() {
           </form>
           ) : (
           <div className="space-y-6">
-              <div className="bg-emerald-50 rounded-2xl border border-emerald-200 p-6 text-center">
-                  <div className="w-16 h-16 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-md mx-auto mb-4">
-                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                  </div>
-                  <h3 className="text-emerald-900 font-black text-2xl mb-1">Registration Complete</h3>
-                  <p className="text-emerald-700 font-bold text-sm">Cattle Profile Successfully Analyzed & Stored</p>
-              </div>
-
-              {videoStats && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                      <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Breed</p>
-                          <p className="text-slate-900 font-bold">{videoStats.breed || 'Unknown'}</p>
-                      </div>
-                      <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">BCS Score</p>
-                          <p className="text-slate-900 font-bold">{videoStats.bcs_score || 'N/A'}</p>
-                      </div>
-                      <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Est. Weight</p>
-                          <p className="text-slate-900 font-bold">{videoStats.weight_kg ? `${videoStats.weight_kg} kg` : 'N/A'}</p>
-                      </div>
-                      <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Height</p>
-                          <p className="text-slate-900 font-bold">{videoStats.height_cm ? `${videoStats.height_cm} cm` : 'N/A'}</p>
-                      </div>
-                      <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Health Status</p>
-                          <p className={`font-bold ${videoStats.disease_status && videoStats.disease_status.toLowerCase() !== 'healthy' ? 'text-rose-600' : 'text-emerald-600'}`}>
-                              {videoStats.disease_status || 'Healthy'}
-                          </p>
-                      </div>
-                      <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Coat Color</p>
-                          <p className="text-slate-900 font-bold">{videoStats.coat_color || 'Unknown'}</p>
-                      </div>
-                      <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-0.5">Est. Value</p>
-                          <p className="text-slate-900 font-bold">{videoStats.estimated_value || 'N/A'}</p>
-                      </div>
-                  </div>
-              )}
-
-              {currentCattleId && (
-                <div className="mt-6">
-                  <CattleQRCodeCard
-                    cattleId={currentCattleId}
-                    cattleName={name || 'Registered Cattle'}
-                    muzzleId={`MUZZ-${currentCattleId.slice(0, 8).toUpperCase()}`}
-                    breed={videoStats?.breed}
-                    healthStatus={videoStats?.disease_status || 'Healthy'}
-                    bcsScore={videoStats?.bcs_score}
-                  />
+            {/* Header */}
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 text-white relative overflow-hidden">
+              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+              <div className="relative flex items-center gap-4">
+                <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/30">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
-              )}
+                <div>
+                  <h3 className="text-white font-black text-xl leading-tight">Registration Complete</h3>
+                  <p className="text-emerald-100 font-medium text-sm mt-0.5">Cattle Profile Successfully Analyzed & Stored by Chimertech AI</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs bg-white/20 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/20">{name || 'Cattle'}</span>
+                    {currentCattleId && (
+                      <span className="text-xs bg-white/20 text-white font-mono font-bold px-2.5 py-0.5 rounded-full border border-white/20">
+                        MUZZ-{currentCattleId.slice(0, 8).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
 
-              <button 
-                  onClick={() => handleReset()}
-                  className="w-full btn-primary py-4 text-base mt-4 shadow-lg shadow-emerald-500/20"
+            {/* Retake Banner — shown when parts are missing */}
+            {videoStats?.missing_parts?.length > 0 && (
+              <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-5">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-amber-900 font-black text-base">Retake Required — Body Parts Not Captured</h4>
+                    <p className="text-amber-800 text-sm mt-0.5">
+                      The AI could not clearly see the following in your video:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {videoStats.missing_parts.map((part: string) => (
+                        <span key={part} className="text-xs font-black bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full capitalize border border-amber-300">
+                          {part.replace('_', ' ')}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-amber-100 rounded-xl p-3 mb-3 border border-amber-200">
+                  <p className="text-amber-800 text-xs font-medium">
+                    <strong>How to retake:</strong> Record the cattle from the rear or side showing the underside (udder/teat area) clearly in good lighting. Walk slowly around the animal.
+                  </p>
+                </div>
+                <button
+                  onClick={retakeVideo}
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black text-sm py-3 px-5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-400/30"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Re-record Video (Keep Muzzle Scan)
+                </button>
+              </div>
+            )}
+
+            {/* AI Analysis Stats Grid */}
+            {videoStats && (() => {
+              const bcsLabel = videoStats.bcs_score >= 4.5 ? 'Obese' : videoStats.bcs_score >= 3.5 ? 'Overconditioned' : videoStats.bcs_score >= 2.5 ? 'Ideal' : videoStats.bcs_score >= 1.5 ? 'Thin' : videoStats.bcs_score > 0 ? 'Emaciated' : 'N/A';
+              const udderLabel = videoStats.udder_score >= 4.5 ? 'Excellent' : videoStats.udder_score >= 3.5 ? 'Good' : videoStats.udder_score >= 2.5 ? 'Average' : videoStats.udder_score >= 1.5 ? 'Below Average' : videoStats.udder_score > 0 ? 'Poor' : 'Not Visible';
+              const teatLabel = videoStats.teat_score >= 4.5 ? 'Ideal' : videoStats.teat_score >= 3.5 ? 'Good' : videoStats.teat_score >= 2.5 ? 'Average' : videoStats.teat_score >= 1.5 ? 'Short' : videoStats.teat_score > 0 ? 'Deformed' : 'Not Visible';
+              const isHealthy = !videoStats.disease_status || videoStats.disease_status.toLowerCase() === 'healthy';
+
+              const ScoreDots = ({ score, max = 5, color = '#10b981' }: { score: number; max?: number; color?: string }) => (
+                <div className="flex gap-0.5 mt-1">
+                  {Array.from({ length: max }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-1.5 flex-1 rounded-full"
+                      style={{ background: i < Math.round(score) ? color : '#e2e8f0' }}
+                    />
+                  ))}
+                </div>
+              );
+
+              return (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider">AI Analysis Results</h4>
+                  
+                  {/* Core Vitals Row */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Breed</p>
+                      <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.breed || 'Unknown'}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Age Estimate</p>
+                      <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.age_estimate || 'N/A'}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Coat Color</p>
+                      <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.coat_color || 'Unknown'}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Weight</p>
+                      <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.weight_kg ? `${videoStats.weight_kg} kg` : 'N/A'}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Height</p>
+                      <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.height_cm ? `${videoStats.height_cm} cm` : 'N/A'}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Value</p>
+                      <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.estimated_value || 'N/A'}</p>
+                    </div>
+                  </div>
+
+                  {/* Score Rows — BCS, Health, Udder, Teat */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                    {/* BCS Score */}
+                    <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
+                      <div className="flex items-start justify-between mb-1">
+                        <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">BCS Score</p>
+                        <span className="text-emerald-700 font-black text-lg leading-none">{videoStats.bcs_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-emerald-500">/5</span></span>
+                      </div>
+                      <p className="text-emerald-800 font-bold text-xs">{bcsLabel}</p>
+                      <ScoreDots score={videoStats.bcs_score || 0} color="#10b981" />
+                    </div>
+
+                    {/* Health Status */}
+                    <div className={`bg-white rounded-xl p-4 border shadow-sm ${isHealthy ? 'border-emerald-200' : 'border-rose-200'}`}>
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1">Health Status</p>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-emerald-500' : 'bg-rose-500'} animate-pulse`} />
+                        <p className={`font-black text-sm ${isHealthy ? 'text-emerald-700' : 'text-rose-700'}`}>
+                          {videoStats.disease_status || 'Healthy'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Udder Score */}
+                    <div className={`bg-white rounded-xl p-4 border shadow-sm ${videoStats.udder_visible ? 'border-purple-200' : 'border-slate-200 opacity-75'}`}>
+                      <div className="flex items-start justify-between mb-1">
+                        <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Udder Score</p>
+                        {videoStats.udder_visible ? (
+                          <span className="text-purple-700 font-black text-lg leading-none">{videoStats.udder_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-purple-400">/5</span></span>
+                        ) : (
+                          <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Not Captured</span>
+                        )}
+                      </div>
+                      <p className={`font-bold text-xs ${videoStats.udder_visible ? 'text-purple-700' : 'text-slate-400'}`}>{udderLabel}</p>
+                      {videoStats.udder_visible && <ScoreDots score={videoStats.udder_score || 0} color="#9333ea" />}
+                      {!videoStats.udder_visible && (
+                        <p className="text-[10px] text-slate-400 mt-1">Re-record video showing udder area</p>
+                      )}
+                    </div>
+
+                    {/* Teat Score */}
+                    <div className={`bg-white rounded-xl p-4 border shadow-sm ${videoStats.teat_visible ? 'border-blue-200' : 'border-slate-200 opacity-75'}`}>
+                      <div className="flex items-start justify-between mb-1">
+                        <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Teat Score</p>
+                        {videoStats.teat_visible ? (
+                          <span className="text-blue-700 font-black text-lg leading-none">{videoStats.teat_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-blue-400">/5</span></span>
+                        ) : (
+                          <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Not Captured</span>
+                        )}
+                      </div>
+                      <p className={`font-bold text-xs ${videoStats.teat_visible ? 'text-blue-700' : 'text-slate-400'}`}>{teatLabel}</p>
+                      {videoStats.teat_visible && <ScoreDots score={videoStats.teat_score || 0} color="#2563eb" />}
+                      {!videoStats.teat_visible && (
+                        <p className="text-[10px] text-slate-400 mt-1">Re-record video showing teat area</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Observations */}
+                  {videoStats.observations?.length > 0 && (
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-2">AI Observations</p>
+                      <ul className="space-y-1.5">
+                        {videoStats.observations.map((obs: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                            <span className="w-1 h-1 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
+                            {obs}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* QR Code Card */}
+            {currentCattleId && (
+              <div className="mt-2">
+                <CattleQRCodeCard
+                  cattleId={currentCattleId}
+                  cattleName={name || 'Registered Cattle'}
+                  muzzleId={`MUZZ-${currentCattleId.slice(0, 8).toUpperCase()}`}
+                  breed={videoStats?.breed}
+                  healthStatus={videoStats?.disease_status || 'Healthy'}
+                  bcsScore={videoStats?.bcs_score}
+                />
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              {videoStats?.missing_parts?.length > 0 && (
+                <button
+                  onClick={retakeVideo}
+                  className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Retake Video
+                </button>
+              )}
+              <button
+                onClick={() => handleReset()}
+                className="flex-1 btn-primary py-3 text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
               >
-                  Register Another Cattle
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Register Another Cattle
               </button>
+            </div>
           </div>
           )}
         </div>

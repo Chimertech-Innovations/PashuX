@@ -414,7 +414,10 @@ async def analyze_cattle_video(
             "weight_kg": stats.weight_kg,
             "height_cm": stats.height_cm,
             "color": stats.coat_color,
-            "estimated_value": stats.estimated_value
+            "estimated_value": stats.estimated_value,
+            # Udder & Teat scores (stored if visible, null otherwise)
+            "udder_score": stats.udder_score if stats.udder_visible else None,
+            "teat_score": stats.teat_score if stats.teat_visible else None,
         }
         
         # cattle_id from frontend is now the real UUID after our register fix.
@@ -429,11 +432,20 @@ async def analyze_cattle_video(
         if not update_result.data:
             # Fallback: cattle_id might be a tag string (legacy)
             await asyncio.to_thread(_update_by_name)
+
+        # Build enriched response data including retake signals
+        result_data = stats.dict()
+        result_data["retake_required"] = len(stats.missing_parts) > 0
+        result_data["retake_reason"] = (
+            f"The following body parts were not clearly visible in the video: {', '.join(stats.missing_parts)}. "
+            "Please re-record showing those areas clearly."
+            if stats.missing_parts else None
+        )
         
         return {
             "status": "success",
             "message": "Video analysis completed and saved successfully.",
-            "data": stats.dict()
+            "data": result_data
         }
         
     except Exception as e:

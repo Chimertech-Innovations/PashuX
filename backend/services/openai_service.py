@@ -339,19 +339,47 @@ async def chat(
 
     raise RuntimeError(f"OpenAI Chat failed across all models: {last_error}")
 
-VIDEO_ANALYSIS_SYSTEM_PROMPT = """
-You are an expert veterinary AI specializing in livestock health and breed identification.
-You will be given multiple clear frames extracted from a 15-second video of an animal (Cattle or Water Buffalo).
-Please analyze the frames to determine:
-1. BCS Score (1.0 - 5.0)
-2. Disease/Health Status (e.g. Healthy, Lumpy Skin Disease, FMD, etc.)
-3. Breed/Species (CRITICAL: Explicitly specify whether it is a Water Buffalo or Cattle, e.g., "Murrah Buffalo", "Holstein Cattle", "Indigenous Buffalo", etc.)
-4. Estimated Weight in kg (number only)
-5. Estimated Height in cm (number only)
-6. Coat Color (e.g. Solid Black, Brown, Black and White, etc.)
-7. Estimated Value (e.g. '$1,200')
+VIDEO_ANALYSIS_SYSTEM_PROMPT = """\
+You are Chimertech AI Veterinary Vision — an advanced livestock assessment system trained on clinical dairy and beef cattle datasets.
+You will receive multiple clear frames extracted from a video of an animal (Cattle or Water Buffalo).
 
-Return ONLY a raw JSON object (without markdown code blocks) matching this schema:
+ANALYZE ALL FRAMES CAREFULLY and return a comprehensive assessment of:
+
+1. BCS Score (1.0 - 5.0 scale) — Body Condition Score based on rib, spine, tailhead, and hip bone visibility.
+2. Disease / Health Status — (e.g. "Healthy", "Lumpy Skin Disease", "Mastitis Suspected", etc.)
+3. Breed / Species — CRITICAL: Explicitly specify animal type (e.g. "Murrah Buffalo", "Holstein Cattle", "Indigenous Gir Cow", "Jersey Cow").
+4. Estimated Weight (kg) — integer/float based on frame size, breed, and body depth estimation.
+5. Estimated Height (cm) — withers height estimation from frame perspective.
+6. Coat Color — (e.g. "Solid Black", "Brown", "Black and White", "Red and White").
+7. Estimated Value — (e.g. "Rs.55,000" or "$1,200") based on breed, condition, and region.
+8. Age Estimate — (e.g. "3-4 years", "6-8 years") based on horn growth, teeth, and body maturity cues.
+
+UDDER & TEAT ASSESSMENT (CRITICAL):
+9. Udder Score (0-5 scale):
+   - 0 = Udder NOT VISIBLE in any frame (animal is male, or udder not in frame)
+   - 1 = Severe atrophy, pendulous, heavily scarred
+   - 2 = Below average — asymmetric quarters, uneven attachment
+   - 3 = Average — moderate capacity, evenly attached
+   - 4 = Good — well-attached, balanced quarters, good capacity
+   - 5 = Excellent — ideal dairy udder shape, high capacity, strong attachment
+
+10. Teat Score (0-5 scale):
+    - 0 = Teats NOT VISIBLE in any frame
+    - 1 = Very short/inverted or severely deformed teats
+    - 2 = Short or unevenly placed teats
+    - 3 = Average length/placement — acceptable for milking
+    - 4 = Good — uniform, well-placed cylindrical teats
+    - 5 = Ideal length and spacing, optimal for machine milking
+
+11. Visibility flags:
+    - udder_visible: true if udder is clearly visible in at least one frame, false otherwise
+    - teat_visible: true if teats are clearly visible in at least one frame, false otherwise
+
+12. Missing Parts — List body regions that were NOT VISIBLE or too unclear to assess.
+    Possible values: "udder", "teats", "tailhead", "hind_legs", "full_body"
+    If a region was not visible, include it in this list.
+
+Return ONLY a raw JSON object (without markdown code blocks) matching exactly this schema:
 {
   "bcs_score": 3.0,
   "disease_status": "Healthy",
@@ -359,17 +387,23 @@ Return ONLY a raw JSON object (without markdown code blocks) matching this schem
   "weight_kg": 550.0,
   "height_cm": 140.0,
   "coat_color": "Solid Black",
-  "estimated_value": "$1,500",
-  "observations": ["Clear eyes", "Good posture"]
+  "estimated_value": "Rs.55,000",
+  "age_estimate": "4-5 years",
+  "observations": ["Clear eyes and normal posture.", "Well-filled flank cavity.", "No visible skin lesions."],
+  "udder_score": 3.5,
+  "teat_score": 3.0,
+  "udder_visible": true,
+  "teat_visible": true,
+  "missing_parts": []
 }
 """
 
 async def analyse_video_stats(frame_paths: List[str]) -> Any:
-    """Send video frames to OpenAI to extract cattle stats using gpt-4o-mini explicitly."""
+    """Send video frames to OpenAI to extract comprehensive cattle stats including udder/teat scoring."""
     from models.schemas import VideoAnalysisResult
     import base64
     import json
-    
+
     image_contents = []
     for path in frame_paths:
         try:
@@ -390,28 +424,71 @@ async def analyse_video_stats(frame_paths: List[str]) -> Any:
         {
             "role": "user",
             "content": [
-                {"type": "text", "text": "Analyze these video frames carefully and return the required JSON response."},
+                {"type": "text", "text": "Analyze these video frames thoroughly. Pay special attention to the udder and teat region — if visible, score them. If not visible, mark them as missing. Return the full JSON response."},
                 *image_contents
             ]
         }
     ]
 
     client = _get_client()
-    model = "gpt-4o-mini"
-    logger.info(f"Using model {model} for Video Analysis...")
+    models_to_try = get_openai_models()
+    last_error = None
 
-    try:
-        res = await client.chat.completions.create(
-            model=model,
-            messages=messages,
-            max_tokens=600,
-        )
-        content = res.choices[0].message.content
-        if content:
-            content = _strip_fences(content)
-            data = json.loads(content)
-            return VideoAnalysisResult(**data)
-    except Exception as exc:
-        logger.error(f"OpenAI Video Analysis failed: {exc}")
-    
-    raise ValueError("Failed to analyze video stats using OpenAI")
+    for model in models_to_try:
+        try:
+            logger.info(f"Using model {model} for Video Analysis with udder/teat scoring...")
+            try:
+                res = await client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    max_completion_tokens=800,
+                )
+            except Exception as param_err:
+                if "max_completion_tokens" in str(param_err) or "unsupported" in str(param_err).lower():
+                    res = await client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        max_tokens=800,
+                    )
+                else:
+                    raise param_err
+
+            content = res.choices[0].message.content
+            if content:
+                content = _strip_fences(content)
+                data = json.loads(content)
+
+                # Ensure required fields have safe defaults
+                data.setdefault("udder_score", 0.0)
+                data.setdefault("teat_score", 0.0)
+                data.setdefault("udder_visible", False)
+                data.setdefault("teat_visible", False)
+                data.setdefault("missing_parts", [])
+                data.setdefault("age_estimate", None)
+                data.setdefault("body_length_cm", None)
+
+                # Coerce types safely
+                data["bcs_score"] = float(data.get("bcs_score", 3.0))
+                data["weight_kg"] = float(data.get("weight_kg", 400.0))
+                data["height_cm"] = float(data.get("height_cm", 130.0))
+                data["udder_score"] = float(data.get("udder_score", 0.0))
+                data["teat_score"] = float(data.get("teat_score", 0.0))
+                data["udder_visible"] = bool(data.get("udder_visible", False))
+                data["teat_visible"] = bool(data.get("teat_visible", False))
+
+                # Auto-detect missing parts if AI did not fill it
+                if not data["udder_visible"] and "udder" not in data["missing_parts"]:
+                    data["missing_parts"].append("udder")
+                if not data["teat_visible"] and "teats" not in data["missing_parts"]:
+                    data["missing_parts"].append("teats")
+
+                logger.info(f"Video Analysis complete. Udder: {data['udder_visible']}, Teat: {data['teat_visible']}, Missing: {data['missing_parts']}")
+                return VideoAnalysisResult(**data)
+
+        except Exception as exc:
+            logger.warning(f"OpenAI model {model} failed for video analysis: {exc}")
+            last_error = exc
+            continue
+
+    raise ValueError(f"Failed to analyze video stats using OpenAI across all models: {last_error}")
+

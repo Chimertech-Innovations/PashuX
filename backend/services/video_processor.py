@@ -96,9 +96,15 @@ def extract_frames(video_path: str, output_dir: str) -> List[Tuple[str, float]]:
             break
 
         if frame_idx % sample_interval == 0:
+            # Downscale high-resolution frames (e.g. 4K MOV/MP4 videos) to max 720px width to prevent OOM
+            h, w = frame.shape[:2]
+            if w > 720:
+                new_h = int(h * (720 / w))
+                frame = cv2.resize(frame, (720, new_h), interpolation=cv2.INTER_AREA)
+
             blur = compute_blur_score(frame)
             frame_path = os.path.join(output_dir, f"frame_{second:04d}.jpg")
-            cv2.imwrite(frame_path, frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
+            cv2.imwrite(frame_path, frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
             frames.append((frame_path, blur))
             second += 1
 

@@ -359,8 +359,11 @@ async def analyze_cattle_video(
     """
     temp_dir = tempfile.mkdtemp()
     try:
-        # Save video temporarily
-        video_path = os.path.join(temp_dir, f"upload_{uuid.uuid4().hex}.webm")
+        # Save video temporarily preserving original extension (.mov, .mp4, .webm)
+        ext = os.path.splitext(video.filename)[1].lower() if video.filename else ".webm"
+        if ext not in [".mp4", ".webm", ".mov", ".avi", ".m4v", ".mkv"]:
+            ext = ".webm"
+        video_path = os.path.join(temp_dir, f"upload_{uuid.uuid4().hex}{ext}")
         with open(video_path, "wb") as f:
             f.write(await video.read())
             

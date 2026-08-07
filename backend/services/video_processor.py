@@ -109,11 +109,11 @@ def extract_frames(video_path: str, output_dir: str) -> List[Tuple[str, float]]:
             second += 1
 
         frame_idx += 1
-        if second >= 60:
+        if second >= 8: # Cap at 8 frames max (1 frame per second) for hyper-fast 1-2 second processing
             break
 
     cap.release()
-    logger.info(f"Extracted {len(frames)} frames sequentially (1 frame every {sample_interval} frames)")
+    logger.info(f"Extracted {len(frames)} frames sequentially in fast single-pass mode")
     return frames
 
 
@@ -236,25 +236,17 @@ def convert_to_mp4(input_path: str, output_path: str) -> str:
 
 def process_video(video_path: str, work_dir: str) -> dict:
     """
-    Full pipeline:
-      0. Convert MOV or non-MP4 video formats into standard MP4
-      1. Extract 1 frame/sec
-      2. Remove blurry frames (strict relative & absolute blur filter)
-      3. Remove near-duplicates using multi-spectral pHash + dHash + MAE similarity
-      4. Return ONLY unique best clean frames (from minimum 1 up to maximum 10 clean frames)
-      5. Clean up / erase discarded blurry & duplicate frame files
+    Full fast pipeline:
+      1. Extract 1 frame/sec in a single fast pass (supports .mov, .mp4, .webm)
+      2. Remove blurry frames
+      3. Remove near-duplicates
+      4. Return top clean frames for AI analysis
     """
     frames_dir = os.path.join(work_dir, "frames")
     os.makedirs(frames_dir, exist_ok=True)
 
-    # Convert .mov / non-mp4 files to standard .mp4 before frame extraction
-    effective_video_path = video_path
-    if not video_path.lower().endswith(".mp4"):
-        mp4_target = os.path.join(work_dir, "converted_input.mp4")
-        effective_video_path = convert_to_mp4(video_path, mp4_target)
-
-    # Step 1 – Extract
-    all_frames = extract_frames(effective_video_path, frames_dir)
+    # Fast single-pass extraction (no slow transcoding pre-pass)
+    all_frames = extract_frames(video_path, frames_dir)
     if not all_frames:
         raise ValueError("Could not extract frames from the video. Please check the video file.")
 

@@ -54,6 +54,8 @@ default_origins = [
     "http://localhost:5175",
     "http://localhost:3000",
     "https://bcs-nine.vercel.app",
+    "https://pashu-x.vercel.app",
+    "https://pashux-production.up.railway.app",
 ]
 for o in default_origins:
     if o not in origins:

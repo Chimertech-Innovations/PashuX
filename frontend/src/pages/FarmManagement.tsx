@@ -763,11 +763,11 @@ export default function FarmManagement() {
 
         {/* QR Code Modal */}
         {selectedQrCattle && (
-          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-            <div className="relative w-full max-w-xl bg-white rounded-3xl p-2 shadow-2xl">
+          <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fade-in">
+            <div className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto bg-slate-50 rounded-3xl p-1.5 sm:p-3 shadow-2xl border border-slate-200">
               <button
                 onClick={() => setSelectedQrCattle(null)}
-                className="absolute top-4 right-4 z-10 w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 font-bold transition-colors"
+                className="absolute top-3 right-3 sm:top-5 sm:right-5 z-20 w-8 h-8 sm:w-9 sm:h-9 bg-slate-200/80 hover:bg-slate-300 rounded-full flex items-center justify-center text-slate-700 font-bold transition-colors shadow-sm"
               >
                 ✕
               </button>

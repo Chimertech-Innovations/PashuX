@@ -10,7 +10,11 @@ export default function Profile() {
     return (
       <div className="min-h-screen pt-24 pb-24 px-6 flex items-center justify-center">
         <div className="text-center glass-card p-12 max-w-md mx-auto">
-          <p className="text-4xl mb-4">👤</p>
+          <div className="w-16 h-16 rounded-full bg-white/10 text-slate-300 mx-auto flex items-center justify-center mb-4">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+          </div>
           <h2 className="text-heading-xl font-bold text-white mb-3">Not signed in</h2>
           <p className="text-grey-500 text-sm mb-6">Sign in to manage your profile and view analysis history.</p>
           <Link to="/auth" className="btn-primary">Sign in</Link>
@@ -74,7 +78,9 @@ export default function Profile() {
               className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 bg-emerald-900/40 px-3 py-1.5 rounded-lg border border-emerald-500/20"
             >
               <span>chimertech.com</span>
-              <span>↗</span>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
             </a>
           </div>
           <p className="text-xs text-grey-400 mb-4">
@@ -82,9 +88,12 @@ export default function Profile() {
           </p>
           <Link
             to="/farm"
-            className="w-full btn-primary text-center text-xs py-2.5 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 border-none"
+            className="w-full btn-primary text-center text-xs py-2.5 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 border-none font-bold"
           >
-            <span>📱</span> View & Share Cattle QR Codes
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+            </svg>
+            <span>View & Share Cattle QR Codes</span>
           </Link>
         </div>
 
@@ -93,13 +102,37 @@ export default function Profile() {
           <h3 className="text-sm font-semibold text-white mb-4">Quick Links</h3>
           <div className="space-y-1">
             {[
-              ['🐄', 'My Farm & Cattle QR Codes', '/farm'],
-              ['📊', 'Analysis History', '/history'],
-              ['🛒', 'Products Catalogue', '/products'],
-            ].map(([icon, label, to]) => (
-              <Link key={to} to={to} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/[0.04] transition-all">
-                <span>{icon}</span>
-                <span className="text-sm text-grey-300">{label}</span>
+              {
+                label: 'My Farm & Cattle QR Codes',
+                to: '/farm',
+                icon: (
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                )
+              },
+              {
+                label: 'Analysis History',
+                to: '/history',
+                icon: (
+                  <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                )
+              },
+              {
+                label: 'Products Catalogue',
+                to: '/products',
+                icon: (
+                  <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                )
+              },
+            ].map((item) => (
+              <Link key={item.to} to={item.to} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/[0.04] transition-all">
+                {item.icon}
+                <span className="text-sm text-grey-300">{item.label}</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-grey-600 ml-auto">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>

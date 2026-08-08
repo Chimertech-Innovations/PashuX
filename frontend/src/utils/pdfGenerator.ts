@@ -338,7 +338,7 @@ export function generateHealthReportPDF(data: ReportPDFData) {
       doc.setFontSize(8);
       doc.setTextColor(100, 116, 139);
       doc.text(
-        `This report and Ai generated data is provided by PashuX AI -- Powered by Chimertech Private Limited -- Page ${i} of ${pageCount}`,
+        `This report isAi generated data is provided by PashuX AI -- Powered by Chimertech Private Limited -- Page ${i} of ${pageCount}`,
         pageWidth / 2,
         287,
         { align: 'center' }
@@ -439,7 +439,7 @@ function fallbackHTMLPrintReport(data: ReportPDFData) {
       </div>
 
       <div style="margin-top:30px; border-top:1px solid #e2e8f0; padding-top:14px; text-align:center; font-size:11px; font-weight:bold; color:#475569;">
-        This report and Ai generated data is provided by PashuX AI (Powered by Chimertech Private Limited).
+        This report is  Ai generated data is provided by PashuX AI (Powered by Chimertech Private Limited).
       </div>
     </body>
     </html>
@@ -760,7 +760,7 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
       doc.setFontSize(8);
       doc.setTextColor(100, 116, 139);
       doc.text(
-        `This report and Ai generated data is provided by PashuX AI -- Powered by Chimertech Private Limited -- Page ${i} of ${pageCount}`,
+        `This report is Ai generated data is provided by PashuX AI -- Powered by Chimertech Private Limited -- Page ${i} of ${pageCount}`,
         pageWidth / 2,
         287,
         { align: 'center' }

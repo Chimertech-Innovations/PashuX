@@ -401,7 +401,7 @@ export default function CattleDetail() {
           {/* Colour stripe based on health */}
           <div className={`h-2 w-full ${isHealthy ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-600' : 'bg-gradient-to-r from-rose-400 via-orange-400 to-rose-600'}`} />
 
-          <div className="p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-start">
+          <div className="p-6 sm:p-8 flex flex-col lg:flex-row gap-6 items-start justify-between">
             {/* Muzzle image */}
             <div className="w-full sm:w-52 h-52 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0 relative shadow-md">
               {cattle.display_image ? (
@@ -442,6 +442,7 @@ export default function CattleDetail() {
                   <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: HEALTH_COLOR(healthStatus) }} />
                   {healthStatus}
                 </span>
+                <span className="text-[10px] text-slate-400 font-bold ml-auto sm:ml-0">Registered: {registeredDate}</span>
               </div>
 
               {/* Name */}
@@ -506,24 +507,21 @@ export default function CattleDetail() {
               </div>
             </div>
 
-            {/* Registered date */}
-            <div className="text-right flex-shrink-0">
-              <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Registered</p>
-              <p className="text-slate-700 font-bold text-sm">{registeredDate}</p>
+            {/* Right Column: Sleek Premium QR Code & Quick Share Widget */}
+            <div className="flex-shrink-0 w-full lg:w-auto flex justify-center lg:justify-end">
+              <CattleQRCodeCard
+                cattleId={cattle.id}
+                cattleName={cattle.name}
+                muzzleId={muzzleID}
+                breed={cattle.breed}
+                healthStatus={healthStatus}
+                bcsScore={bcsScore}
+                cattleImage={cattle.display_image}
+                variant="inline"
+              />
             </div>
           </div>
         </div>
-
-        {/* ── QR Code Section ──────────────────────────────────────────────── */}
-        <CattleQRCodeCard
-          cattleId={cattle.id}
-          cattleName={cattle.name}
-          muzzleId={muzzleID}
-          breed={cattle.breed}
-          healthStatus={healthStatus}
-          bcsScore={bcsScore}
-          cattleImage={cattle.display_image}
-        />
 
         {/* ── Charts ───────────────────────────────────────────────────────── */}
         {bcsScore > 0 && (

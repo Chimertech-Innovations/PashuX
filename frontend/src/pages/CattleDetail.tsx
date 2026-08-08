@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BASE_URL } from '@/lib/api';
 import CattleQRCodeCard from '@/components/cattle/CattleQRCodeCard';
 import AIDisclaimerFooter from '@/components/ui/AIDisclaimerFooter';
+import { generateCattleProfilePDF } from '@/utils/pdfGenerator';
 
 /* ── Types ───────────────────────────────────────────────────────────────────── */
 interface CattleData {
@@ -382,6 +383,30 @@ export default function CattleDetail() {
   const swatchBg  = coatSwatch(coatColor);
   const isSwatch  = swatchBg.startsWith('linear');
 
+  const handleDownloadPDF = () => {
+    if (!cattle) return;
+    generateCattleProfilePDF({
+      cattleId: cattle.id,
+      cattleName: cattle.name,
+      muzzleId: muzzleID,
+      userId: userShort,
+      registeredDate: registeredDate,
+      breed: cattle.breed,
+      ageEstimate: cattle.age_estimate,
+      weightKg: cattle.weight_kg,
+      heightCm: cattle.height_cm,
+      coatColor: coatColor,
+      estimatedValue: cattle.estimated_value,
+      bcsScore: bcsScore,
+      healthStatus: healthStatus,
+      udderScore: cattle.udder_score,
+      teatScore: cattle.teat_score,
+      bodyConditionDetail: cattle.body_condition_detail,
+      displayImage: cattle.display_image,
+      qrCanvasId: `cattle-qr-${cattle.id}`,
+    });
+  };
+
   return (
     <div className="pt-24 pb-20 min-h-screen bg-slate-50">
       <div className="max-w-5xl mx-auto px-4">
@@ -729,6 +754,12 @@ export default function CattleDetail() {
         {/* ── Actions ─────────────────────────────────────────────────────── */}
         <div className="flex flex-wrap gap-3 mt-2">
           <button onClick={() => navigate('/farm')} className="btn-secondary">← Back to Farm</button>
+          <button onClick={handleDownloadPDF} className="bg-slate-900 hover:bg-slate-800 text-white font-black text-sm py-3 px-5 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5">
+            <svg className="w-4 h-4 text-emerald-400 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Download Official PDF Report</span>
+          </button>
           <button onClick={() => navigate('/muzzle-check')} className="btn-primary">Run Muzzle Check</button>
         </div>
 

@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { PASHUX_LOGO_BASE64 } from './pashuxLogoBase64';
+import { CHIMERTECH_LOGO_BASE64 } from './logoBase64';
 import { IHERD_LOGO_BASE64, GOOGLE_PLAY_BASE64 } from './iherdLogoBase64';
 
 export interface ReportPDFData {
@@ -446,4 +447,328 @@ function fallbackHTMLPrintReport(data: ReportPDFData) {
   printWindow.document.write(html);
   printWindow.document.close();
   setTimeout(() => printWindow.print(), 300);
+}
+
+/* ── Cattle Muzzle Profile PDF Generator ───────────────────────────────────── */
+export interface CattleProfilePDFData {
+  cattleId: string;
+  cattleName: string;
+  muzzleId: string;
+  userId: string;
+  registeredDate: string;
+  breed?: string;
+  ageEstimate?: string;
+  weightKg?: number;
+  heightCm?: number;
+  coatColor?: string;
+  estimatedValue?: string;
+  bcsScore?: number;
+  healthStatus?: string;
+  udderScore?: number;
+  teatScore?: number;
+  observations?: string[];
+  bodyConditionDetail?: string;
+  displayImage?: string;
+  qrCanvasId?: string;
+}
+
+async function urlToBase64(url: string): Promise<string | null> {
+  if (!url) return null;
+  if (url.startsWith('data:image')) return url;
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || 400;
+        canvas.height = img.naturalHeight || 400;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+          return;
+        }
+      } catch (e) {
+        console.warn('Canvas conversion error:', e);
+      }
+      resolve(null);
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
+  try {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let y = 15;
+
+    // --- Header Section ---
+    doc.setFillColor(15, 23, 42); // Slate-900 header banner
+    doc.rect(0, 0, pageWidth, 30, 'F');
+
+    // Embed Logos (Chimertech & PashuX)
+    try {
+      doc.addImage(CHIMERTECH_LOGO_BASE64, 'PNG', 12, 5, 22, 20);
+    } catch (e) {
+      console.warn('Could not embed Chimertech logo:', e);
+    }
+    try {
+      doc.addImage(PASHUX_LOGO_BASE64, 'PNG', 38, 6, 40, 18);
+    } catch (e) {
+      console.warn('Could not embed PashuX logo:', e);
+    }
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text('CATTLE BIOMETRIC MUZZLE & AI HEALTH REPORT', pageWidth - 14, 13, { align: 'right' });
+
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(16, 185, 129); // Emerald-500
+    doc.text('POWERED BY CHIMERTECH PRIVATE LIMITED', pageWidth - 14, 20, { align: 'right' });
+
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(1);
+    doc.line(0, 30, pageWidth, 30);
+
+    y = 36;
+
+    // --- Identity Meta Box ---
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(14, y, pageWidth - 28, 24, 3, 3, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(14, y, pageWidth - 28, 24, 3, 3, 'S');
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(`Cattle Name: ${data.cattleName}`, 18, y + 7);
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(16, 185, 129);
+    doc.text(`Biometric Muzzle ID: ${data.muzzleId}`, 18, y + 14);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Owner User ID: ${data.userId}`, 18, y + 20);
+    doc.text(`Registered Date: ${data.registeredDate}`, 125, y + 20);
+
+    y += 30;
+
+    // --- Muzzle Image & QR Code Side-by-Side ---
+    const imageBoxWidth = 90;
+    const imageBoxHeight = 56;
+
+    // 1. Muzzle Photo Box
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(14, y, imageBoxWidth, imageBoxHeight, 3, 3, 'F');
+    doc.setDrawColor(203, 213, 225);
+    doc.roundedRect(14, y, imageBoxWidth, imageBoxHeight, 3, 3, 'S');
+
+    if (data.displayImage) {
+      try {
+        const imgData = await urlToBase64(data.displayImage);
+        if (imgData) {
+          doc.addImage(imgData, 'JPEG', 16, y + 2, imageBoxWidth - 4, imageBoxHeight - 10);
+        }
+      } catch (err) {
+        console.warn('Could not embed cattle image in PDF:', err);
+      }
+    }
+    doc.setFillColor(15, 23, 42);
+    doc.rect(14, y + imageBoxHeight - 7, imageBoxWidth, 7, 'F');
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(16, 185, 129);
+    doc.text('AI VERIFIED MUZZLE BIOMETRIC RECORD', 14 + imageBoxWidth / 2, y + imageBoxHeight - 2.5, { align: 'center' });
+
+    // 2. QR Code Box
+    const qrX = 14 + imageBoxWidth + 6;
+    const qrBoxWidth = pageWidth - 14 - qrX;
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(qrX, y, qrBoxWidth, imageBoxHeight, 3, 3, 'F');
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(qrX, y, qrBoxWidth, imageBoxHeight, 3, 3, 'S');
+
+    // Try capturing QR code canvas from DOM
+    let qrDataUrl: string | null = null;
+    const qrCanvas = document.getElementById(data.qrCanvasId || `cattle-qr-${data.cattleId}`) as HTMLCanvasElement;
+    if (qrCanvas) {
+      try {
+        qrDataUrl = qrCanvas.toDataURL('image/png');
+      } catch (e) {}
+    }
+    if (qrDataUrl) {
+      try {
+        doc.addImage(qrDataUrl, 'PNG', qrX + (qrBoxWidth - 36) / 2, y + 4, 36, 36);
+      } catch (e) {}
+    }
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('SCAN TO VIEW LIVE PROFILE', qrX + qrBoxWidth / 2, y + 43, { align: 'center' });
+
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    const pUrl = typeof window !== 'undefined' ? `${window.location.origin}/cattle/${data.cattleId}` : `/cattle/${data.cattleId}`;
+    const pUrlTruncated = pUrl.length > 38 ? `${pUrl.slice(0, 38)}...` : pUrl;
+    doc.text(pUrlTruncated, qrX + qrBoxWidth / 2, y + 48, { align: 'center' });
+
+    y += imageBoxHeight + 10;
+
+    // --- Vitals & AI Analysis Scores Grid ---
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('1. Cattle Physical Vitals & AI Biometric Scores', 14, y);
+    doc.setDrawColor(226, 232, 240);
+    doc.line(14, y + 2, pageWidth - 14, y + 2);
+
+    y += 7;
+
+    const vitals = [
+      { label: 'Breed', val: data.breed || 'Unknown' },
+      { label: 'Estimated Age', val: data.ageEstimate || 'N/A' },
+      { label: 'Coat Color', val: data.coatColor || 'N/A' },
+      { label: 'Estimated Weight', val: data.weightKg ? `${data.weightKg} kg` : 'N/A' },
+      { label: 'Estimated Height', val: data.heightCm ? `${data.heightCm} cm` : 'N/A' },
+      { label: 'Estimated Value', val: data.estimatedValue || 'N/A' },
+    ];
+
+    const gridColW = (pageWidth - 28) / 3;
+    let gridY = y;
+    vitals.forEach((item, idx) => {
+      const row = Math.floor(idx / 3);
+      const col = idx % 3;
+      const vx = 14 + col * gridColW;
+      const vy = gridY + row * 14;
+
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(vx, vy, gridColW - 4, 12, 2, 2, 'F');
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(148, 163, 184);
+      doc.text(item.label.toUpperCase(), vx + 3, vy + 4);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.text(item.val, vx + 3, vy + 9.5);
+    });
+
+    y += 32;
+
+    // --- Key AI Health Scores Row (BCS, Health, Udder, Teat) ---
+    const scoreBoxW = (pageWidth - 28) / 4;
+
+    // BCS
+    doc.setFillColor(236, 253, 245);
+    doc.roundedRect(14, y, scoreBoxW - 3, 16, 2, 2, 'F');
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(4, 120, 87);
+    doc.text('BCS SCORE', 17, y + 4);
+    doc.setFontSize(11);
+    doc.text(`${data.bcsScore ? data.bcsScore.toFixed(1) : '—'} / 5.0`, 17, y + 11);
+
+    // Health Status
+    const isHealthy = !data.healthStatus || data.healthStatus.toLowerCase().includes('healthy');
+    doc.setFillColor(isHealthy ? 236 : 254, isHealthy ? 253 : 242, isHealthy ? 245 : 242);
+    doc.roundedRect(14 + scoreBoxW, y, scoreBoxW - 3, 16, 2, 2, 'F');
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(isHealthy ? 4 : 225, isHealthy ? 120 : 29, isHealthy ? 87 : 72);
+    doc.text('HEALTH STATUS', 17 + scoreBoxW, y + 4);
+    doc.setFontSize(10);
+    doc.text(data.healthStatus || 'Healthy', 17 + scoreBoxW, y + 11);
+
+    // Udder Score
+    doc.setFillColor(243, 232, 255);
+    doc.roundedRect(14 + scoreBoxW * 2, y, scoreBoxW - 3, 16, 2, 2, 'F');
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(126, 34, 206);
+    doc.text('UDDER SCORE', 17 + scoreBoxW * 2, y + 4);
+    doc.setFontSize(11);
+    doc.text(`${data.udderScore ? data.udderScore.toFixed(1) : 'N/A'}`, 17 + scoreBoxW * 2, y + 11);
+
+    // Teat Score
+    doc.setFillColor(239, 246, 255);
+    doc.roundedRect(14 + scoreBoxW * 3, y, scoreBoxW - 3, 16, 2, 2, 'F');
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(29, 78, 216);
+    doc.text('TEAT SCORE', 17 + scoreBoxW * 3, y + 4);
+    doc.setFontSize(11);
+    doc.text(`${data.teatScore ? data.teatScore.toFixed(1) : 'N/A'}`, 17 + scoreBoxW * 3, y + 11);
+
+    y += 24;
+
+    // --- AI Body Condition & Diagnostic Report ---
+    if (data.bodyConditionDetail || (data.observations && data.observations.length > 0)) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.text('2. AI Clinical Observations & Diagnostic Notes', 14, y);
+      doc.setDrawColor(226, 232, 240);
+      doc.line(14, y + 2, pageWidth - 14, y + 2);
+
+      y += 7;
+
+      if (data.bodyConditionDetail) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 65, 85);
+        const splitText = doc.splitTextToSize(data.bodyConditionDetail, pageWidth - 28);
+        doc.text(splitText, 14, y);
+        y += splitText.length * 4.5 + 4;
+      }
+
+      if (data.observations && data.observations.length > 0) {
+        data.observations.forEach((obs) => {
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(16, 185, 129);
+          doc.text('•', 16, y);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(51, 65, 85);
+          doc.text(obs, 20, y);
+          y += 5;
+        });
+      }
+    }
+
+    // --- Page Footer for all pages ---
+    const pageCount = (doc.internal as any).getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text(
+        `This report and Ai generated data is provided by PashuX AI -- Powered by Chimertech Private Limited -- Page ${i} of ${pageCount}`,
+        pageWidth / 2,
+        287,
+        { align: 'center' }
+      );
+    }
+
+    doc.save(`PashuX_Cattle_Profile_${data.cattleName.replace(/[^a-zA-Z0-9]/g, '_')}_${data.muzzleId}.pdf`);
+  } catch (err) {
+    console.error('Error generating cattle profile PDF:', err);
+  }
 }

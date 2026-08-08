@@ -50,16 +50,19 @@ export default function CattleQRCodeCard({
   };
 
   const shareWhatsApp = () => {
-    const text = `*Cattle Profile Biometrics*\n\n` +
-      `Name: ${cattleName}\n` +
-      `Biometric Muzzle ID: ${muzzleId}\n` +
-      `${breed ? `Breed: ${breed}\n` : ''}` +
-      `${bcsScore ? `BCS Score: ${bcsScore.toFixed(1)}/5\n` : ''}` +
-      `Health Status: ${healthStatus}\n\n` +
-      `Powered by Chimertech Private Limited\n` +
-      `Scan or click link to view full details:\n${profileUrl}` +
-      `${teatScore ? `Teat Score: ${teatScore}\n` : ''}` +
-      `${cattleImage ? `Cattle Image: ${cattleImage}\n` : ''}` ;
+    const text =
+      `*PASHUX AI - CATTLE BIOMETRIC PROFILE REPORT*\n` +
+      `----------------------------------------\n` +
+      `*Cattle Name:* ${cattleName}\n` +
+      `*Biometric Muzzle ID:* ${muzzleId}\n` +
+      `${breed ? `*Breed:* ${breed}\n` : ''}` +
+      `${bcsScore ? `*BCS Score:* ${bcsScore.toFixed(1)} / 5.0\n` : ''}` +
+      `${teatScore ? `*Teat Score:* ${teatScore} / 5.0\n` : ''}` +
+      `*Health Status:* ${healthStatus}\n` +
+      `----------------------------------------\n` +
+      `*Powered by Chimertech Private Limited*\n\n` +
+      `*Click link to view full live profile, biometric muzzle record & AI health report:*\n` +
+      `${profileUrl}`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { DiseaseResult } from '@/types';
+import AIDisclaimerFooter from '@/components/ui/AIDisclaimerFooter';
 
 interface Props {
   result: DiseaseResult;
@@ -156,6 +157,9 @@ export default function DiseaseResultCard({ result }: Props) {
           ))}
         </ol>
       </div>
+
+      {/* AI Disclaimer Footer */}
+      <AIDisclaimerFooter />
     </div>
   );
 }

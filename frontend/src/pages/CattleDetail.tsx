@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { BASE_URL } from '@/lib/api';
 import CattleQRCodeCard from '@/components/cattle/CattleQRCodeCard';
+import AIDisclaimerFooter from '@/components/ui/AIDisclaimerFooter';
 
 /* ── Types ───────────────────────────────────────────────────────────────────── */
 interface CattleData {
@@ -730,6 +731,9 @@ export default function CattleDetail() {
           <button onClick={() => navigate('/farm')} className="btn-secondary">← Back to Farm</button>
           <button onClick={() => navigate('/muzzle-check')} className="btn-primary">Run Muzzle Check</button>
         </div>
+
+        {/* ── Disclaimer Footer ────────────────────────────────────────────── */}
+        <AIDisclaimerFooter />
 
       </div>
     </div>

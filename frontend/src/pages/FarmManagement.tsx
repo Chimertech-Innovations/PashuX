@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { BASE_URL } from '@/lib/api';
 import CattleQRCodeCard from '@/components/cattle/CattleQRCodeCard';
+import AIDisclaimerFooter from '@/components/ui/AIDisclaimerFooter';
 
 export default function FarmManagement() {
   const { user, loading: authLoading } = useAuth();
@@ -746,6 +747,9 @@ export default function FarmManagement() {
                 Register Another Cattle
               </button>
             </div>
+
+            {/* AI Report Disclaimer Footer */}
+            <AIDisclaimerFooter />
           </div>
           )}
         </div>

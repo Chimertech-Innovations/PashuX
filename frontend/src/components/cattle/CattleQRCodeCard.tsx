@@ -53,7 +53,7 @@ export default function CattleQRCodeCard({
       `${breed ? `Breed: ${breed}\n` : ''}` +
       `${bcsScore ? `BCS Score: ${bcsScore.toFixed(1)}/5\n` : ''}` +
       `Health Status: ${healthStatus}\n\n` +
-      `Powered by Chimertech Innovations\n` +
+      `Powered by Chimertech Private Limited\n` +
       `Scan or click link to view full details:\n${profileUrl}`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');

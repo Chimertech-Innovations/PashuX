@@ -8,6 +8,7 @@ interface CattleQRCodeCardProps {
   breed?: string;
   healthStatus?: string;
   bcsScore?: number;
+  teatScore?: number;
   cattleImage?: string;
   compact?: boolean;
   variant?: 'inline' | 'card';
@@ -20,6 +21,8 @@ export default function CattleQRCodeCard({
   breed,
   healthStatus = 'Healthy',
   bcsScore,
+  teatScore,
+  cattleImage,
   compact = false,
   variant = 'card',
 }: CattleQRCodeCardProps) {
@@ -54,7 +57,9 @@ export default function CattleQRCodeCard({
       `${bcsScore ? `BCS Score: ${bcsScore.toFixed(1)}/5\n` : ''}` +
       `Health Status: ${healthStatus}\n\n` +
       `Powered by Chimertech Private Limited\n` +
-      `Scan or click link to view full details:\n${profileUrl}`;
+      `Scan or click link to view full details:\n${profileUrl}` +
+      `${teatScore ? `Teat Score: ${teatScore}\n` : ''}` +
+      `${cattleImage ? `Cattle Image: ${cattleImage}\n` : ''}` ;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };

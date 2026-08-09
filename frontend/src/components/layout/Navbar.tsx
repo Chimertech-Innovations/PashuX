@@ -23,7 +23,7 @@ const SUBMENU_ITEMS = [
 
 export default function Navbar() {
   const { pathname } = useLocation();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
   const [submenuOpen, setSubmenuOpen] = useState(false);
@@ -202,19 +202,10 @@ export default function Navbar() {
             <span>Download iHerd App</span>
           </a>
 
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className="px-3 py-2 rounded-xl text-xs font-black bg-purple-700 text-white shadow-md hover:bg-purple-800 transition-all whitespace-nowrap"
-            >
-              ⚡ Admin
-            </Link>
-          )}
-
           {user ? (
             <div className="flex items-center gap-1.5">
-              <Link to="/profile" className="btn-ghost text-xs font-black text-slate-900 hover:text-emerald-700 px-2 py-1 truncate max-w-[120px] whitespace-nowrap">
-                {user.email?.split('@')[0]}
+              <Link to="/profile" className="btn-ghost text-xs font-black text-slate-900 hover:text-emerald-700 px-2 py-1 truncate max-w-[140px] whitespace-nowrap">
+                {user.user_metadata?.full_name || (user.email ? user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1) : 'User')}
               </Link>
               <button onClick={() => signOut()} className="btn-secondary py-1.5 px-3 text-xs font-black border-slate-300 text-slate-900 whitespace-nowrap">
                 Sign out
@@ -317,16 +308,6 @@ export default function Navbar() {
             Contact Us
           </Link>
 
-          {isAdmin && (
-            <Link
-              to="/admin"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-black bg-purple-100 text-purple-950 border border-purple-300"
-            >
-              <span>⚡ Admin Panel</span>
-            </Link>
-          )}
-
           <div className="pt-3 border-t border-slate-200 flex flex-col gap-2">
             <a
               href={IHERD_PLAY_STORE_URL}
@@ -339,7 +320,7 @@ export default function Navbar() {
             </a>
             {user ? (
               <button onClick={() => { signOut(); setMenuOpen(false); }} className="btn-secondary text-xs font-black text-slate-900 w-full py-2.5">
-                Sign out ({user.email?.split('@')[0]})
+                Sign out ({user.user_metadata?.full_name || (user.email ? user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1) : 'User')})
               </button>
             ) : (
               <Link to="/auth" onClick={() => setMenuOpen(false)} className="btn-secondary text-xs text-center font-black text-slate-900 py-2.5">

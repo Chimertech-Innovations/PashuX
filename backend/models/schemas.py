@@ -60,6 +60,7 @@ class VideoAnalysisResult(BaseModel):
     weight_kg: float
     height_cm: float
     coat_color: str
+    gender: str = "Female"
     estimated_value: str
     observations: List[str]
     # Udder & Teat scoring (0 = not visible/not applicable)
@@ -70,7 +71,8 @@ class VideoAnalysisResult(BaseModel):
     # Parts AI could not clearly see — triggers retake prompt on frontend
     missing_parts: List[str] = []
     age_estimate: Optional[str] = None
-    body_length_cm: Optional[float] = None
+    # Cleanliness / Hygiene Score out of 100
+    cleanliness_score: int = Field(default=85, ge=0, le=100)
     # Multi-cattle support (e.g. Cow + Calf)
     total_cattle_count: int = 1
     secondary_cattle: Optional[SecondaryCattleInfo] = None

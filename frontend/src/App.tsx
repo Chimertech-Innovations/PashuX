@@ -12,7 +12,6 @@ import LiveDetection from '@/pages/LiveDetection';
 import AnalysisHistory from '@/pages/AnalysisHistory';
 import Products from '@/pages/Products';
 import Profile from '@/pages/Profile';
-import Admin from '@/pages/Admin';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import TermsOfService from '@/pages/TermsOfService';
 import VeterinaryDisclaimer from '@/pages/VeterinaryDisclaimer';
@@ -36,7 +35,6 @@ export default function App() {
             <Routes>
               <Route path="/"               element={<Landing />} />
               <Route path="/auth"           element={<Auth />} />
-              <Route path="/admin"          element={<Admin />} />
               <Route path="/farm"           element={<FarmManagement />} />
               <Route path="/cattle/:id"     element={<CattleDetail />} />
               <Route path="/muzzle-check"   element={<MuzzleCheck />} />
@@ -45,7 +43,6 @@ export default function App() {
               <Route path="/disease"        element={<DiseaseDetection />} />
               <Route path="/history"        element={<AnalysisHistory />} />
               <Route path="/products"       element={<Products />} />
-              <Route path="/contact font-black" element={<ContactUs />} />
               <Route path="/contact"        element={<ContactUs />} />
               <Route path="/profile"         element={<Profile />} />
               <Route path="/privacy"        element={<PrivacyPolicy />} />

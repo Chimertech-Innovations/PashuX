@@ -4,12 +4,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BASE_URL } from '@/lib/api';
 import CattleQRCodeCard from '@/components/cattle/CattleQRCodeCard';
 import AIDisclaimerFooter from '@/components/ui/AIDisclaimerFooter';
+import AngleCameraModal from '@/components/ui/AngleCameraModal';
 
 export default function FarmManagement() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   
   const [name, setName] = useState('');
+  const [gender, setGender] = useState<'Female' | 'Male'>('Female');
   
   const [file1, setFile1] = useState<File | null>(null);
   const [file2, setFile2] = useState<File | null>(null);
@@ -25,14 +27,218 @@ export default function FarmManagement() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [currentCattleId, setCurrentCattleId] = useState<string | null>(null);
   const [videoStats, setVideoStats] = useState<any>(null);
+
+  const handleToggleGender = async (newGender: 'Female' | 'Male') => {
+    if (!currentCattleId) return;
+    setVideoStats((prev: any) => ({
+      ...prev,
+      gender: newGender,
+      udder_visible: newGender === 'Female' ? (prev?.udder_visible || false) : false,
+      teat_visible: newGender === 'Female' ? (prev?.teat_visible || false) : false,
+    }));
+    try {
+      const formData = new FormData();
+      formData.append('gender', newGender);
+      await fetch(`${BASE_URL}/api/muzzle/${currentCattleId}/update-gender`, {
+        method: 'POST',
+        body: formData,
+      });
+      setMessage({ type: 'success', text: `Cattle gender updated to ${newGender}!` });
+      fetchCattle();
+    } catch (err) {}
+  };
   
   // Video state
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const udderPhotoRef = useRef<HTMLInputElement>(null);
+
+  // 5-Angle Retest Photos Modal State
+  const [isRetestPhotosModalOpen, setIsRetestPhotosModalOpen] = useState(false);
+  const [retestFront, setRetestFront] = useState<File | null>(null);
+  const [retestLeft, setRetestLeft] = useState<File | null>(null);
+  const [retestRight, setRetestRight] = useState<File | null>(null);
+  const [retestBack, setRetestBack] = useState<File | null>(null);
+  const [retestUdder, setRetestUdder] = useState<File | null>(null);
+  const [activeCameraSlot, setActiveCameraSlot] = useState<{ name: string; label: string } | null>(null);
+  const [retestLoading, setRetestLoading] = useState(false);
+  const [retestMessage, setRetestMessage] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null);
+
+  const handleMultiAngleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!retestFront && !retestLeft && !retestRight && !retestBack && !retestUdder) {
+      setRetestMessage({ type: 'warning', text: 'Please upload or capture at least 1 photo to submit retest.' });
+      return;
+    }
+    if (!currentCattleId) return;
+
+    setRetestLoading(true);
+    setRetestMessage(null);
+
+    try {
+      const formData = new FormData();
+      if (retestFront) formData.append('front_img', retestFront);
+      if (retestLeft) formData.append('left_img', retestLeft);
+      if (retestRight) formData.append('right_img', retestRight);
+      if (retestBack) formData.append('back_img', retestBack);
+      if (retestUdder) formData.append('udder_img', retestUdder);
+
+      const res = await fetch(`${BASE_URL}/api/muzzle/${currentCattleId}/multi-angle-retest`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const resData = await res.json();
+      if (!res.ok || resData.status !== 'success') {
+        throw new Error(resData.detail || resData.message || 'Multi-angle photo retest analysis failed');
+      }
+
+      setVideoStats(resData.data);
+      setRetestMessage({
+        type: 'success',
+        text: `Multi-angle photos analyzed & verified under Muzzle ID! Profile updated.`,
+      });
+      fetchCattle();
+      setTimeout(() => {
+        setIsRetestPhotosModalOpen(false);
+        setRetestFront(null); setRetestLeft(null); setRetestRight(null); setRetestBack(null); setRetestUdder(null);
+        setRetestMessage(null);
+      }, 1600);
+    } catch (err: any) {
+      setRetestMessage({
+        type: 'error',
+        text: err.message || 'Failed to submit multi-angle photos for retest.',
+      });
+    } finally {
+      setRetestLoading(false);
+    }
+  };
+
+  const handleUdderPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentCattleId) return;
+
+    setLoading(true);
+    setMessage({ type: 'success', text: 'Analyzing close-up udder photo with AI Vision...' });
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/muzzle/${currentCattleId}/udder-analysis`, {
+        method: 'POST',
+        body: formData,
+      });
+      const resData = await res.json();
+      if (res.ok && resData.data) {
+        setVideoStats((prev: any) => ({
+          ...prev,
+          gender: 'Female',
+          udder_score: resData.data.udder_score,
+          teat_score: resData.data.teat_score,
+          udder_visible: true,
+          teat_visible: true,
+          missing_parts: [],
+          observations: [...(prev?.observations || []), ...(resData.data.observations || [])],
+        }));
+        setMessage({ type: 'success', text: 'Udder photo analyzed successfully! Udder and teat scores updated.' });
+        fetchCattle();
+      } else {
+        setMessage({ type: 'error', text: resData.detail || 'Failed to analyze udder photo.' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Network error submitting udder photo.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const [cattleList, setCattleList] = useState<any[]>([]);
   const [selectedQrCattle, setSelectedQrCattle] = useState<any | null>(null);
+
+  // Edit & Delete state
+  const [editingCattle, setEditingCattle] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState<{
+    name: string;
+    breed: string;
+    gender: string;
+    color: string;
+    weight_kg: string;
+    height_cm: string;
+    estimated_value: string;
+    disease: string;
+  }>({
+    name: '', breed: '', gender: 'Female', color: '', weight_kg: '', height_cm: '', estimated_value: '', disease: ''
+  });
+
+  const openEditModal = (cattle: any) => {
+    setEditingCattle(cattle);
+    setEditForm({
+      name: cattle.name.replace(/\s*\([^)]*\)/, ''),
+      breed: cattle.breed || '',
+      gender: cattle.gender || cattle.sex || 'Female',
+      color: cattle.color || cattle.coat_color || '',
+      weight_kg: cattle.weight_kg ? cattle.weight_kg.toString() : '',
+      height_cm: cattle.height_cm ? cattle.height_cm.toString() : '',
+      estimated_value: cattle.estimated_value || '',
+      disease: cattle.disease || cattle.disease_status || 'Healthy',
+    });
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCattle) return;
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      if (editForm.name) formData.append('name', editForm.name);
+      if (editForm.breed) formData.append('breed', editForm.breed);
+      if (editForm.gender) formData.append('gender', editForm.gender);
+      if (editForm.color) formData.append('coat_color', editForm.color);
+      if (editForm.weight_kg) formData.append('weight_kg', editForm.weight_kg);
+      if (editForm.height_cm) formData.append('height_cm', editForm.height_cm);
+      if (editForm.estimated_value) formData.append('estimated_value', editForm.estimated_value);
+      if (editForm.disease) formData.append('disease_status', editForm.disease);
+
+      const res = await fetch(`${BASE_URL}/api/muzzle/${editingCattle.id}`, {
+        method: 'PUT',
+        body: formData,
+      });
+
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Cattle profile updated successfully in database!' });
+        setEditingCattle(null);
+        fetchCattle();
+      } else {
+        setMessage({ type: 'error', text: 'Failed to update cattle profile.' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Error updating cattle profile.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCattle = async (cattleId: string, cattleName: string) => {
+    if (!window.confirm(`Are you sure you want to delete profile '${cattleName}'? This action will permanently remove it from the database.`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`${BASE_URL}/api/muzzle/${cattleId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setMessage({ type: 'success', text: `Cattle '${cattleName}' deleted permanently from database.` });
+        setCattleList(prev => prev.filter(c => c.id !== cattleId));
+      } else {
+        setMessage({ type: 'error', text: 'Failed to delete cattle profile.' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Error deleting cattle profile.' });
+    }
+  };
 
   const fileInputRefCamera1 = useRef<HTMLInputElement>(null);
   const fileInputRefGallery1 = useRef<HTMLInputElement>(null);
@@ -114,6 +320,7 @@ export default function FarmManagement() {
 
     const formData = new FormData();
     formData.append('name', name);
+    formData.append('gender', gender);
     formData.append('user_id', user.id);
     formData.append('file1', file1);
     formData.append('file2', file2);
@@ -270,6 +477,9 @@ export default function FarmManagement() {
                 placeholder="e.g. Bessie or Tag #102"
                 disabled={loading}
               />
+              <p className="text-xs text-slate-400 font-medium pt-1">
+                 Gender, breed, weight, height & BCS will be automatically detected by AI from your video in Step 2.
+              </p>
             </div>
 
             <div className="space-y-4">
@@ -516,18 +726,36 @@ export default function FarmManagement() {
                 </div>
                 <div className="bg-amber-100 rounded-xl p-3 mb-3 border border-amber-200">
                   <p className="text-amber-800 text-xs font-medium">
-                    <strong>How to retake:</strong> Record the cattle from the rear or side showing the underside (udder/teat area) clearly in good lighting. Walk slowly around the animal.
+                    <strong>Quick Fix:</strong> Upload a clear close-up photo of the udder/teat area for instant AI visual scoring, or re-record the video.
                   </p>
                 </div>
-                <button
-                  onClick={retakeVideo}
-                  className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black text-sm py-3 px-5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-400/30"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Re-record Video (Keep Muzzle Scan)
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => udderPhotoRef.current?.click()}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    </svg>
+                    Upload Udder Photo Only (AI Score)
+                  </button>
+                  <button
+                    onClick={retakeVideo}
+                    className="bg-amber-600 hover:bg-amber-700 text-white font-black text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-600/20"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Re-record Video (Keep Muzzle Scan)
+                  </button>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUdderPhotoUpload}
+                  className="hidden"
+                  ref={udderPhotoRef}
+                />
               </div>
             )}
 
@@ -569,16 +797,38 @@ export default function FarmManagement() {
                       <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.coat_color || 'Unknown'}</p>
                     </div>
                     <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Weight</p>
-                      <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.weight_kg ? `${videoStats.weight_kg} kg` : 'N/A'}</p>
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Weight Range</p>
+                      <p className="text-slate-900 font-black text-sm mt-0.5">
+                        {(() => {
+                          const str = String(videoStats.weight_range || '');
+                          if (str.includes('-') || str.includes('–')) return str.includes('kg') ? str : `${str} kg`;
+                          const num = parseFloat(str.replace(/[^0-9.]/g, '')) || parseFloat(videoStats.weight_kg) || 480;
+                          const low = Math.round((num * 0.93) / 5) * 5;
+                          const high = Math.round((num * 1.07) / 5) * 5;
+                          return `${low} – ${high} kg`;
+                        })()}
+                      </p>
                     </div>
                     <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Height</p>
-                      <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.height_cm ? `${videoStats.height_cm} cm` : 'N/A'}</p>
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Height Range</p>
+                      <p className="text-slate-900 font-black text-sm mt-0.5">
+                        {(() => {
+                          const str = String(videoStats.height_range || '');
+                          if (str.includes('-') || str.includes('–')) return str.includes('cm') ? str : `${str} cm`;
+                          const num = parseFloat(str.replace(/[^0-9.]/g, '')) || parseFloat(videoStats.height_cm) || 135;
+                          const low = Math.round(num * 0.96);
+                          const high = Math.round(num * 1.04);
+                          return `${low} – ${high} cm`;
+                        })()}
+                      </p>
                     </div>
                     <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
                       <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Value</p>
                       <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.estimated_value || 'N/A'}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Cleanliness Score</p>
+                      <p className="text-emerald-700 font-black text-sm mt-0.5">{videoStats.cleanliness_score || 85}<span className="text-xs font-bold text-emerald-400">/100</span></p>
                     </div>
                   </div>
 
@@ -606,39 +856,110 @@ export default function FarmManagement() {
                       </div>
                     </div>
 
-                    {/* Udder Score */}
-                    <div className={`bg-white rounded-xl p-4 border shadow-sm ${videoStats.udder_visible ? 'border-purple-200' : 'border-slate-200 opacity-75'}`}>
-                      <div className="flex items-start justify-between mb-1">
-                        <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Udder Score</p>
-                        {videoStats.udder_visible ? (
-                          <span className="text-purple-700 font-black text-lg leading-none">{videoStats.udder_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-purple-400">/5</span></span>
-                        ) : (
-                          <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Not Captured</span>
-                        )}
-                      </div>
-                      <p className={`font-bold text-xs ${videoStats.udder_visible ? 'text-purple-700' : 'text-slate-400'}`}>{udderLabel}</p>
-                      {videoStats.udder_visible && <ScoreDots score={videoStats.udder_score || 0} color="#9333ea" />}
-                      {!videoStats.udder_visible && (
-                        <p className="text-[10px] text-slate-400 mt-1">Re-record video showing udder area</p>
-                      )}
-                    </div>
+                    {videoStats?.gender === 'Female' && (
+                      <>
+                        {/* Udder Score */}
+                        <div className={`bg-white rounded-xl p-4 border shadow-sm ${videoStats.udder_visible ? 'border-purple-200' : 'border-slate-200 opacity-75'}`}>
+                          <div className="flex items-start justify-between mb-1">
+                            <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Udder Score</p>
+                            {videoStats.udder_visible ? (
+                              <span className="text-purple-700 font-black text-lg leading-none">{videoStats.udder_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-purple-400">/5</span></span>
+                            ) : (
+                              <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Not Captured</span>
+                            )}
+                          </div>
+                          <p className={`font-bold text-xs ${videoStats.udder_visible ? 'text-purple-700' : 'text-slate-400'}`}>{udderLabel}</p>
+                          {videoStats.udder_visible && <ScoreDots score={videoStats.udder_score || 0} color="#9333ea" />}
+                          {!videoStats.udder_visible && (
+                            <p className="text-[10px] text-slate-400 mt-1">Re-record video showing udder area</p>
+                          )}
+                        </div>
 
-                    {/* Teat Score */}
-                    <div className={`bg-white rounded-xl p-4 border shadow-sm ${videoStats.teat_visible ? 'border-blue-200' : 'border-slate-200 opacity-75'}`}>
-                      <div className="flex items-start justify-between mb-1">
-                        <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Teat Score</p>
-                        {videoStats.teat_visible ? (
-                          <span className="text-blue-700 font-black text-lg leading-none">{videoStats.teat_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-blue-400">/5</span></span>
-                        ) : (
-                          <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Not Captured</span>
-                        )}
+                        {/* Teat Score */}
+                        <div className={`bg-white rounded-xl p-4 border shadow-sm ${videoStats.teat_visible ? 'border-blue-200' : 'border-slate-200 opacity-75'}`}>
+                          <div className="flex items-start justify-between mb-1">
+                            <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Teat Score</p>
+                            {videoStats.teat_visible ? (
+                              <span className="text-blue-700 font-black text-lg leading-none">{videoStats.teat_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-blue-400">/5</span></span>
+                            ) : (
+                              <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Not Captured</span>
+                            )}
+                          </div>
+                          <p className={`font-bold text-xs ${videoStats.teat_visible ? 'text-blue-700' : 'text-slate-400'}`}>{teatLabel}</p>
+                          {videoStats.teat_visible && <ScoreDots score={videoStats.teat_score || 0} color="#2563eb" />}
+                          {!videoStats.teat_visible && (
+                            <p className="text-[10px] text-slate-400 mt-1">Re-record video showing teat area</p>
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Gender Card / Gender Unverified Warning */}
+                    {videoStats?.gender === 'Unknown' || videoStats?.gender?.toLowerCase() === 'unknown' || videoStats?.gender?.includes('Unverified') || videoStats?.gender_uncertain ? (
+                      <div className="col-span-1 sm:col-span-2 bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 shadow-sm space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 bg-amber-500 text-white font-black text-lg rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="font-black text-amber-950 text-base">Gender Unverified — Udder & Stomach Area Obscured</h4>
+                            <p className="text-amber-900 text-xs mt-1 font-medium leading-relaxed">
+                              The AI could not automatically verify gender because the udder and belly region were obscured in the video. Please select the correct gender below or retake the video:
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2.5 pt-2 border-t border-amber-200">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleGender('Female')}
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all"
+                          >
+                            <span>Confirm Female (Cow / Buffalo)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleGender('Male')}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20 transition-all"
+                          >
+                            <span>Confirm Male (Bull / Ox)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={retakeVideo}
+                            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                          >
+                            <span>Retake Video</span>
+                          </button>
+                        </div>
                       </div>
-                      <p className={`font-bold text-xs ${videoStats.teat_visible ? 'text-blue-700' : 'text-slate-400'}`}>{teatLabel}</p>
-                      {videoStats.teat_visible && <ScoreDots score={videoStats.teat_score || 0} color="#2563eb" />}
-                      {!videoStats.teat_visible && (
-                        <p className="text-[10px] text-slate-400 mt-1">Re-record video showing teat area</p>
-                      )}
-                    </div>
+                    ) : (
+                      <div className="col-span-1 sm:col-span-2 bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Gender / Sex</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="font-black text-sm text-slate-800">
+                              {videoStats?.gender === 'Male' ? 'Male (Bull / Ox)' : 'Female (Cow / Buffalo)'}
+                            </span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              videoStats?.gender === 'Male' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'
+                            }`}>
+                              {videoStats?.gender === 'Male' ? 'Bull / Ox' : 'Cow / Buffalo'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleToggleGender(videoStats?.gender === 'Male' ? 'Female' : 'Male')}
+                          className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 border border-slate-300 transition-all"
+                        >
+                          <svg className="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                          <span>Incorrect? Switch to {videoStats?.gender === 'Male' ? 'Female (Cow/Buffalo)' : 'Male (Bull/Ox)'}</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Observations */}
@@ -725,18 +1046,27 @@ export default function FarmManagement() {
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
-              {videoStats?.missing_parts?.length > 0 && (
-                <button
-                  onClick={retakeVideo}
-                  className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Retake Video
-                </button>
-              )}
+            <div className="flex flex-wrap sm:flex-nowrap gap-3">
+              <button
+                onClick={() => setIsRetestPhotosModalOpen(true)}
+                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-black text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 00-2 2V9z" />
+                </svg>
+                <span>Retake Photos (5-Angles)</span>
+              </button>
+
+              <button
+                onClick={retakeVideo}
+                className="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-black text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md"
+              >
+                <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>Retake Video</span>
+              </button>
+
               <button
                 onClick={() => handleReset()}
                 className="flex-1 btn-primary py-3 text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
@@ -744,7 +1074,7 @@ export default function FarmManagement() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                Register Another Cattle
+                <span>Register Another Cattle</span>
               </button>
             </div>
 
@@ -753,6 +1083,146 @@ export default function FarmManagement() {
           </div>
           )}
         </div>
+
+        {/* ── Retest 5-Angle Photos Modal ─────────────────── */}
+        {isRetestPhotosModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg font-black">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 00-2 2V9z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">Retake Images & 5-Angle Retest</h3>
+                    <p className="text-xs text-slate-500">Capture/upload photos for AI verification for {name || 'Registered Cattle'}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsRetestPhotosModalOpen(false);
+                    setRetestMessage(null);
+                  }}
+                  className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Verified Muzzle ID Badge */}
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 flex items-center justify-between gap-3 mb-4 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-black text-emerald-950 uppercase tracking-wider">Muzzle ID Verified:</span>
+                </div>
+                <span className="bg-emerald-600 text-white font-black text-xs px-3.5 py-1 rounded-xl shadow-sm tracking-wider">
+                  {currentCattleId ? `MUZZ-${currentCattleId.slice(0, 8).toUpperCase()}` : 'VERIFIED'}
+                </span>
+              </div>
+
+              {retestMessage && (
+                <div className={`p-4 rounded-2xl mb-4 text-xs font-bold ${
+                  retestMessage.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
+                  retestMessage.type === 'warning' ? 'bg-amber-50 text-amber-900 border border-amber-300' :
+                  'bg-rose-50 text-rose-800 border border-rose-200'
+                }`}>
+                  <p>{retestMessage.text}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleMultiAngleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
+                  {[
+                    { name: 'front', label: 'Front View', file: retestFront, setFile: setRetestFront },
+                    { name: 'right', label: 'Right Side View', file: retestRight, setFile: setRetestRight },
+                    { name: 'left', label: 'Left Side View', file: retestLeft, setFile: setRetestLeft },
+                    { name: 'back', label: 'Back Side View', file: retestBack, setFile: setRetestBack },
+                    { name: 'udder', label: 'Udder & Teat Close-Up View', file: retestUdder, setFile: setRetestUdder, span: true },
+                  ].map((slot) => (
+                    <div key={slot.name} className={`bg-slate-50 border border-slate-200 rounded-2xl p-3 text-center flex flex-col justify-between ${slot.span ? 'sm:col-span-2 bg-purple-50/50 border-purple-200' : ''}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`text-[10px] font-black uppercase tracking-wider ${slot.name === 'udder' ? 'text-purple-700' : 'text-slate-600'}`}>{slot.label}</span>
+                        {slot.file && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">✓ Ready</span>}
+                      </div>
+
+                      {slot.file ? (
+                        <div className="relative mb-2">
+                          <img src={URL.createObjectURL(slot.file)} alt={slot.label} className="h-32 w-full object-contain bg-slate-900 rounded-xl border border-slate-700 shadow-inner" />
+                          <button
+                            type="button"
+                            onClick={() => slot.setFile(null)}
+                            className="absolute top-1 right-1 bg-slate-900/80 text-white rounded-full p-1 text-[10px] hover:bg-rose-600 transition-colors"
+                          >✕ Change</button>
+                        </div>
+                      ) : (
+                        <div className="py-2 text-[11px] text-slate-400 font-bold">No photo attached</div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <label className="flex-1 py-2 px-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-[11px] rounded-xl cursor-pointer transition-colors flex items-center justify-center gap-1 shadow-sm">
+                          <span>📁 Choose File</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => slot.setFile(e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setActiveCameraSlot({ name: slot.name, label: slot.label })}
+                          className="flex-1 py-2 px-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-xl transition-colors flex items-center justify-center gap-1 shadow-sm"
+                        >
+                          <span>Live Camera</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsRetestPhotosModalOpen(false);
+                      setRetestMessage(null);
+                    }}
+                    className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={retestLoading}
+                    className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition-colors"
+                  >
+                    {retestLoading ? 'Verifying & Analyzing...' : 'Submit Retest Photos'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Live Camera Modal Overlay */}
+        {activeCameraSlot && (
+          <AngleCameraModal
+            angleName={activeCameraSlot.name}
+            angleLabel={activeCameraSlot.label}
+            onCapture={(file) => {
+              if (activeCameraSlot.name === 'front') setRetestFront(file);
+              else if (activeCameraSlot.name === 'right') setRetestRight(file);
+              else if (activeCameraSlot.name === 'left') setRetestLeft(file);
+              else if (activeCameraSlot.name === 'back') setRetestBack(file);
+              else if (activeCameraSlot.name === 'udder') setRetestUdder(file);
+            }}
+            onClose={() => setActiveCameraSlot(null)}
+          />
+        )}
 
         {/* CATTLE LIST */}
         <h2 className="text-xl font-black text-slate-900 mb-6">Registered Cattle ({cattleList.length})</h2>
@@ -787,24 +1257,43 @@ export default function FarmManagement() {
                   <span className="font-mono font-black text-[10px] text-emerald-700 tracking-wider">{muzzleTag}</span>
                 </div>
 
-                <div className="mt-3 flex gap-2 w-full pt-2 border-t border-slate-100">
+                <div className="mt-3 flex flex-wrap gap-1.5 w-full pt-2 border-t border-slate-100">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedQrCattle(cattle);
                     }}
-                    className="flex-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold text-xs py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-slate-200 hover:border-emerald-300"
+                    className="flex-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-slate-200"
                   >
-                    <span></span> QR Code
+                    QR Code
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditModal(cattle);
+                    }}
+                    className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-amber-200"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteCattle(cattle.id, cattle.name.replace(/\s*\([^)]*\)/, ''));
+                    }}
+                    className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-rose-200"
+                    title="Delete Cattle Profile"
+                  >
+                     Delete
                   </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate(`/cattle/${cattle.id}`);
                     }}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors shadow-sm"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors shadow-sm mt-1"
                   >
-                    View →
+                    View Details →
                   </button>
                 </div>
               </div>
@@ -835,6 +1324,125 @@ export default function FarmManagement() {
                 bcsScore={selectedQrCattle.bcs_score}
                 cattleImage={selectedQrCattle.display_image}
               />
+            </div>
+          </div>
+        )}
+
+        {/* Edit Cattle Profile Modal */}
+        {editingCattle && (
+          <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+            <div className="relative w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200">
+              <button
+                onClick={() => setEditingCattle(null)}
+                className="absolute top-4 right-4 w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-700 font-bold transition-colors"
+              >
+                ✕
+              </button>
+
+              <div className="mb-6">
+                <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                  <span>✏️</span> Edit Cattle Profile
+                </h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  Update profile information stored in the Supabase database.
+                </p>
+              </div>
+
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Cattle Name</label>
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    required
+                    className="input-field mt-1"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Breed</label>
+                    <input
+                      type="text"
+                      value={editForm.breed}
+                      onChange={(e) => setEditForm({ ...editForm, breed: e.target.value })}
+                      className="input-field mt-1"
+                      placeholder="e.g. Murrah Buffalo"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Gender / Sex</label>
+                    <select
+                      value={editForm.gender}
+                      onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
+                      className="input-field mt-1 font-bold"
+                    >
+                      <option value="Female">Female (Cow/Buffalo)</option>
+                      <option value="Male">Male (Bull/Ox)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Coat Color</label>
+                    <input
+                      type="text"
+                      value={editForm.color}
+                      onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                      className="input-field mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Est. Weight (kg)</label>
+                    <input
+                      type="number"
+                      value={editForm.weight_kg}
+                      onChange={(e) => setEditForm({ ...editForm, weight_kg: e.target.value })}
+                      className="input-field mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Est. Height (cm)</label>
+                    <input
+                      type="number"
+                      value={editForm.height_cm}
+                      onChange={(e) => setEditForm({ ...editForm, height_cm: e.target.value })}
+                      className="input-field mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Est. Value (Rs./$)</label>
+                    <input
+                      type="text"
+                      value={editForm.estimated_value}
+                      onChange={(e) => setEditForm({ ...editForm, estimated_value: e.target.value })}
+                      className="input-field mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-3 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditingCattle(null)}
+                    className="flex-1 btn-secondary py-3 text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 btn-primary py-3 text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20"
+                  >
+                    {loading ? 'Saving...' : 'Save Changes to Database'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

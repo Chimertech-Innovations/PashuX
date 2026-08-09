@@ -271,24 +271,15 @@ async def analyse_disease(frame_paths: List[str]) -> DiseaseResult:
         return _smart_fallback_disease(frame_paths)
 
 
-async def analyse_video_stats(frame_paths: List[str]) -> VideoAnalysisResult:
+async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[str] = None) -> VideoAnalysisResult:
     """Analyze cattle video frames for comprehensive statistics."""
     try:
         logger.info("Executing Video Analysis via OpenAI Vision service...")
-        return await openai_service.analyse_video_stats(frame_paths)
+        return await openai_service.analyse_video_stats(frame_paths, expected_gender=expected_gender)
     except Exception as exc:
-        logger.warning(f"OpenAI Video Analysis encountered error: [{type(exc).__name__}] {exc}")
-        # Return a fallback result
-        return VideoAnalysisResult(
-            bcs_score=3.0,
-            disease_status="Unknown (Fallback)",
-            breed="Cattle (Fallback)",
-            weight_kg=400.0,
-            height_cm=130.0,
-            coat_color="Unknown",
-            estimated_value="N/A",
-            observations=["Computer vision feature analysis applied due to API error."]
-        )
+        logger.error(f"OpenAI Video Analysis failed: [{type(exc).__name__}] {exc}")
+        raise exc
+
 
 
 async def chat(

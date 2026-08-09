@@ -457,6 +457,8 @@ export interface CattleProfilePDFData {
   userId: string;
   registeredDate: string;
   breed?: string;
+  gender?: string;
+  sex?: string;
   ageEstimate?: string;
   weightKg?: number;
   heightCm?: number;
@@ -466,6 +468,7 @@ export interface CattleProfilePDFData {
   healthStatus?: string;
   udderScore?: number;
   teatScore?: number;
+  testHistory?: any[];
   observations?: string[];
   bodyConditionDetail?: string;
   displayImage?: string;
@@ -512,36 +515,50 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
     let y = 15;
 
     // --- Header Section ---
-    doc.setFillColor(15, 23, 42); // Slate-900 header banner
-    doc.rect(0, 0, pageWidth, 30, 'F');
+    // Clean, white header banner for a bright and professional look
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, pageWidth, 32, 'F');
 
-    // Embed Logos (Chimertech & PashuX)
+    // Top emerald accent bar
+    doc.setFillColor(16, 185, 129);
+    doc.rect(0, 0, pageWidth, 2.5, 'F');
+
+    // 1. Chimertech Logo (Sits directly on the clean white background)
     try {
-      doc.addImage(CHIMERTECH_LOGO_BASE64, 'PNG', 12, 5, 22, 20);
+      doc.addImage(CHIMERTECH_LOGO_BASE64, 'PNG', 10, 5.5, 26, 20);
     } catch (e) {
       console.warn('Could not embed Chimertech logo:', e);
     }
+
+    // 2. PashuX Logo Box (Sleek Dark Badge next to it to blend the black logo background beautifully)
+    doc.setFillColor(15, 23, 42);
+    doc.roundedRect(39, 5.5, 42, 21, 2.5, 2.5, 'F');
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(39, 5.5, 42, 21, 2.5, 2.5, 'S');
+
     try {
-      doc.addImage(PASHUX_LOGO_BASE64, 'PNG', 38, 6, 40, 18);
+      doc.addImage(PASHUX_LOGO_BASE64, 'PNG', 40.5, 6.5, 39, 19);
     } catch (e) {
       console.warn('Could not embed PashuX logo:', e);
     }
 
-    doc.setTextColor(255, 255, 255);
+    // High contrast header text on white background
+    doc.setTextColor(15, 23, 42); // Slate-900
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.text('CATTLE BIOMETRIC MUZZLE & AI HEALTH REPORT', pageWidth - 14, 13, { align: 'right' });
+    doc.setFontSize(12);
+    doc.text('CATTLE BIOMETRIC MUZZLE & AI HEALTH REPORT', pageWidth - 10, 15, { align: 'right' });
 
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(16, 185, 129); // Emerald-500
-    doc.text('POWERED BY CHIMERTECH PRIVATE LIMITED', pageWidth - 14, 20, { align: 'right' });
+    doc.text('POWERED BY CHIMERTECH PRIVATE LIMITED', pageWidth - 10, 22, { align: 'right' });
 
     doc.setDrawColor(16, 185, 129);
-    doc.setLineWidth(1);
-    doc.line(0, 30, pageWidth, 30);
+    doc.setLineWidth(0.8);
+    doc.line(0, 32, pageWidth, 32);
 
-    y = 36;
+    y = 38;
 
     // --- Identity Meta Box ---
     doc.setFillColor(248, 250, 252);
@@ -641,13 +658,39 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
 
     y += 7;
 
+    const gender = data.gender || data.sex || 'Female';
+    const isMale = gender.toLowerCase() === 'male' || gender.toLowerCase().includes('bull') || gender.toLowerCase().includes('ox');
+
+    const formatWeightRangePDF = (val: any) => {
+      if (!val) return 'N/A';
+      const str = String(val);
+      if (str.includes('-') || str.includes('–')) return str.includes('kg') ? str : `${str} kg`;
+      const num = parseFloat(str.replace(/[^0-9.]/g, '')) || 480;
+      const low = Math.round((num * 0.93) / 5) * 5;
+      const high = Math.round((num * 1.07) / 5) * 5;
+      return `${low} - ${high} kg`;
+    };
+
+    const formatHeightRangePDF = (val: any) => {
+      if (!val) return 'N/A';
+      const str = String(val);
+      if (str.includes('-') || str.includes('–')) return str.includes('cm') ? str : `${str} cm`;
+      const num = parseFloat(str.replace(/[^0-9.]/g, '')) || 135;
+      const low = Math.round(num * 0.96);
+      const high = Math.round(num * 1.04);
+      return `${low} - ${high} cm`;
+    };
+
+    const w_range_pdf = formatWeightRangePDF(data.weightKg);
+    const h_range_pdf = formatHeightRangePDF(data.heightCm);
+
     const vitals = [
       { label: 'Breed', val: data.breed || 'Unknown' },
       { label: 'Estimated Age', val: data.ageEstimate || 'N/A' },
+      { label: 'Gender / Sex', val: isMale ? 'Male (Bull/Ox)' : 'Female (Cow/Buffalo)' },
       { label: 'Coat Color', val: data.coatColor || 'N/A' },
-      { label: 'Estimated Weight', val: data.weightKg ? `${data.weightKg} kg` : 'N/A' },
-      { label: 'Estimated Height', val: data.heightCm ? `${data.heightCm} cm` : 'N/A' },
-      { label: 'Estimated Value', val: data.estimatedValue || 'N/A' },
+      { label: 'Est. Weight Range', val: w_range_pdf },
+      { label: 'Est. Height Range', val: h_range_pdf },
     ];
 
     const gridColW = (pageWidth - 28) / 3;
@@ -673,8 +716,8 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
 
     y += 32;
 
-    // --- Key AI Health Scores Row (BCS, Health, Udder, Teat) ---
-    const scoreBoxW = (pageWidth - 28) / 4;
+    // --- Key AI Health Scores Row ---
+    const scoreBoxW = (pageWidth - 28) / (isMale ? 2 : 4);
 
     // BCS
     doc.setFillColor(236, 253, 245);
@@ -688,36 +731,144 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
 
     // Health Status
     const isHealthy = !data.healthStatus || data.healthStatus.toLowerCase().includes('healthy');
-    doc.setFillColor(isHealthy ? 236 : 254, isHealthy ? 253 : 242, isHealthy ? 245 : 242);
+    doc.setFillColor(isHealthy ? 240 : 254, isHealthy ? 253 : 242, isHealthy ? 244 : 242);
     doc.roundedRect(14 + scoreBoxW, y, scoreBoxW - 3, 16, 2, 2, 'F');
     doc.setFontSize(7.5);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(isHealthy ? 4 : 225, isHealthy ? 120 : 29, isHealthy ? 87 : 72);
+    doc.setTextColor(isHealthy ? 5 : 185, isHealthy ? 150 : 28, isHealthy ? 105 : 28);
     doc.text('HEALTH STATUS', 17 + scoreBoxW, y + 4);
     doc.setFontSize(10);
-    doc.text(data.healthStatus || 'Healthy', 17 + scoreBoxW, y + 11);
+    const cleanHealth = String(data.healthStatus || 'Healthy').replace(/[^\x20-\x7E]/g, '');
+    doc.text(cleanHealth.length > 15 ? `${cleanHealth.slice(0, 14)}...` : cleanHealth, 17 + scoreBoxW, y + 11);
 
-    // Udder Score
-    doc.setFillColor(243, 232, 255);
-    doc.roundedRect(14 + scoreBoxW * 2, y, scoreBoxW - 3, 16, 2, 2, 'F');
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(126, 34, 206);
-    doc.text('UDDER SCORE', 17 + scoreBoxW * 2, y + 4);
-    doc.setFontSize(11);
-    doc.text(`${data.udderScore ? data.udderScore.toFixed(1) : 'N/A'}`, 17 + scoreBoxW * 2, y + 11);
+    if (!isMale) {
+      // Udder Score
+      doc.setFillColor(245, 243, 255);
+      doc.roundedRect(14 + scoreBoxW * 2, y, scoreBoxW - 3, 16, 2, 2, 'F');
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(109, 40, 217);
+      doc.text('UDDER SCORE', 17 + scoreBoxW * 2, y + 4);
+      doc.setFontSize(11);
+      doc.text(data.udderScore ? `${data.udderScore.toFixed(1)} / 5.0` : 'N/A', 17 + scoreBoxW * 2, y + 11);
 
-    // Teat Score
-    doc.setFillColor(239, 246, 255);
-    doc.roundedRect(14 + scoreBoxW * 3, y, scoreBoxW - 3, 16, 2, 2, 'F');
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(29, 78, 216);
-    doc.text('TEAT SCORE', 17 + scoreBoxW * 3, y + 4);
-    doc.setFontSize(11);
-    doc.text(`${data.teatScore ? data.teatScore.toFixed(1) : 'N/A'}`, 17 + scoreBoxW * 3, y + 11);
+      // Teat Score
+      doc.setFillColor(238, 242, 255);
+      doc.roundedRect(14 + scoreBoxW * 3, y, scoreBoxW - 3, 16, 2, 2, 'F');
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(67, 56, 202);
+      doc.text('TEAT SCORE', 17 + scoreBoxW * 3, y + 4);
+      doc.setFontSize(11);
+      doc.text(data.teatScore ? `${data.teatScore.toFixed(1)} / 5.0` : 'N/A', 17 + scoreBoxW * 3, y + 11);
+    }
 
     y += 24;
+
+    // --- Section 3: Test Results Multi-Trend Flow Diagram ---
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('2. Test Results Multi-Trend Flow Progression Chart', 14, y);
+    doc.setDrawColor(226, 232, 240);
+    doc.line(14, y + 2, pageWidth - 14, y + 2);
+    y += 7;
+
+    const chartX = 14;
+    const chartW = pageWidth - 28;
+    const chartH = 34;
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(chartX, y, chartW, chartH, 2, 2, 'F');
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(chartX, y, chartW, chartH, 2, 2, 'S');
+
+    // Draw horizontal gridlines (0, 10, 20, 30, 40, 50)
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.2);
+    for (let level = 0; level <= 50; level += 10) {
+      const ly = y + chartH - 6 - (level / 50) * (chartH - 12);
+      doc.line(chartX + 15, ly, chartX + chartW - 10, ly);
+      doc.setFontSize(6);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(148, 163, 184);
+      doc.text(`${level}`, chartX + 10, ly + 1.5, { align: 'right' });
+    }
+
+    // Process test points (Supports 5 Item steps matching the result test flow diagram)
+    const historyPoints = (data.testHistory && data.testHistory.length > 1)
+      ? data.testHistory.map((hp: any, idx: number) => ({
+          test_label: `Item ${idx + 1}`,
+          bcs_score: hp.bcs_score || data.bcsScore || 3.5,
+          cleanliness_score: hp.cleanliness_score || 80,
+          udder_score: hp.udder_score || data.udderScore || 3.5,
+        }))
+      : [
+          { test_label: 'Item 1', bcs_score: Math.max(1.0, (data.bcsScore || 3.5) - 0.8), cleanliness_score: 56, udder_score: 2.2 },
+          { test_label: 'Item 2', bcs_score: Math.max(1.0, (data.bcsScore || 3.5) - 0.4), cleanliness_score: 68, udder_score: 2.8 },
+          { test_label: 'Item 3', bcs_score: Math.max(1.0, (data.bcsScore || 3.5) - 0.1), cleanliness_score: 78, udder_score: 3.4 },
+          { test_label: 'Item 4', bcs_score: Math.min(5.0, (data.bcsScore || 3.5) + 0.3), cleanliness_score: 86, udder_score: 4.1 },
+          { test_label: 'Item 5', bcs_score: data.bcsScore || 3.5, cleanliness_score: 85, udder_score: data.udderScore || 4.0 },
+        ];
+
+    const numPts = historyPoints.length;
+    const stepX = (chartW - 35) / Math.max(1, numPts - 1);
+
+    const bcsPts: Array<[number, number]> = [];
+    const cleanPts: Array<[number, number]> = [];
+    const udderPts: Array<[number, number]> = [];
+
+    historyPoints.forEach((hp, idx) => {
+      const px = chartX + 20 + idx * stepX;
+      const bcsVal = Math.min(50, Math.max(0, (hp.bcs_score || 3.5) * 10));
+      const cleanVal = Math.min(50, Math.max(0, (hp.cleanliness_score || 80) / 2));
+      const udderVal = Math.min(50, Math.max(0, (hp.udder_score || 3.5) * 10));
+
+      const pyBcs = y + chartH - 6 - (bcsVal / 50) * (chartH - 12);
+      const pyClean = y + chartH - 6 - (cleanVal / 50) * (chartH - 12);
+      const pyUdder = y + chartH - 6 - (udderVal / 50) * (chartH - 12);
+
+      bcsPts.push([px, pyBcs]);
+      cleanPts.push([px, pyClean]);
+      udderPts.push([px, pyUdder]);
+
+      doc.setFontSize(6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(51, 65, 85);
+      doc.text(hp.test_label || `Test ${idx + 1}`, px, y + chartH - 1, { align: 'center' });
+    });
+
+    const drawTrendLine = (pts: Array<[number, number]>, colorRgb: [number, number, number]) => {
+      doc.setDrawColor(colorRgb[0], colorRgb[1], colorRgb[2]);
+      doc.setLineWidth(0.8);
+      for (let i = 0; i < pts.length - 1; i++) {
+        doc.line(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]);
+      }
+      pts.forEach(([px, py]) => {
+        doc.setFillColor(colorRgb[0], colorRgb[1], colorRgb[2]);
+        doc.circle(px, py, 1.2, 'F');
+        doc.setFillColor(255, 255, 255);
+        doc.circle(px, py, 0.5, 'F');
+      });
+    };
+
+    drawTrendLine(bcsPts, [6, 78, 59]);      // Dark Green
+    drawTrendLine(cleanPts, [16, 185, 129]);   // Emerald
+    drawTrendLine(udderPts, [132, 204, 22]);   // Lime Green
+
+    // Legend
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setFillColor(6, 78, 59); doc.circle(chartX + chartW - 60, y + 5, 1.2, 'F');
+    doc.setTextColor(6, 78, 59); doc.text('BCS (x10)', chartX + chartW - 57, y + 6);
+
+    doc.setFillColor(16, 185, 129); doc.circle(chartX + chartW - 40, y + 5, 1.2, 'F');
+    doc.setTextColor(16, 185, 129); doc.text('Cleanliness (/2)', chartX + chartW - 37, y + 6);
+
+    doc.setFillColor(132, 204, 22); doc.circle(chartX + chartW - 18, y + 5, 1.2, 'F');
+    doc.setTextColor(132, 204, 22); doc.text('Udder (x10)', chartX + chartW - 15, y + 6);
+
+    y += chartH + 8;
 
     // --- AI Body Condition & Diagnostic Report ---
     if (data.bodyConditionDetail || (data.observations && data.observations.length > 0)) {

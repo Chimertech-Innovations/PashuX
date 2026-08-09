@@ -25,19 +25,13 @@ export default function Auth() {
 
     try {
       if (mode === 'signin') {
-        const isAdminUser = await signIn(email, password);
-        if (isAdminUser) {
-          navigate('/admin');
-        } else {
-          navigate('/');
-        }
+        await signIn(email, password);
+        navigate('/');
       } else {
         await signUp(email, password, fullName);
         setSuccess('Account created! Logging you in...');
         setTimeout(() => navigate('/'), 600);
       }
-
-
     } catch (err: any) {
       setError(err.message || 'Authentication failed.');
     } finally {

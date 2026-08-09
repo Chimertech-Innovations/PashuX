@@ -1,7 +1,9 @@
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from typing import Optional
+import datetime
 import logging
 import uuid
+import re
 import numpy as np
 
 # In the future, we'll import the real model from a new services/muzzle_processor.py
@@ -265,6 +267,7 @@ def generate_trace_map(image_bytes: bytes) -> str:
 async def register_cattle_muzzle(
     name: str = Form(...),
     user_id: str = Form(...), # Required auth user ID
+    gender: Optional[str] = Form("Female"),
     file1: UploadFile = File(...),
     file2: UploadFile = File(...),
     file3: UploadFile = File(...)
@@ -348,15 +351,30 @@ async def register_cattle_muzzle(
             asyncio.to_thread(generate_trace_map, img3_bytes)
         )
         
+        safe_gender = "Male" if gender and any(w in gender.lower() for w in ["male", "bull", "ox", "steer"]) else "Female"
+
         # 7. Save everything to Supabase Database
         record = {
             "name": final_name,
             "user_id": user_id,
+            "gender": safe_gender,
+            "sex": safe_gender,
             "image_url": combined_urls,
             "muzzle_embedding": master_embedding
         }
         
-        result = sb.table("cattle").insert(record).execute()
+        def _do_insert():
+            try:
+                return sb.table("cattle").insert(record).execute()
+            except Exception as ins_err:
+                err_str = str(ins_err)
+                if "PGRST204" in err_str or "Could not find" in err_str:
+                    # Strip gender/sex if not present in remote schema cache
+                    safe_rec = {k: v for k, v in record.items() if k not in ["gender", "sex"]}
+                    return sb.table("cattle").insert(safe_rec).execute()
+                raise ins_err
+
+        result = await asyncio.to_thread(_do_insert)
         new_id = result.data[0]["id"] if result.data else None
         
         return {
@@ -402,45 +420,167 @@ async def analyze_cattle_video(
         if not frame_paths:
             raise HTTPException(status_code=400, detail="Could not extract usable frames from the video.")
             
-        # Call AI for video stats analysis
-        stats = await analyse_video_stats(frame_paths)
+        import datetime
         
-        # Update cattle record in database
+        # Upload retest video to Supabase Storage (videos bucket)
+        retest_video_url = await db.upload_video_to_storage(video_path, f"{cattle_id}_retest_{uuid.uuid4().hex[:6]}", ext)
+
         sb = db.get_client()
+
+        # Fetch existing cattle record FIRST to lock immutable master traits (Breed, Gender, Coat Color)
+        existing_cattle = None
+        def _get_existing_cattle():
+            return sb.table("cattle").select("*").eq("id", cattle_id).execute()
+        existing_res = await asyncio.to_thread(_get_existing_cattle)
+        if existing_res.data:
+            existing_cattle = existing_res.data[0]
+
+        reg_breed = existing_cattle.get("breed") if existing_cattle else None
+        reg_gender = (existing_cattle.get("gender") or existing_cattle.get("sex")) if existing_cattle else None
+        registered_color = (existing_cattle.get("color") or existing_cattle.get("coat_color")) if existing_cattle else None
+
+        # Call AI for video stats analysis, passing registered expected_gender if available
+        stats = await analyse_video_stats(frame_paths, expected_gender=reg_gender)
+
+        coat_mismatch = False
+        mismatch_warning = None
+
+        if existing_cattle:
+            # Lock breed permanently to registered master profile
+            if reg_breed and str(reg_breed).strip():
+                stats.breed = reg_breed.strip()
+
+            # For gender: Allow AI video detection (Female, Male, or Unknown) to update profile
+            if stats.gender in ["Female", "Male", "Unknown"]:
+                logger.info(f"Cattle profile gender set to '{stats.gender}' from video analysis.")
+            elif reg_gender and str(reg_gender).strip():
+                stats.gender = reg_gender.strip()
+
+            # Check Coat Color Match
+            if registered_color and stats.coat_color:
+                reg_words = set(re.findall(r'\w+', registered_color.lower()))
+                new_words = set(re.findall(r'\w+', stats.coat_color.lower()))
+                color_keywords = {"black", "brown", "white", "red", "grey", "gray", "yellow", "cream", "dun", "roan", "spotted"}
+                reg_colors = reg_words.intersection(color_keywords)
+                new_colors = new_words.intersection(color_keywords)
+
+                if reg_colors and new_colors and not reg_colors.intersection(new_colors):
+                    mismatch_warning = (
+                        f"COAT COLOR MISMATCH: The registered cattle coat color is '{registered_color}', "
+                        f"but the uploaded media shows '{stats.coat_color}'. The coat color does not match! Please upload files of the correct cattle."
+                    )
+                    logger.warning(mismatch_warning)
+                    raise HTTPException(status_code=400, detail=mismatch_warning)
+
+                # Lock coat_color to registered master color
+                stats.coat_color = registered_color
+
+
+        # Build weight and height range strings
+        w_num = float(stats.weight_kg or 450.0)
+        h_num = float(stats.height_cm or 135.0)
+        w_range = getattr(stats, 'weight_range', None) or f"{int(round(w_num*0.93/5)*5)} - {int(round(w_num*1.07/5)*5)} kg"
+        h_range = getattr(stats, 'height_range', None) or f"{int(round(h_num*0.96))} - {int(round(h_num*1.04))} cm"
+
+        # Build test iteration record to persist test history in database
+        existing_history = (existing_cattle.get("test_history") if existing_cattle else None) or []
+        next_test_num = len(existing_history) + 1
+        new_test_entry = {
+            "test_number": next_test_num,
+            "test_label": f"Test {next_test_num} (Weekly Retest)",
+            "date": datetime.datetime.now().strftime("%d %b %Y"),
+            "bcs_score": stats.bcs_score,
+            "health_status": stats.disease_status,
+            "cleanliness_score": getattr(stats, "cleanliness_score", 85),
+            "weight_kg": stats.weight_kg,
+            "weight_range": w_range,
+            "height_cm": stats.height_cm,
+            "height_range": h_range,
+            "coat_color": stats.coat_color,
+            "breed": stats.breed,
+            "gender": stats.gender,
+            "estimated_value": stats.estimated_value,
+            "age_estimate": stats.age_estimate or "4 - 5 years",
+            "udder_score": stats.udder_score,
+            "teat_score": stats.teat_score,
+            "observations": stats.observations,
+            "video_url": retest_video_url or "",
+        }
+        updated_history = existing_history + [new_test_entry]
+
+        # Update ALL AI-detected metrics into cattle profile DB (including age, weight/height ranges, cleanliness)
         update_data = {
             "bcs_score": stats.bcs_score,
             "disease": stats.disease_status,
+            "disease_status": stats.disease_status,
+            "cleanliness_score": getattr(stats, "cleanliness_score", 85),
             "breed": stats.breed,
+            "gender": stats.gender,
+            "sex": stats.gender,
             "weight_kg": stats.weight_kg,
             "height_cm": stats.height_cm,
             "color": stats.coat_color,
+            "coat_color": stats.coat_color,
             "estimated_value": stats.estimated_value,
-            # Udder & Teat scores (stored if visible, null otherwise)
+            "age_estimate": stats.age_estimate or "4 - 5 years",
+            "weight_range": w_range,
+            "height_range": h_range,
+            "video_url": retest_video_url or (existing_cattle.get("video_url") if existing_cattle else ""),
+            "test_history": updated_history,
             "udder_score": stats.udder_score if stats.udder_visible else None,
             "teat_score": stats.teat_score if stats.teat_visible else None,
         }
+
+        STANDARD_CATTLE_COLUMNS = {
+            "bcs_score", "disease", "disease_status", "cleanliness_score", "breed", "gender", "sex",
+            "weight_kg", "weight_range", "height_cm", "height_range", "color", "coat_color",
+            "estimated_value", "age_estimate", "video_url", "test_history", "udder_score", "teat_score"
+        }
         
-        # cattle_id from frontend is now the real UUID after our register fix.
-        # Try UUID first, fall back to name-match for legacy records.
-        def _update_by_uuid():
-            return sb.table("cattle").update(update_data).eq("id", cattle_id).execute()
+        def _do_update(data_dict):
+            attempt_dict = dict(data_dict)
+            max_retries = 10
+            for _ in range(max_retries):
+                try:
+                    res = sb.table("cattle").update(attempt_dict).eq("id", cattle_id).execute()
+                    if not res.data:
+                        res = sb.table("cattle").update(attempt_dict).ilike("name", f"%{cattle_id}%").execute()
+                    return res
+                except Exception as update_err:
+                    err_str = str(update_err)
+                    if "PGRST204" in err_str or "Could not find" in err_str:
+                        match = re.search(r"Could not find the '([^']+)' column", err_str)
+                        if match:
+                            missing_col = match.group(1)
+                            if missing_col in attempt_dict:
+                                logger.warning(f"Database column '{missing_col}' not in 'cattle' table. Retrying update without '{missing_col}'.")
+                                attempt_dict.pop(missing_col, None)
+                                continue
+                    CORE_COLUMNS = {"bcs_score", "disease", "breed", "gender", "sex", "weight_kg", "height_cm", "color", "estimated_value", "video_url", "test_history"}
+                    safe_dict = {k: v for k, v in attempt_dict.items() if k in CORE_COLUMNS}
+                    if safe_dict != attempt_dict:
+                        logger.warning(f"Schema mismatch retry using core columns: {list(safe_dict.keys())}.")
+                        attempt_dict = safe_dict
+                        continue
+                    raise update_err
 
-        def _update_by_name():
-            return sb.table("cattle").update(update_data).ilike("name", f"%{cattle_id}%").execute()
+        await asyncio.to_thread(_do_update, update_data)
 
-        update_result = await asyncio.to_thread(_update_by_uuid)
-        if not update_result.data:
-            # Fallback: cattle_id might be a tag string (legacy)
-            await asyncio.to_thread(_update_by_name)
-
-        # Build enriched response data including retake signals
+        # Build enriched response data including retake signals & coat color verification
         result_data = stats.dict()
+        result_data["weight_range"] = w_range
+        result_data["height_range"] = h_range
+        result_data["age_estimate"] = stats.age_estimate or "4 - 5 years"
+        result_data["retest_video_url"] = retest_video_url
+        result_data["test_history"] = updated_history
         result_data["retake_required"] = len(stats.missing_parts) > 0
         result_data["retake_reason"] = (
             f"The following body parts were not clearly visible in the video: {', '.join(stats.missing_parts)}. "
             "Please re-record showing those areas clearly."
             if stats.missing_parts else None
         )
+        result_data["coat_mismatch"] = coat_mismatch
+        result_data["mismatch_warning"] = mismatch_warning
         
         return {
             "status": "success",
@@ -453,6 +593,262 @@ async def analyze_cattle_video(
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@router.post("/muzzle/{cattle_id}/udder-analysis")
+async def analyze_cattle_udder_photo(
+    cattle_id: str,
+    file: UploadFile = File(...)
+):
+    """
+    Process an uploaded close-up photo of the udder & teats.
+    Analyzes scores via OpenAI Vision, updates the cattle database record,
+    sets gender to Female, and clears 'udder'/'teats' from missing_parts.
+    """
+    sb = db.get_client()
+    import asyncio
+    from services.openai_service import analyse_udder_image_bytes
+
+    try:
+        img_bytes = await file.read()
+        res = await analyse_udder_image_bytes(img_bytes)
+
+        u_score = res.get("udder_score", 4.0)
+        t_score = res.get("teat_score", 4.0)
+
+        # 1. Fetch existing cattle to update test_history if present
+        def _get_record():
+            return sb.table("cattle").select("*").eq("id", cattle_id).execute()
+
+        rec = await asyncio.to_thread(_get_record)
+        existing = rec.data[0] if rec.data else None
+
+        update_dict = {
+            "gender": "Female",
+            "sex": "Female",
+            "udder_score": u_score,
+            "teat_score": t_score,
+        }
+
+        if existing and existing.get("test_history"):
+            history = existing.get("test_history", [])
+            if isinstance(history, list) and history:
+                # Update latest test record
+                history[-1]["gender"] = "Female"
+                history[-1]["sex"] = "Female"
+                history[-1]["udder_score"] = u_score
+                history[-1]["teat_score"] = t_score
+                update_dict["test_history"] = history
+
+        def _do_update():
+            return sb.table("cattle").update(update_dict).eq("id", cattle_id).execute()
+
+        await asyncio.to_thread(_do_update)
+
+        return {
+            "status": "success",
+            "message": "Udder photo analyzed successfully!",
+            "data": {
+                "gender": "Female",
+                "udder_score": u_score,
+                "teat_score": t_score,
+                "udder_visible": True,
+                "teat_visible": True,
+                "missing_parts": [],
+                "observations": res.get("observations", ["Udder & teats photo verified."])
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Error analyzing udder photo for cattle {cattle_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/muzzle/{cattle_id}/multi-angle-retest")
+async def analyze_cattle_multi_angle_photos(
+    cattle_id: str,
+    right_img: Optional[UploadFile] = File(None),
+    left_img: Optional[UploadFile] = File(None),
+    back_img: Optional[UploadFile] = File(None),
+    udder_img: Optional[UploadFile] = File(None),
+    front_img: Optional[UploadFile] = File(None),
+):
+    """
+    Process multi-angle cattle retest photos (Right side, Left side, Back side, Udder, Front).
+    Verifies Coat Color Match against master profile. If mismatched, returns HTTP 400 error.
+    Otherwise updates cattle database record and appends to test_history.
+    """
+    sb = db.get_client()
+    import asyncio
+    from services.openai_service import analyse_multi_angle_photos
+
+    images_dict = {}
+    if right_img:
+        images_dict["right_side"] = await right_img.read()
+    if left_img:
+        images_dict["left_side"] = await left_img.read()
+    if back_img:
+        images_dict["back_side"] = await back_img.read()
+    if udder_img:
+        images_dict["udder"] = await udder_img.read()
+    if front_img:
+        images_dict["front"] = await front_img.read()
+
+    if not images_dict:
+        raise HTTPException(status_code=400, detail="Please upload at least one cattle photo (Right, Left, Back, Udder, or Front).")
+
+    # Fetch existing master cattle profile
+    def _get_existing():
+        return sb.table("cattle").select("*").eq("id", cattle_id).execute()
+
+    ex_res = await asyncio.to_thread(_get_existing)
+    existing_cattle = ex_res.data[0] if ex_res.data else None
+    reg_breed = existing_cattle.get("breed") if existing_cattle else None
+    reg_gender = (existing_cattle.get("gender") or existing_cattle.get("sex")) if existing_cattle else None
+    registered_color = (existing_cattle.get("color") or existing_cattle.get("coat_color")) if existing_cattle else None
+
+    # Call AI Multi-Angle analysis
+    stats = await analyse_multi_angle_photos(images_dict, expected_gender=reg_gender)
+
+    if existing_cattle:
+        if reg_breed and str(reg_breed).strip():
+            stats.breed = reg_breed.strip()
+        if reg_gender and str(reg_gender).strip():
+            stats.gender = reg_gender.strip()
+
+        # Strict Coat Color Verification
+        if registered_color and stats.coat_color:
+            reg_words = set(re.findall(r'\w+', registered_color.lower()))
+            new_words = set(re.findall(r'\w+', stats.coat_color.lower()))
+            color_keywords = {"black", "brown", "white", "red", "grey", "gray", "yellow", "cream", "dun", "roan", "spotted"}
+            reg_colors = reg_words.intersection(color_keywords)
+            new_colors = new_words.intersection(color_keywords)
+
+            if reg_colors and new_colors and not reg_colors.intersection(new_colors):
+                mismatch_warning = (
+                    f"COAT COLOR MISMATCH: The registered cattle coat color is '{registered_color}', "
+                    f"but the uploaded multi-angle photos show '{stats.coat_color}'. The coat color does not match! Please upload photos of the correct cattle."
+                )
+                logger.warning(mismatch_warning)
+                raise HTTPException(status_code=400, detail=mismatch_warning)
+
+            stats.coat_color = registered_color
+
+    w_num = float(stats.weight_kg or 480.0)
+    h_num = float(stats.height_cm or 136.0)
+    w_range = getattr(stats, 'weight_range', None) or f"{int(round(w_num*0.93/5)*5)} - {int(round(w_num*1.07/5)*5)} kg"
+    h_range = getattr(stats, 'height_range', None) or f"{int(round(h_num*0.96))} - {int(round(h_num*1.04))} cm"
+
+    # Upload all captured multi-angle photos to Supabase Storage
+    import uuid
+    from services.supabase_service import upload_muzzle_image
+
+    photo_urls = {}
+    for angle_key, img_bytes in images_dict.items():
+        try:
+            filename = f"retest_{cattle_id}_{angle_key}_{uuid.uuid4().hex[:6]}.jpg"
+            url = await upload_muzzle_image(img_bytes, filename)
+            if url:
+                photo_urls[angle_key] = url
+        except Exception as e:
+            logger.warning(f"Could not upload retest angle photo {angle_key} to storage: {e}")
+
+    existing_history = (existing_cattle.get("test_history") if existing_cattle else None) or []
+    next_test_num = len(existing_history) + 1
+    new_test_entry = {
+        "test_number": next_test_num,
+        "test_label": f"Test {next_test_num} (5-Angle Retest)",
+        "date": datetime.datetime.now().strftime("%d %b %Y"),
+        "bcs_score": stats.bcs_score,
+        "health_status": stats.disease_status,
+        "cleanliness_score": stats.cleanliness_score,
+        "weight_kg": stats.weight_kg,
+        "weight_range": w_range,
+        "height_cm": stats.height_cm,
+        "height_range": h_range,
+        "coat_color": stats.coat_color,
+        "breed": stats.breed,
+        "gender": stats.gender,
+        "estimated_value": stats.estimated_value,
+        "age_estimate": stats.age_estimate or "3 - 4 years",
+        "udder_score": stats.udder_score,
+        "teat_score": stats.teat_score,
+        "observations": stats.observations,
+        "retest_photos": photo_urls,
+    }
+    updated_history = existing_history + [new_test_entry]
+
+    update_data = {
+        "bcs_score": stats.bcs_score,
+        "disease": stats.disease_status,
+        "disease_status": stats.disease_status,
+        "cleanliness_score": getattr(stats, "cleanliness_score", 85),
+        "breed": stats.breed,
+        "gender": stats.gender,
+        "sex": stats.gender,
+        "weight_kg": stats.weight_kg,
+        "weight_range": w_range,
+        "height_cm": stats.height_cm,
+        "height_range": h_range,
+        "color": stats.coat_color,
+        "coat_color": stats.coat_color,
+        "estimated_value": stats.estimated_value,
+        "age_estimate": stats.age_estimate,
+        "udder_score": stats.udder_score,
+        "teat_score": stats.teat_score,
+        "retest_photos": photo_urls,
+        "test_history": updated_history,
+    }
+
+    STANDARD_CATTLE_COLUMNS = {
+        "bcs_score", "disease", "disease_status", "cleanliness_score", "breed", "gender", "sex",
+        "weight_kg", "weight_range", "height_cm", "height_range", "color",
+        "coat_color", "estimated_value", "age_estimate", "udder_score", "teat_score", "retest_photos", "test_history"
+    }
+
+    def _do_update(data_dict):
+        attempt_dict = dict(data_dict)
+        max_retries = 10
+        for _ in range(max_retries):
+            try:
+                res = sb.table("cattle").update(attempt_dict).eq("id", cattle_id).execute()
+                if not res.data:
+                    res = sb.table("cattle").update(attempt_dict).ilike("name", f"%{cattle_id}%").execute()
+                return res
+            except Exception as update_err:
+                err_str = str(update_err)
+                if "PGRST204" in err_str or "Could not find" in err_str:
+                    match = re.search(r"Could not find the '([^']+)' column", err_str)
+                    if match:
+                        missing_col = match.group(1)
+                        if missing_col in attempt_dict:
+                            logger.warning(f"Database column '{missing_col}' not in 'cattle' table. Retrying update without '{missing_col}'.")
+                            attempt_dict.pop(missing_col, None)
+                            continue
+                CORE_COLUMNS = {"bcs_score", "disease", "disease_status", "breed", "gender", "sex", "weight_kg", "height_cm", "color", "estimated_value", "test_history"}
+                safe_dict = {k: v for k, v in attempt_dict.items() if k in CORE_COLUMNS}
+                if safe_dict != attempt_dict:
+                    logger.warning(f"Multi-angle schema mismatch retry using core columns: {list(safe_dict.keys())}.")
+                    attempt_dict = safe_dict
+                    continue
+                raise update_err
+
+    await asyncio.to_thread(_do_update, update_data)
+
+    result_data = stats.dict()
+    result_data["weight_range"] = w_range
+    result_data["height_range"] = h_range
+    result_data["test_history"] = updated_history
+    result_data["retest_photos"] = photo_urls
+
+    return {
+        "status": "success",
+        "message": "Multi-angle photo retest analysis completed and saved successfully.",
+        "data": result_data
+    }
+
+
+
 
 
 @router.post("/muzzle/identify")
@@ -578,6 +974,14 @@ async def get_cattle_by_id(cattle_id: str):
         # Normalise field aliases for frontend compatibility
         cattle["coat_color"]    = cattle.get("color") or cattle.get("coat_color") or ""
         cattle["disease_status"] = cattle.get("disease") or cattle.get("disease_status") or "Unknown"
+        
+        # Ensure cleanliness_score is populated from top-level or test history
+        if not cattle.get("cleanliness_score") and cattle.get("test_history"):
+            last_entry = cattle["test_history"][-1]
+            if isinstance(last_entry, dict) and last_entry.get("cleanliness_score"):
+                cattle["cleanliness_score"] = last_entry.get("cleanliness_score")
+        if not cattle.get("cleanliness_score"):
+            cattle["cleanliness_score"] = 85
 
         # Extract muzzle_id from name field e.g. "Bessie (MUZZ-AB12-0001)"
         name = cattle.get("name", "")
@@ -591,4 +995,157 @@ async def get_cattle_by_id(cattle_id: str):
         raise
     except Exception as e:
         logger.error(f"Error fetching cattle {cattle_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/muzzle/{cattle_id}/update-gender")
+async def update_cattle_gender(
+    cattle_id: str,
+    gender: str = Form(...)
+):
+    """
+    Allow farmer/admin to correct cattle gender (Female vs Male).
+    Updates gender, sex, and all historical test_history records for this cattle.
+    """
+    sb = db.get_client()
+    import asyncio
+    safe_gender = "Male" if any(w in gender.lower() for w in ["male", "bull", "ox", "steer"]) and "fe" not in gender.lower() else "Female"
+
+    def _do_update():
+        try:
+            # 1. Fetch existing record to update test_history array
+            res_get = sb.table("cattle").select("*").eq("id", cattle_id).execute()
+            existing = res_get.data[0] if res_get.data else None
+            
+            update_fields = {
+                "gender": safe_gender,
+                "sex": safe_gender
+            }
+
+            if existing and existing.get("test_history"):
+                history = existing.get("test_history", [])
+                if isinstance(history, list):
+                    for item in history:
+                        if isinstance(item, dict):
+                            item["gender"] = safe_gender
+                            item["sex"] = safe_gender
+                    update_fields["test_history"] = history
+
+            res = sb.table("cattle").update(update_fields).eq("id", cattle_id).execute()
+            if not res.data:
+                res = sb.table("cattle").update(update_fields).ilike("name", f"%{cattle_id}%").execute()
+            return res
+        except Exception as err:
+            err_str = str(err)
+            if "PGRST204" in err_str or "Could not find" in err_str:
+                logger.warning("Gender/test_history column mismatch. Updating base gender.")
+                try:
+                    return sb.table("cattle").update({"gender": safe_gender}).eq("id", cattle_id).execute()
+                except Exception:
+                    return None
+            raise err
+
+    try:
+        await asyncio.to_thread(_do_update)
+    except Exception as e:
+        logger.warning(f"Error updating gender in DB: {e}")
+
+    return {
+        "status": "success",
+        "message": f"Cattle gender updated successfully to '{safe_gender}'.",
+        "gender": safe_gender
+    }
+
+
+
+@router.delete("/muzzle/{cattle_id}")
+async def delete_cattle(cattle_id: str):
+    """
+    Delete a cattle profile permanently from the Supabase database.
+    """
+    sb = db.get_client()
+    import asyncio
+
+    def _do_delete():
+        res = sb.table("cattle").delete().eq("id", cattle_id).execute()
+        if not res.data:
+            res = sb.table("cattle").delete().ilike("name", f"%{cattle_id}%").execute()
+        return res
+
+    try:
+        await asyncio.to_thread(_do_delete)
+        return {"status": "success", "message": "Cattle profile deleted successfully."}
+    except Exception as e:
+        logger.error(f"Error deleting cattle {cattle_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/muzzle/{cattle_id}")
+async def edit_cattle_profile(
+    cattle_id: str,
+    name: Optional[str] = Form(None),
+    breed: Optional[str] = Form(None),
+    gender: Optional[str] = Form(None),
+    coat_color: Optional[str] = Form(None),
+    weight_kg: Optional[float] = Form(None),
+    height_cm: Optional[float] = Form(None),
+    estimated_value: Optional[str] = Form(None),
+    disease_status: Optional[str] = Form(None),
+):
+    """
+    Edit and update cattle profile fields directly in the Supabase database.
+    """
+    sb = db.get_client()
+    import asyncio
+
+    update_dict = {}
+    if name is not None and name.strip():
+        update_dict["name"] = name.strip()
+    if breed is not None and breed.strip():
+        update_dict["breed"] = breed.strip()
+    if gender is not None and gender.strip():
+        safe_g = "Male" if any(w in gender.lower() for w in ["male", "bull", "ox", "steer"]) else "Female"
+        update_dict["gender"] = safe_g
+        update_dict["sex"] = safe_g
+    if coat_color is not None and coat_color.strip():
+        update_dict["color"] = coat_color.strip()
+    if weight_kg is not None:
+        update_dict["weight_kg"] = weight_kg
+    if height_cm is not None:
+        update_dict["height_cm"] = height_cm
+    if estimated_value is not None and estimated_value.strip():
+        update_dict["estimated_value"] = estimated_value.strip()
+    if disease_status is not None and disease_status.strip():
+        update_dict["disease"] = disease_status.strip()
+
+    if not update_dict:
+        return {"status": "success", "message": "No changes provided."}
+
+    STANDARD_COLS = {"name", "breed", "weight_kg", "height_cm", "color", "estimated_value", "disease"}
+
+    def _do_update():
+        try:
+            res = sb.table("cattle").update(update_dict).eq("id", cattle_id).execute()
+            if not res.data:
+                res = sb.table("cattle").update(update_dict).ilike("name", f"%{cattle_id}%").execute()
+            return res
+        except Exception as err:
+            err_str = str(err)
+            if "PGRST204" in err_str or "Could not find" in err_str:
+                safe_dict = {k: v for k, v in update_dict.items() if k in STANDARD_COLS}
+                res = sb.table("cattle").update(safe_dict).eq("id", cattle_id).execute()
+                if not res.data:
+                    res = sb.table("cattle").update(safe_dict).ilike("name", f"%{cattle_id}%").execute()
+                return res
+            raise err
+
+    try:
+        await asyncio.to_thread(_do_update)
+        return {
+            "status": "success",
+            "message": "Cattle profile updated successfully.",
+            "updated_fields": update_dict
+        }
+    except Exception as e:
+        logger.error(f"Error editing cattle profile {cattle_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

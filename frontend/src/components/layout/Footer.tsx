@@ -49,7 +49,7 @@ export default function Footer() {
             <ul className="space-y-2.5">
               {[
                 ['Farm Management', '/farm'],
-                ['Muzzle Scan', '/farm'],
+                ['Muzzle Scan', '/muzzle-check'],
                 ['BCS Score Detection', '/farm'],
                 ['Disease Screening', '/farm'],
                 ['Analysis History', '/farm'],

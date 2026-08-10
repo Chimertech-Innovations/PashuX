@@ -271,6 +271,76 @@ def generate_trace_map(image_bytes: bytes) -> str:
     b64_string = base64.b64encode(buffer).decode('utf-8')
     return f"data:image/jpeg;base64,{b64_string}"
 
+def calculate_pashu_score(bcs_score: float, disease_status: str, cleanliness_score: int, manure_score: float, frames_selected: int = 10) -> dict:
+    # 1. BCS Score points (max 25)
+    bcs_points = 0
+    if bcs_score > 0:
+        dev = abs(bcs_score - 3.25)
+        if dev <= 0.25: # 3.0 to 3.5
+            bcs_points = 25
+        elif dev <= 0.5: # 2.75 to 3.75
+            bcs_points = 22
+        elif dev <= 0.75: # 2.5 to 4.0
+            bcs_points = 18
+        elif dev <= 1.25: # 2.0 to 4.5
+            bcs_points = 12
+        else:
+            bcs_points = 5
+    
+    # 2. Overall Health points (max 25)
+    ds = (disease_status or "").lower()
+    health_points = 25
+    if not ds or "healthy" in ds:
+        health_points = 25
+    elif "unknown" in ds:
+        health_points = 18
+    elif any(d in ds for d in ["mastitis", "lumpy", "foot and mouth", "disease", "sick", "infection", "fever"]):
+        health_points = 10
+    else:
+        health_points = 15
+
+    # 3. Body Cleanliness points (max 20)
+    cleanliness_points = int(round((cleanliness_score / 100.0) * 20))
+    cleanliness_points = min(20, max(0, cleanliness_points))
+
+    # 4. Manure Condition points (max 20)
+    manure_points = 0
+    manure_tested = False
+    if manure_score and manure_score > 0:
+        manure_tested = True
+        if 3.0 <= manure_score <= 4.0:
+            manure_points = 20
+        elif 2.5 <= manure_score < 3.0 or 4.0 < manure_score <= 4.5:
+            manure_points = 16
+        elif 1.5 <= manure_score < 2.5 or 4.5 < manure_score <= 5.0:
+            manure_points = 10
+        else:
+            manure_points = 5
+
+    # 5. Image & Video Quality points (max 10)
+    quality_points = 8
+    if frames_selected >= 8:
+        quality_points = 10
+    elif frames_selected >= 5:
+        quality_points = 8
+    else:
+        quality_points = 7
+
+    total_score = bcs_points + health_points + cleanliness_points + manure_points + quality_points
+    total_score = min(100, max(0, total_score))
+
+    return {
+        "pashu_score": total_score,
+        "breakdown": {
+            "bcs": bcs_points,
+            "health": health_points,
+            "cleanliness": cleanliness_points,
+            "manure": manure_points,
+            "manure_tested": manure_tested,
+            "quality": quality_points
+        }
+    }
+
 @router.post("/muzzle/register")
 async def register_cattle_muzzle(
     name: str = Form(...),
@@ -556,6 +626,14 @@ async def analyze_cattle_video(
 
         calculated_age = _calc_dynamic_age_str(stats)
 
+        pashu_result = calculate_pashu_score(
+            bcs_score=stats.bcs_score,
+            disease_status=stats.disease_status,
+            cleanliness_score=getattr(stats, "cleanliness_score", 85),
+            manure_score=getattr(stats, "manure_score", 0.0),
+            frames_selected=len(frame_paths)
+        )
+
         new_test_entry = {
             "test_number": next_test_num,
             "test_label": f"Test {next_test_num} (Video Scan)",
@@ -574,6 +652,9 @@ async def analyze_cattle_video(
             "age_estimate": calculated_age,
             "udder_score": stats.udder_score,
             "teat_score": stats.teat_score,
+            "manure_score": getattr(stats, "manure_score", 0.0),
+            "pashu_score": pashu_result["pashu_score"],
+            "pashu_score_breakdown": pashu_result["breakdown"],
             "observations": stats.observations,
             "video_url": retest_video_url or "",
         }
@@ -600,12 +681,16 @@ async def analyze_cattle_video(
             "test_history": updated_history,
             "udder_score": stats.udder_score if stats.udder_visible else None,
             "teat_score": stats.teat_score if stats.teat_visible else None,
+            "pashu_score": pashu_result["pashu_score"],
+            "pashu_score_breakdown": pashu_result["breakdown"],
+            "manure_score": getattr(stats, "manure_score", 0.0),
         }
 
         STANDARD_CATTLE_COLUMNS = {
             "bcs_score", "disease", "disease_status", "cleanliness_score", "breed", "gender", "sex",
             "weight_kg", "weight_range", "height_cm", "height_range", "color", "coat_color",
-            "estimated_value", "age_estimate", "video_url", "test_history", "udder_score", "teat_score"
+            "estimated_value", "age_estimate", "video_url", "test_history", "udder_score", "teat_score",
+            "pashu_score", "pashu_score_breakdown", "manure_score"
         }
         
         def _do_update(data_dict):
@@ -743,9 +828,10 @@ async def analyze_cattle_multi_angle_photos(
     back_img: Optional[UploadFile] = File(None),
     udder_img: Optional[UploadFile] = File(None),
     front_img: Optional[UploadFile] = File(None),
+    manure_img: Optional[UploadFile] = File(None),
 ):
     """
-    Process multi-angle cattle retest photos (Right side, Left side, Back side, Udder, Front).
+    Process multi-angle cattle retest photos (Right side, Left side, Back side, Udder, Front, Manure).
     Verifies Coat Color Match against master profile. If mismatched, returns HTTP 400 error.
     Otherwise updates cattle database record and appends to test_history.
     """
@@ -755,18 +841,32 @@ async def analyze_cattle_multi_angle_photos(
 
     images_dict = {}
     if right_img:
-        images_dict["right_side"] = await right_img.read()
+        content = await right_img.read()
+        if content:
+            images_dict["right_side"] = content
     if left_img:
-        images_dict["left_side"] = await left_img.read()
+        content = await left_img.read()
+        if content:
+            images_dict["left_side"] = content
     if back_img:
-        images_dict["back_side"] = await back_img.read()
+        content = await back_img.read()
+        if content:
+            images_dict["back_side"] = content
     if udder_img:
-        images_dict["udder"] = await udder_img.read()
+        content = await udder_img.read()
+        if content:
+            images_dict["udder"] = content
     if front_img:
-        images_dict["front"] = await front_img.read()
+        content = await front_img.read()
+        if content:
+            images_dict["front"] = content
+    if manure_img:
+        content = await manure_img.read()
+        if content:
+            images_dict["manure"] = content
 
     if not images_dict:
-        raise HTTPException(status_code=400, detail="Please upload at least one cattle photo (Right, Left, Back, Udder, or Front).")
+        raise HTTPException(status_code=400, detail="Please upload at least one cattle photo (Right, Left, Back, Udder, Front, or Manure).")
 
     # Fetch existing master cattle profile
     def _get_existing():
@@ -782,10 +882,10 @@ async def analyze_cattle_multi_angle_photos(
     stats = await analyse_multi_angle_photos(images_dict, expected_gender=reg_gender)
 
     if existing_cattle:
-        if reg_breed and str(reg_breed).strip():
-            stats.breed = reg_breed.strip()
-        if reg_gender and str(reg_gender).strip():
-            stats.gender = reg_gender.strip()
+        if reg_breed and reg_breed.strip() and reg_breed.strip().lower() not in ["unidentified subject", "unknown", "n/a"]:
+            stats.breed = reg_breed
+        if reg_gender:
+            stats.gender = reg_gender
 
         # Strict Coat Color Verification
         if registered_color and stats.coat_color:
@@ -824,6 +924,33 @@ async def analyze_cattle_multi_angle_photos(
         except Exception as e:
             logger.warning(f"Could not upload retest angle photo {angle_key} to storage: {e}")
 
+    # Calculate Image Quality score dynamically via Laplacian variance (blur detection)
+    try:
+        import cv2
+        import numpy as np
+        blur_scores = []
+        for img_bytes in images_dict.values():
+            nparr = np.frombuffer(img_bytes, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            if img is not None:
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                blur_var = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+                blur_scores.append(blur_var)
+        avg_blur = sum(blur_scores) / len(blur_scores) if blur_scores else 150.0
+        # Map average blur score (0-300+) to a 0-10 quality scale
+        quality_score_val = min(10, max(2, int(avg_blur / 30)))
+    except Exception as e:
+        logger.warning(f"Error calculating dynamic blur quality score: {e}")
+        quality_score_val = 8
+
+    pashu_result = calculate_pashu_score(
+        bcs_score=stats.bcs_score,
+        disease_status=stats.disease_status,
+        cleanliness_score=getattr(stats, "cleanliness_score", 85),
+        manure_score=getattr(stats, "manure_score", 0.0),
+        frames_selected=quality_score_val
+    )
+
     existing_history = (existing_cattle.get("test_history") if existing_cattle else None) or []
     next_test_num = len(existing_history) + 1
     new_test_entry = {
@@ -844,6 +971,9 @@ async def analyze_cattle_multi_angle_photos(
         "age_estimate": stats.age_estimate or "3 - 4 years",
         "udder_score": stats.udder_score,
         "teat_score": stats.teat_score,
+        "manure_score": getattr(stats, "manure_score", 0.0),
+        "pashu_score": pashu_result["pashu_score"],
+        "pashu_score_breakdown": pashu_result["breakdown"],
         "observations": stats.observations,
         "retest_photos": photo_urls,
     }
@@ -852,29 +982,29 @@ async def analyze_cattle_multi_angle_photos(
     update_data = {
         "bcs_score": stats.bcs_score,
         "disease": stats.disease_status,
-        "disease_status": stats.disease_status,
         "cleanliness_score": getattr(stats, "cleanliness_score", 85),
         "breed": stats.breed,
         "gender": stats.gender,
         "sex": stats.gender,
         "weight_kg": stats.weight_kg,
-        "weight_range": w_range,
         "height_cm": stats.height_cm,
-        "height_range": h_range,
         "color": stats.coat_color,
-        "coat_color": stats.coat_color,
         "estimated_value": stats.estimated_value,
         "age_estimate": stats.age_estimate,
         "udder_score": stats.udder_score,
         "teat_score": stats.teat_score,
         "retest_photos": photo_urls,
         "test_history": updated_history,
+        "pashu_score": pashu_result["pashu_score"],
+        "pashu_score_breakdown": pashu_result["breakdown"],
+        "manure_score": getattr(stats, "manure_score", 0.0),
     }
 
     STANDARD_CATTLE_COLUMNS = {
         "bcs_score", "disease", "disease_status", "cleanliness_score", "breed", "gender", "sex",
         "weight_kg", "weight_range", "height_cm", "height_range", "color",
-        "coat_color", "estimated_value", "age_estimate", "udder_score", "teat_score", "retest_photos", "test_history"
+        "coat_color", "estimated_value", "age_estimate", "udder_score", "teat_score", "retest_photos", "test_history",
+        "pashu_score", "pashu_score_breakdown", "manure_score"
     }
 
     def _do_update(data_dict):
@@ -896,7 +1026,7 @@ async def analyze_cattle_multi_angle_photos(
                             logger.warning(f"Database column '{missing_col}' not in 'cattle' table. Retrying update without '{missing_col}'.")
                             attempt_dict.pop(missing_col, None)
                             continue
-                CORE_COLUMNS = {"bcs_score", "disease", "disease_status", "breed", "gender", "sex", "weight_kg", "height_cm", "color", "estimated_value", "test_history"}
+                CORE_COLUMNS = {"bcs_score", "disease", "disease_status", "breed", "gender", "sex", "weight_kg", "height_cm", "color", "estimated_value", "test_history", "manure_score", "pashu_score", "pashu_score_breakdown"}
                 safe_dict = {k: v for k, v in attempt_dict.items() if k in CORE_COLUMNS}
                 if safe_dict != attempt_dict:
                     logger.warning(f"Multi-angle schema mismatch retry using core columns: {list(safe_dict.keys())}.")
@@ -956,7 +1086,7 @@ async def identify_cattle_muzzle(
                     "match_cattle_muzzle", 
                     {
                         "query_embedding": master_embedding,
-                        "match_threshold": 0.85,
+                        "match_threshold": 0.65,
                         "match_count": 1
                     }
                 ).execute()
@@ -977,7 +1107,7 @@ async def identify_cattle_muzzle(
                                     if sim > best_sim:
                                         best_sim = sim
                                         best_c = c
-                        if best_c and best_sim >= 0.85:
+                        if best_c and best_sim >= 0.65:
                             best_c["similarity"] = float(best_sim)
                             class MatchResp:
                                 data = [best_c]
@@ -1042,6 +1172,28 @@ async def get_user_cattle(user_id: str):
             # We just send the first image to display on the card
             urls = c.get("image_url", "").split(",")
             c["display_image"] = urls[0] if urls else ""
+            
+            # Fallback Pashu Score
+            if not c.get("pashu_score") or not c.get("pashu_score_breakdown"):
+                bcs = float(c.get("bcs_score") or 3.0)
+                ds = c.get("disease_status") or c.get("disease") or "Healthy"
+                cleanliness = int(c.get("cleanliness_score") or 85)
+                manure = float(c.get("manure_score") or 0.0)
+                
+                pashu_result = calculate_pashu_score(
+                    bcs_score=bcs,
+                    disease_status=ds,
+                    cleanliness_score=cleanliness,
+                    manure_score=manure,
+                    frames_selected=10
+                )
+                c["pashu_score"] = pashu_result["pashu_score"]
+                c["pashu_score_breakdown"] = pashu_result["breakdown"]
+                c["manure_score"] = manure
+            else:
+                c["pashu_score"] = int(c["pashu_score"])
+                c["manure_score"] = float(c.get("manure_score") or 0.0)
+
             cattle_list.append(c)
             
         return {"status": "success", "data": cattle_list}
@@ -1086,6 +1238,27 @@ async def get_cattle_by_id(cattle_id: str):
                 cattle["cleanliness_score"] = last_entry.get("cleanliness_score")
         if not cattle.get("cleanliness_score"):
             cattle["cleanliness_score"] = 85
+
+        # Ensure pashu_score, breakdown, and manure_score are populated
+        if not cattle.get("pashu_score") or not cattle.get("pashu_score_breakdown"):
+            bcs = float(cattle.get("bcs_score") or 3.0)
+            ds = cattle.get("disease_status") or cattle.get("disease") or "Healthy"
+            cleanliness = int(cattle.get("cleanliness_score") or 85)
+            manure = float(cattle.get("manure_score") or 0.0)
+            
+            pashu_result = calculate_pashu_score(
+                bcs_score=bcs,
+                disease_status=ds,
+                cleanliness_score=cleanliness,
+                manure_score=manure,
+                frames_selected=10
+            )
+            cattle["pashu_score"] = pashu_result["pashu_score"]
+            cattle["pashu_score_breakdown"] = pashu_result["breakdown"]
+            cattle["manure_score"] = manure
+        else:
+            cattle["pashu_score"] = int(cattle["pashu_score"])
+            cattle["manure_score"] = float(cattle.get("manure_score") or 0.0)
 
         # Extract muzzle_id from name field e.g. "Bessie (MUZZ-AB12-0001)"
         name = cattle.get("name", "")

@@ -69,6 +69,9 @@ class VideoAnalysisResult(BaseModel):
     teat_score: float = Field(default=0.0, ge=0.0, le=5.0)
     udder_visible: bool = False
     teat_visible: bool = False
+    # Manure scoring (0 = not visible)
+    manure_score: float = Field(default=0.0, ge=0.0, le=5.0)
+    manure_visible: bool = False
     # Parts AI could not clearly see — triggers retake prompt on frontend
     missing_parts: List[str] = Field(default_factory=list)
     age_estimate: Optional[str] = None

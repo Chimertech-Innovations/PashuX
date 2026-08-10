@@ -38,6 +38,9 @@ interface CattleData {
   cleanliness_score?: number; // 0-100 hygiene score from video analysis
   retest_photos?: any;       // photos dictionary or array
   test_history?: any[];     // array of past test records
+  manure_score?: number;
+  pashu_score?: number;
+  pashu_score_breakdown?: any;
 }
 
 /* ── BCS 1-5 scale colours (1=red … 5=deep green) ────────────────────────── */
@@ -47,11 +50,12 @@ const BCS5_LABELS = ['Emaciated', 'Thin', 'Ideal', 'Fat', 'Obese'];
 /* ── Health colours ──────────────────────────────────────────────────────────── */
 const HEALTH_COLOR = (status: string): string => {
   const s = status.toLowerCase();
+  if (!s || s.includes('unknown') || s.includes('pending')) return '#94a3b8';
   if (s.includes('healthy') || s.includes('no visible')) return '#10b981';
   if (s.includes('mild')) return '#f59e0b';
   if (s.includes('moderate')) return '#f97316';
-  if (s.includes('severe') || s.includes('disease') || s.includes('issue')) return '#ef4444';
-  return '#94a3b8';
+  // If it's a specific disease/condition like 'Tick Infestation', default to red.
+  return '#ef4444';
 };
 
 /* ── Coat CSS colour approximation ──────────────────────────────────────────── */
@@ -114,6 +118,54 @@ const formatHeightRange = (val: any) => {
   const high = Math.round(num * 1.04);
   return `${low} – ${high} cm`;
 };
+
+function getPashuScoreBreakdown(bcs: number, health: string, cleanliness: number, manure: number) {
+  // 1. BCS Score points (max 25)
+  let bcsPoints = 0;
+  if (bcs > 0) {
+    const dev = Math.abs(bcs - 3.25);
+    if (dev <= 0.25) bcsPoints = 25;
+    else if (dev <= 0.5) bcsPoints = 22;
+    else if (dev <= 0.75) bcsPoints = 18;
+    else if (dev <= 1.25) bcsPoints = 12;
+    else bcsPoints = 5;
+  }
+
+  // 2. Health points (max 25)
+  const hs = (health || '').toLowerCase();
+  let healthPoints = 25;
+  if (!hs || hs.includes('healthy')) healthPoints = 25;
+  else if (hs.includes('unknown') || hs.includes('pending')) healthPoints = 18;
+  else if (['mastitis', 'lumpy', 'foot and mouth', 'disease', 'sick', 'infection', 'fever'].some(d => hs.includes(d))) healthPoints = 10;
+  else healthPoints = 15;
+
+  // 3. Cleanliness points (max 20)
+  const cleanlinessPoints = Math.min(20, Math.max(0, Math.round((cleanliness / 100) * 20)));
+
+  // 4. Manure points (max 20)
+  let manurePoints = 0;
+  let manureTested = false;
+  if (manure > 0) {
+    manureTested = true;
+    if (manure >= 3.0 && manure <= 4.0) manurePoints = 20;
+    else if ((manure >= 2.5 && manure < 3.0) || (manure > 4.0 && manure <= 4.5)) manurePoints = 16;
+    else if ((manure >= 1.5 && manure < 2.5) || (manure > 4.5 && manure <= 5.0)) manurePoints = 10;
+    else manurePoints = 5;
+  }
+
+  const qualityPoints = 8;
+  const total = bcsPoints + healthPoints + cleanlinessPoints + manurePoints + qualityPoints;
+
+  return {
+    total: Math.min(100, Math.max(0, total)),
+    bcs: bcsPoints,
+    health: healthPoints,
+    cleanliness: cleanlinessPoints,
+    manure: manurePoints,
+    manureTested: manureTested,
+    quality: qualityPoints,
+  };
+}
 
 /* ── Stat Card ───────────────────────────────────────────────────────────────── */
 function StatCard({ label, value, icon, color = 'emerald' }: { label: string; value: string; icon: React.ReactNode; color?: string }) {
@@ -208,6 +260,130 @@ function BCS5Chart({ score }: { score: number }) {
     </div>
   );
 }
+
+/* ── Animated Cow Avatar ─────────────────────────────────────────────────────── */
+const AnimatedCowAvatar = ({ score, isAnalyzing = false }: { score: number, isAnalyzing?: boolean }) => {
+  const [cycleIndex, setCycleIndex] = useState(0);
+
+  useEffect(() => {
+    if (!isAnalyzing) return;
+    const interval = setInterval(() => {
+      setCycleIndex(prev => (prev + 1) % 3);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [isAnalyzing]);
+
+  let mood = 'neutral';
+  let bgColor = 'bg-amber-100';
+  let strokeColor = '#b45309'; // amber-700
+  let skinColor = '#fcd34d'; // amber-300
+  let spotColor = '#d97706'; // amber-600
+  let snoutColor = '#fef3c7'; // amber-50
+  
+  if (isAnalyzing) {
+    if (cycleIndex === 0) mood = 'neutral';
+    else if (cycleIndex === 1) {
+      mood = 'happy';
+      bgColor = 'bg-emerald-100';
+      strokeColor = '#047857';
+      skinColor = '#6ee7b7';
+      spotColor = '#10b981';
+      snoutColor = '#ecfdf5';
+    } else {
+      mood = 'sad';
+      bgColor = 'bg-rose-100';
+      strokeColor = '#be123c';
+      skinColor = '#fda4af';
+      spotColor = '#f43f5e';
+      snoutColor = '#fff1f2';
+    }
+  } else {
+    if (score >= 75) {
+      mood = 'happy';
+      bgColor = 'bg-emerald-100';
+      strokeColor = '#047857';
+      skinColor = '#6ee7b7';
+      spotColor = '#10b981';
+      snoutColor = '#ecfdf5';
+    } else if (score < 55) {
+      mood = 'sad';
+      bgColor = 'bg-rose-100';
+      strokeColor = '#be123c';
+      skinColor = '#fda4af';
+      spotColor = '#f43f5e';
+      snoutColor = '#fff1f2';
+    }
+  }
+
+  return (
+    <div className={`w-32 h-32 rounded-3xl flex items-center justify-center transition-colors duration-700 ${bgColor} shadow-inner border border-white/40 relative overflow-hidden`}>
+      <svg viewBox="0 0 100 100" className={`w-24 h-24 transform transition-transform duration-500 ${mood === 'happy' ? 'animate-bounce' : ''}`}>
+        <style>
+          {`
+            @keyframes earFlapRight { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(15deg); } }
+            @keyframes earFlapLeft { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-15deg); } }
+            @keyframes blink { 0%, 96%, 100% { transform: scaleY(1); } 98% { transform: scaleY(0.1); } }
+            .happy-ear-r { transform-origin: 75px 40px; animation: earFlapRight 2s infinite; }
+            .happy-ear-l { transform-origin: 25px 40px; animation: earFlapLeft 2s infinite; }
+            .eye-blink { animation: blink 4s infinite; }
+          `}
+        </style>
+        
+        {/* Ears */}
+        <path d="M 70 35 Q 90 20 95 40 Q 80 50 75 45 Z" fill={skinColor} stroke={strokeColor} strokeWidth="2" strokeLinejoin="round" className={mood === 'happy' ? 'happy-ear-r' : mood === 'sad' ? 'origin-[75px_40px] rotate-[25deg]' : ''} />
+        <path d="M 30 35 Q 10 20 5 40 Q 20 50 25 45 Z" fill={skinColor} stroke={strokeColor} strokeWidth="2" strokeLinejoin="round" className={mood === 'happy' ? 'happy-ear-l' : mood === 'sad' ? 'origin-[25px_40px] -rotate-[25deg]' : ''} />
+        
+        {/* Head Base */}
+        <rect x="25" y="25" width="50" height="45" rx="20" fill={skinColor} stroke={strokeColor} strokeWidth="2" />
+        
+        {/* Spots on Head */}
+        <path d="M 30 25 Q 40 25 35 40 Q 25 35 25 30 Z" fill={spotColor} />
+        <path d="M 60 25 Q 70 25 75 35 Q 65 40 60 25 Z" fill={spotColor} />
+
+        {/* Horns */}
+        <path d="M 35 25 Q 30 10 25 15" fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" />
+        <path d="M 65 25 Q 70 10 75 15" fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" />
+        
+        {/* Snout */}
+        <ellipse cx="50" cy="65" rx="30" ry="20" fill={snoutColor} stroke={strokeColor} strokeWidth="2" />
+        
+        {/* Nostrils */}
+        <circle cx="40" cy="62" r="3" fill={strokeColor} />
+        <circle cx="60" cy="62" r="3" fill={strokeColor} />
+        
+        {/* Eyes & Mouth */}
+        {mood === 'happy' && (
+          <g>
+            <path d="M 35 45 Q 40 38 45 45" fill="none" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" />
+            <path d="M 55 45 Q 60 38 65 45" fill="none" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" />
+            <path d="M 40 72 Q 50 84 60 72" fill="none" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" />
+            {/* Blushing */}
+            <circle cx="30" cy="55" r="4" fill="#f43f5e" opacity="0.4" />
+            <circle cx="70" cy="55" r="4" fill="#f43f5e" opacity="0.4" />
+          </g>
+        )}
+        {mood === 'neutral' && (
+          <g>
+            <circle cx="40" cy="45" r="3" fill={strokeColor} className="eye-blink" style={{ transformOrigin: '40px 45px' }} />
+            <circle cx="60" cy="45" r="3" fill={strokeColor} className="eye-blink" style={{ transformOrigin: '60px 45px' }} />
+            <line x1="45" y1="76" x2="55" y2="76" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" />
+          </g>
+        )}
+        {mood === 'sad' && (
+          <g>
+            <circle cx="40" cy="45" r="3" fill={strokeColor} />
+            <circle cx="60" cy="45" r="3" fill={strokeColor} />
+            <path d="M 35 40 Q 40 45 45 42" fill="none" stroke={strokeColor} strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M 55 42 Q 60 45 65 40" fill="none" stroke={strokeColor} strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M 42 78 Q 50 72 58 78" fill="none" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" />
+            {/* Tear drop */}
+            <path d="M 35 50 Q 38 55 35 58 Q 32 55 35 50" fill="#38bdf8" />
+          </g>
+        )}
+      </svg>
+    </div>
+  );
+};
 
 /* ── Health Status Pie ───────────────────────────────────────────────────────── */
 function HealthPieChart({ status, confidence }: { status: string; confidence: number }) {
@@ -429,6 +605,10 @@ interface CattleTestRecord {
   observations?: string[];
   coat_mismatch?: boolean;
   mismatch_warning?: string;
+  pashu_score?: number;
+  pashu_score_breakdown?: any;
+  manure_score?: number;
+  retest_photos?: any;
 }
 
 interface AngleCameraModalProps {
@@ -588,6 +768,7 @@ export default function CattleDetail() {
   const [retakeVideoFile, setRetakeVideoFile] = useState<File | null>(null);
   const [retakeVideoPreview , setRetakeVideoPreview] = useState<string | null>(null);
   const [retakeLoading, setRetakeLoading] = useState(false);
+  const [isCalculatingScore, setIsCalculatingScore] = useState(false);
   const [retakeMessage, setRetakeMessage] = useState<{ type: 'success' | 'warning' | 'error'; text: string } | null>(null);
   const detailUdderPhotoRef = useRef<HTMLInputElement>(null);
 
@@ -629,17 +810,25 @@ export default function CattleDetail() {
   const [retestRight, setRetestRight] = useState<File | null>(null);
   const [retestBack, setRetestBack] = useState<File | null>(null);
   const [retestUdder, setRetestUdder] = useState<File | null>(null);
+  const [retestManure, setRetestManure] = useState<File | null>(null);
 
   const handleRetakePhotosSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!cattle) return;
-    if (!retestFront && !retestLeft && !retestRight && !retestBack && !retestUdder) {
-      setRetakeMessage({ type: 'error', text: 'Please upload at least one angle photo (Front, Left, Right, Back, or Udder).' });
+    if (!retestFront || !retestLeft || !retestRight || !retestBack || !retestUdder || !retestManure) {
+      setRetakeMessage({ type: 'error', text: 'Please upload/capture all 6 angle photos (Front, Left, Right, Back, Udder, and Manure) for a complete 6-angle analysis.' });
       return;
     }
 
     setRetakeLoading(true);
     setRetakeMessage(null);
+    setIsRetakeModalOpen(false);
+    setIsCalculatingScore(true);
+    
+    // Smooth scroll to the dashboard so they can see the avatar loading
+    window.scrollTo({ top: 450, behavior: 'smooth' });
+    
+    const startTime = Date.now();
 
     try {
       const formData = new FormData();
@@ -648,6 +837,7 @@ export default function CattleDetail() {
       if (retestRight) formData.append('right_img', retestRight);
       if (retestBack) formData.append('back_img', retestBack);
       if (retestUdder) formData.append('udder_img', retestUdder);
+      if (retestManure) formData.append('manure_img', retestManure);
 
       const res = await fetch(`${BASE_URL}/api/muzzle/${cattle.id}/multi-angle-retest`, {
         method: 'POST',
@@ -659,30 +849,28 @@ export default function CattleDetail() {
         throw new Error(resData.detail || resData.message || 'Multi-angle photo analysis failed');
       }
 
-      if (resData.data?.test_history) {
-        setTestHistory(resData.data.test_history);
-        localStorage.setItem(`cattle_test_history_${cattle.id}`, JSON.stringify(resData.data.test_history));
-      }
-
-      // Re-fetch cattle from backend to sync profile stats and test history
-      fetch(`${BASE_URL}/api/muzzle/${cattle.id}`)
-        .then((r) => r.json())
-        .then((d) => { if (d.data) setCattle(d.data); });
-
-      setRetakeMessage({
-        type: 'success',
-        text: `Multi-angle photos analyzed successfully! Profile and test history updated.`,
-      });
+      // Wait 10 seconds total to show the animation, per user request
+      const elapsed = Date.now() - startTime;
+      const remainingTime = Math.max(0, 10000 - elapsed);
+      
       setTimeout(() => {
-        setIsRetakeModalOpen(false);
-        setRetestFront(null); setRetestLeft(null); setRetestRight(null); setRetestBack(null); setRetestUdder(null);
-        setRetakeMessage(null);
-      }, 1600);
+        if (resData.data?.test_history) {
+          setTestHistory(resData.data.test_history);
+          localStorage.setItem(`cattle_test_history_${cattle.id}`, JSON.stringify(resData.data.test_history));
+        }
+
+        fetch(`${BASE_URL}/api/muzzle/${cattle.id}`)
+          .then((r) => r.json())
+          .then((d) => { if (d.data) setCattle(d.data); });
+
+        setRetestFront(null); setRetestLeft(null); setRetestRight(null); setRetestBack(null); setRetestUdder(null); setRetestManure(null);
+        setIsCalculatingScore(false);
+      }, remainingTime);
+
     } catch (err: any) {
-      setRetakeMessage({
-        type: 'error',
-        text: err.message || 'Failed to submit multi-angle photos for retest.',
-      });
+      alert(err.message || 'Failed to submit multi-angle photos for retest.');
+      setIsCalculatingScore(false);
+      setIsRetakeModalOpen(true);
     } finally {
       setRetakeLoading(false);
     }
@@ -807,12 +995,18 @@ export default function CattleDetail() {
     ? Math.round(cleanlinessTests.reduce((acc, t) => acc + (t.cleanliness_score || 0), 0) / cleanlinessTests.length)
     : (cattle.cleanliness_score || 0);
 
+  const manureTests = testHistory.filter(t => t.manure_score && t.manure_score > 0);
+  const avgManureScore = manureTests.length > 0
+    ? (manureTests.reduce((acc, t) => acc + (t.manure_score || 0), 0) / manureTests.length)
+    : (cattle.manure_score ?? 0);
+
   const bcsScore = activeTest ? (activeTest.bcs_score ?? 0) : avgBcsScore;
   const weightKg = activeTest ? activeTest.weight_kg : avgWeightKg;
   const heightCm = activeTest ? activeTest.height_cm : avgHeightCm;
   const udderScore = activeTest ? activeTest.udder_score : avgUdderScore;
   const teatScore = activeTest ? activeTest.teat_score : avgTeatScore;
   const cleanlinessScore = activeTest ? (activeTest.cleanliness_score ?? avgCleanlinessScore) : avgCleanlinessScore;
+  const manureScore = activeTest ? (activeTest.manure_score ?? avgManureScore) : avgManureScore;
   
   const rawStatus = (activeTest?.health_status) || cattle.disease || cattle.disease_status || 'Unknown';
   const isNonBovine = (activeTest && activeTest.is_cattle_detected === false) ||
@@ -1292,7 +1486,7 @@ export default function CattleDetail() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 00-2 2V9z" />
                     </svg>
-                    <span> Multi-Angle Retest Photos (Test {testHistory.length + 1})</span>
+                    <span> 6-Angle Retest Photos (Test {testHistory.length + 1})</span>
                   </button>
                 </>
               )}
@@ -1306,8 +1500,9 @@ export default function CattleDetail() {
             </div>
           </div>
 
+          
           {/* Test Detail Breakdown Grid */}
-          <div className="pt-5 space-y-4">
+          <div className="pt-3 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-black text-slate-700 uppercase tracking-widest">
                 {isAvgView ? `Calculated Profile Summary (${testHistory.length} Test Iterations)` : `Iteration Report: ${activeTest?.test_label}`}
@@ -1390,6 +1585,11 @@ export default function CattleDetail() {
                   <p className="text-xs font-black text-slate-400 mt-0.5">N/A (Male)</p>
                 </div>
               )}
+
+              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Manure Score</p>
+                <p className="text-xs font-black text-amber-700 mt-0.5">{manureScore ? `${manureScore.toFixed(1)} / 5` : 'Pending'}</p>
+              </div>
             </div>
 
             {/* Test Specific AI Observations */}
@@ -1464,6 +1664,240 @@ export default function CattleDetail() {
           </div>
         )}
 
+        {/* ── Pashu Score Dashboard ───────────────────── */}
+          {(() => {
+            const currentBcs = activeTest ? (activeTest.bcs_score ?? 0) : avgBcsScore;
+            const currentHealth = activeTest ? activeTest.health_status : (cattle.disease_status || cattle.disease || 'Healthy');
+            const currentCleanliness = activeTest ? (activeTest.cleanliness_score ?? avgCleanlinessScore) : avgCleanlinessScore;
+            const currentManure = activeTest ? (activeTest.manure_score ?? (cattle.manure_score ?? 0)) : (cattle.manure_score ?? 0);
+            
+            let hasManurePhoto = false;
+            if (activeTest) {
+              hasManurePhoto = !!(activeTest.retest_photos?.manure || activeTest.retest_photos?.manure_img);
+            } else if (cattle.retest_photos?.manure || cattle.retest_photos?.manure_img) {
+              hasManurePhoto = true;
+            } else if (cattle.test_history && cattle.test_history.length > 0) {
+              const latest = cattle.test_history[cattle.test_history.length - 1];
+              hasManurePhoto = !!(latest.retest_photos?.manure || latest.retest_photos?.manure_img);
+            }
+
+            let pashuScore = activeTest?.pashu_score ?? cattle.pashu_score;
+            let breakdown = activeTest?.pashu_score_breakdown ?? cattle.pashu_score_breakdown;
+
+            if (currentManure > 0) {
+              hasManurePhoto = true;
+            }
+
+            if (!hasManurePhoto && breakdown && breakdown.manure > 0) {
+               const calc = getPashuScoreBreakdown(currentBcs, currentHealth, currentCleanliness, 0);
+               pashuScore = calc.total;
+               breakdown = calc;
+            } else {
+               const calc = getPashuScoreBreakdown(currentBcs, currentHealth, currentCleanliness, currentManure);
+               pashuScore = calc.total;
+               breakdown = calc;
+            }
+            
+            const scoreVal = pashuScore;
+            
+            let ratingLabel = 'Needs Attention';
+            let ratingColor = 'text-rose-600 bg-rose-50 border-rose-200';
+            let ratingBarColor = '#f43f5e';
+            if (scoreVal >= 75) {
+              ratingLabel = 'Excellent Health';
+              ratingColor = 'text-emerald-700 bg-emerald-50 border-emerald-200';
+              ratingBarColor = '#10b981';
+            } else if (scoreVal >= 55) {
+              ratingLabel = 'Average Health';
+              ratingColor = 'text-amber-700 bg-amber-50 border-amber-200';
+              ratingBarColor = '#f59e0b';
+            }
+
+            return (
+              <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 mb-2 mt-4">
+                <div className="flex flex-col lg:flex-row gap-8 items-center justify-center">
+                  
+                  {/* Animated Cow Avatar & Score Column */}
+                  <div className="flex-shrink-0 flex flex-col items-center">
+                    <AnimatedCowAvatar score={scoreVal} isAnalyzing={isCalculatingScore} />
+                    
+                    <div className="flex flex-col items-center mt-4 h-16 justify-center">
+                      {isCalculatingScore ? (
+                        <>
+                          <div className="flex gap-1 items-center mb-1">
+                            <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></span>
+                            <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
+                            <span className="w-2 h-2 bg-slate-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                          </div>
+                          <span className="text-xs text-slate-500 font-black tracking-widest uppercase animate-pulse">Calculating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-5xl font-black text-slate-900 tracking-tight leading-none">{scoreVal}</span>
+                          <span className="text-xs text-slate-500 uppercase tracking-widest font-black mt-1">PASHU SCORE</span>
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-wider mt-4 ${ratingColor}`}>
+                      <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: ratingBarColor }} />
+                      {ratingLabel}
+                    </div>
+                  </div>
+
+                  {/* Breakdown details */}
+                  <div className="flex-1 w-full max-w-lg space-y-3">
+                    <div>
+                      <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                        Pashu Health Credit Score
+                      </h3>
+                      <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">
+                        An index representing overall physical condition, health diagnostics, hygiene, and AI-assessed manure consistency.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="bg-white border border-slate-200/80 rounded-xl p-2.5 flex justify-between items-center shadow-sm">
+                        <span className="text-xs font-black text-slate-600 uppercase tracking-wider">Body Condition (BCS)</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-base font-black text-slate-900">{breakdown.bcs ?? 0}</span>
+                          <span className="text-[10px] font-bold text-slate-400">/ 25 pts</span>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white border border-slate-200/80 rounded-xl p-2.5 flex justify-between items-center shadow-sm">
+                        <span className="text-xs font-black text-slate-600 uppercase tracking-wider">Overall Health</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-base font-black text-slate-900">{breakdown.health ?? 0}</span>
+                          <span className="text-[10px] font-bold text-slate-400">/ 25 pts</span>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white border border-slate-200/80 rounded-xl p-2.5 flex justify-between items-center shadow-sm">
+                        <span className="text-xs font-black text-slate-600 uppercase tracking-wider">Body Cleanliness</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-base font-black text-slate-900">{breakdown.cleanliness ?? 0}</span>
+                          <span className="text-[10px] font-bold text-slate-400">/ 20 pts</span>
+                        </div>
+                      </div>
+                      
+                      {/* Manure Quality Card */}
+                      <div className="bg-white border border-slate-200/80 rounded-xl p-2.5 flex flex-row justify-between items-center shadow-sm">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-black text-slate-600 uppercase tracking-wider">Manure Score</span>
+                          <div className="mt-1 flex items-center gap-2">
+                            {hasManurePhoto && breakdown.manureTested ? (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase tracking-wider">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                Stored DB
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-black uppercase tracking-wider">
+                                Pending
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-1.5">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-base font-black text-slate-900">{breakdown.manureTested ? (breakdown.manure ?? 0) : 0}</span>
+                            <span className="text-[10px] font-bold text-slate-400">/ 20 pts</span>
+                          </div>
+                          {!breakdown.manureTested && (
+                            <button
+                              onClick={() => {
+                                setRetestMode('photos');
+                                setIsRetakeModalOpen(true);
+                              }}
+                              className="w-full py-1 px-2 bg-amber-600 hover:bg-amber-700 text-white font-black text-[9px] rounded-lg transition-colors flex items-center justify-center gap-1 shadow-sm"
+                            >
+                              <span>Test Manure</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Media Quality */}
+                      <div className="bg-white border border-slate-200/80 rounded-xl p-2.5 flex justify-between items-center shadow-sm">
+                        <span className="text-xs font-black text-slate-600 uppercase tracking-wider">Media Quality</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-base font-black text-slate-900">{breakdown.quality ?? 0}</span>
+                          <span className="text-[10px] font-bold text-slate-400">/ 10 pts</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recommendations if Score is Low */}
+                {scoreVal < 70 && (
+                  <div className="mt-5 border-t border-slate-200/80 pt-4">
+                    <div className="bg-amber-50/50 rounded-2xl p-4 border border-amber-200/60 flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-black flex-shrink-0 mt-0.5">
+                        !
+                      </div>
+                      <div className="w-full">
+                        <div>
+                          <h4 className="text-sm font-black text-amber-950">How to Boost Your Cattle's Pashu Score:</h4>
+                          <p className="text-xs text-amber-900 leading-relaxed font-bold mt-1">
+                            Your cattle's overall health index is currently low (Score: {scoreVal}/100) and the Body Condition Score (BCS) is suboptimal. We highly recommend feed intervention to restore optimal BCS and boost their immunity.
+                          </p>
+                        </div>
+
+                        <ul className="space-y-2 text-xs text-amber-900 leading-relaxed font-bold mt-3">
+                          {(breakdown.bcs ?? 0) < 22 && (
+                            <li>
+                              • <strong className="text-amber-950">Nutrition Boost (BCS):</strong> Supplement feed with high-energy mixtures. Consider buying a targeted veterinary supplement like <strong className="text-emerald-800">NutraKine Gain</strong> to boost weight and condition.
+                            </li>
+                          )}
+                          {(breakdown.cleanliness ?? 0) < 16 && (
+                            <li>
+                              • <strong className="text-amber-950">Improve Cleanliness:</strong> Keep the cattle skin coat clean, wash dung off the hindquarters, maintain floor hygiene in the stall, and keep bedding dry to avoid Mastitis.
+                            </li>
+                          )}
+                          <li>
+                            • <strong className="text-amber-950">6-Angle Retest:</strong> After implementing the feed supplement and cleaning, click the retest button below and upload a fresh set of photos (including a <strong className="text-amber-950">Manure Image View</strong>) for the AI to perform a detailed digestive analysis and recalculate the Pashu Score.
+                          </li>
+                        </ul>
+
+                        {/* Interactive Supplement Recommendation Card */}
+                        <div className="mt-4 flex flex-col sm:flex-row items-center gap-3 bg-white p-3.5 rounded-2xl border border-amber-100 shadow-sm">
+                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-50 border border-slate-200 flex items-center justify-center p-1 flex-shrink-0">
+                            <img src="https://placehold.co/100x100/f8fafc/059669?text=NutraKine+Gain" alt="NutraKine Gain" className="w-full h-full object-contain" />
+                          </div>
+                          <div className="flex-1 min-w-0 text-center sm:text-left">
+                            <p className="text-xs font-black text-slate-800 truncate">NutraKine Gain (BCS Supplement)</p>
+                            <p className="text-[10px] text-slate-500 line-clamp-1">High-calorie weight-gain formulation for thin and low BCS cattle.</p>
+                          </div>
+                          <div className="flex gap-2 w-full sm:w-auto justify-end">
+                            <a 
+                              href="https://chimertech.shop/search?q=NutraKine%20Gain" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex-1 sm:flex-none text-center bg-amber-600 hover:bg-amber-700 text-white font-black text-[10px] px-3.5 py-2 rounded-xl transition-all shadow-sm whitespace-nowrap"
+                            >
+                              Buy Supplement
+                            </a>
+                            <button
+                              onClick={() => {
+                                setRetestMode('photos');
+                                setIsRetakeModalOpen(true);
+                              }}
+                              className="flex-1 sm:flex-none text-center bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] px-3.5 py-2 rounded-xl transition-all shadow-sm whitespace-nowrap flex items-center justify-center gap-1"
+                            >
+                              <span>🔄 Retest (6-Angle)</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
         {/* ── Test Results Multi-Trend Flow Chart ─────────────────────────── */}
         <TestResultFlowChart
           testHistory={testHistory.length > 0 ? testHistory : cattle?.test_history}
@@ -1513,11 +1947,19 @@ export default function CattleDetail() {
 
                   const photoList: Array<{ label: string; url: string }> = [];
                   if (testPhotos && typeof testPhotos === 'object' && !Array.isArray(testPhotos)) {
-                    if (testPhotos.front_img) photoList.push({ label: 'Front View', url: testPhotos.front_img });
-                    if (testPhotos.right_img) photoList.push({ label: 'Right Side View', url: testPhotos.right_img });
-                    if (testPhotos.left_img) photoList.push({ label: 'Left Side View', url: testPhotos.left_img });
-                    if (testPhotos.back_img) photoList.push({ label: 'Back Side View', url: testPhotos.back_img });
-                    if (testPhotos.udder_img) photoList.push({ label: 'Udder Close-Up', url: testPhotos.udder_img });
+                    const front = testPhotos.front_img || testPhotos.front;
+                    const right = testPhotos.right_img || testPhotos.right_side || testPhotos.right;
+                    const left = testPhotos.left_img || testPhotos.left_side || testPhotos.left;
+                    const back = testPhotos.back_img || testPhotos.back_side || testPhotos.back;
+                    const udder = testPhotos.udder_img || testPhotos.udder;
+                    const manure = testPhotos.manure_img || testPhotos.manure;
+
+                    if (front) photoList.push({ label: 'Front View', url: front });
+                    if (right) photoList.push({ label: 'Right Side View', url: right });
+                    if (left) photoList.push({ label: 'Left Side View', url: left });
+                    if (back) photoList.push({ label: 'Back Side View', url: back });
+                    if (udder) photoList.push({ label: 'Udder Close-Up', url: udder });
+                    if (manure) photoList.push({ label: 'Manure View', url: manure });
                   } else if (Array.isArray(testPhotos)) {
                     testPhotos.forEach((pUrl: string, pIdx: number) => {
                       photoList.push({ label: `Angle #${pIdx + 1}`, url: pUrl });
@@ -1578,31 +2020,7 @@ export default function CattleDetail() {
                         </div>
                       </div>
 
-                      {photoList.length > 0 ? (
-                        <div className="space-y-1.5 pt-1">
-                          <span className="text-[10px] font-black uppercase text-slate-700 tracking-wider block">
-                             Retest & Scan Photos Captured for Test {testNum} ({photoList.length} Photos):
-                          </span>
-                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                            {photoList.map((photo, pIdx) => (
-                              <div
-                                key={pIdx}
-                                onClick={() => setSelectedRetestImg(photo.url)}
-                                className="relative group cursor-pointer rounded-xl overflow-hidden border border-slate-200 bg-black aspect-square hover:border-emerald-500 transition-all shadow-sm"
-                              >
-                                <img src={photo.url} alt={photo.label} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                                <span className="absolute bottom-0 inset-x-0 bg-slate-900/90 text-[8px] font-bold text-center text-emerald-300 py-0.5 truncate px-1">
-                                  {photo.label}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-[11px] text-slate-500 italic bg-white p-2.5 rounded-xl border border-slate-200">
-                          10s video scan clip recorded for Test {testNum}.
-                        </p>
-                      )}
+                      {/* Photos grid removed as per instructions: only showing values */}
                     </div>
                   );
                 })}
@@ -1747,8 +2165,11 @@ export default function CattleDetail() {
           />
           <StatCard
             label="Udder Score"
-            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (!isMale ? (udderScore && udderScore > 0 ? `${udderScore.toFixed(1)} / 5.0` : 'Pending / Not Visible') : 'N/A (Male)')}
-            color={isNonBovine ? 'slate' : (!isMale && udderScore && udderScore > 0 ? 'purple' : 'slate')}
+            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (!isMale ? (() => {
+              const score = udderScore && udderScore > 0 ? udderScore : (cattle.udder_score && cattle.udder_score > 0 ? cattle.udder_score : 0);
+              return score > 0 ? `${score.toFixed(1)} / 5.0` : 'Not Visible in Video';
+            })() : 'N/A (Male)')}
+            color={isNonBovine ? 'slate' : (!isMale ? ((() => { const s = udderScore && udderScore > 0 ? udderScore : (cattle.udder_score && cattle.udder_score > 0 ? cattle.udder_score : 0); return s > 0 ? 'purple' : 'slate'; })()) : 'slate')}
             icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -1757,8 +2178,11 @@ export default function CattleDetail() {
           />
           <StatCard
             label="Teat Score"
-            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (!isMale ? (teatScore && teatScore > 0 ? `${teatScore.toFixed(1)} / 5.0` : 'Pending / Not Visible') : 'N/A (Male)')}
-            color={isNonBovine ? 'slate' : (!isMale && teatScore && teatScore > 0 ? 'blue' : 'slate')}
+            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (!isMale ? (() => {
+              const score = teatScore && teatScore > 0 ? teatScore : (cattle.teat_score && cattle.teat_score > 0 ? cattle.teat_score : 0);
+              return score > 0 ? `${score.toFixed(1)} / 5.0` : 'Not Visible in Video';
+            })() : 'N/A (Male)')}
+            color={isNonBovine ? 'slate' : (!isMale ? ((() => { const s = teatScore && teatScore > 0 ? teatScore : (cattle.teat_score && cattle.teat_score > 0 ? cattle.teat_score : 0); return s > 0 ? 'blue' : 'slate'; })()) : 'slate')}
             icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -1788,77 +2212,96 @@ export default function CattleDetail() {
         </div>
 
         {/* ── Udder & Teat Health Section ──────────────────────────────────── */}
-        {((cattle.udder_score && cattle.udder_score > 0) || (cattle.teat_score && cattle.teat_score > 0)) && (() => {
-          const udderScore = cattle.udder_score || 0;
-          const teatScore = cattle.teat_score || 0;
-          const udderLabel = udderScore >= 4.5 ? 'Excellent' : udderScore >= 3.5 ? 'Good' : udderScore >= 2.5 ? 'Average' : udderScore >= 1.5 ? 'Below Average' : 'Poor';
-          const teatLabel = teatScore >= 4.5 ? 'Ideal' : teatScore >= 3.5 ? 'Good' : teatScore >= 2.5 ? 'Average' : teatScore >= 1.5 ? 'Short' : 'Deformed';
-          const udderColor = udderScore >= 3.5 ? '#9333ea' : udderScore >= 2.5 ? '#a855f7' : '#ef4444';
-          const teatColor = teatScore >= 3.5 ? '#2563eb' : teatScore >= 2.5 ? '#3b82f6' : '#ef4444';
+        {(!isMale && !isNonBovine) && (() => {
+          const udderVal = udderScore && udderScore > 0 ? udderScore : (cattle.udder_score && cattle.udder_score > 0 ? cattle.udder_score : 0);
+          const teatVal = teatScore && teatScore > 0 ? teatScore : (cattle.teat_score && cattle.teat_score > 0 ? cattle.teat_score : 0);
+          const udderNotVisible = udderVal === 0;
+          const teatNotVisible = teatVal === 0;
+
+          // Show 'Not Visible' card when both udder & teat were not captured
+          if (udderNotVisible && teatNotVisible) {
+            return (
+              <div className="bg-white rounded-2xl p-6 border border-amber-200 shadow-sm mb-8">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Udder &amp; Teat — Not Visible in Video</h2>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      The uploaded video did not capture the udder or teats in any extracted frame. For accurate udder health and dairy productivity scoring, please upload a video that includes the <strong>rear flank</strong>, <strong>underside</strong>, or <strong>side angle</strong> of the cattle showing the udder region clearly.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          const udderLabel = udderVal >= 4.5 ? 'Excellent' : udderVal >= 3.5 ? 'Good' : udderVal >= 2.5 ? 'Average' : udderVal >= 1.5 ? 'Below Average' : 'Poor';
+          const teatLabel = teatVal >= 4.5 ? 'Ideal' : teatVal >= 3.5 ? 'Good' : teatVal >= 2.5 ? 'Average' : teatVal >= 1.5 ? 'Short' : 'Deformed';
+          const udderColor = udderVal >= 3.5 ? '#9333ea' : udderVal >= 2.5 ? '#a855f7' : '#ef4444';
+          const teatColor = teatVal >= 3.5 ? '#2563eb' : teatVal >= 2.5 ? '#3b82f6' : '#ef4444';
           return (
             <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-8">
               <h2 className="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">Udder &amp; Teat Health</h2>
               <p className="text-xs text-slate-500 mb-5">AI-assessed dairy productivity indicators from video analysis</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Udder Score */}
-                {udderScore > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <p className="text-xs font-black text-slate-600 uppercase tracking-wider">Udder Score</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{udderLabel} condition</p>
-                      </div>
-                      <span className="font-black text-2xl leading-none" style={{ color: udderColor }}>
-                        {udderScore.toFixed(1)}<span className="text-sm font-bold text-slate-400">/5</span>
-                      </span>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-xs font-black text-slate-600 uppercase tracking-wider">Udder Score</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{udderLabel} condition</p>
                     </div>
-                    <div className="flex gap-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="h-2.5 flex-1 rounded-full transition-all" style={{ background: i < Math.round(udderScore) ? udderColor : '#e2e8f0' }} />
-                      ))}
-                    </div>
-                    <div className="mt-3 space-y-1">
-                      {[['1','Severe atrophy/scarred'],['2','Asymmetric quarters'],['3','Average — moderate capacity'],['4','Good attachment & balance'],['5','Excellent dairy udder']].map(([s, desc]) => (
-                        <div key={s} className="flex items-center gap-2 text-xs">
-                          <span className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-white flex-shrink-0" style={{ background: Math.round(udderScore) === parseInt(s) ? udderColor : '#e2e8f0', color: Math.round(udderScore) === parseInt(s) ? 'white' : '#94a3b8' }}>{s}</span>
-                          <span className={Math.round(udderScore) === parseInt(s) ? 'font-black text-slate-900' : 'text-slate-400'}>{desc}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <span className="font-black text-2xl leading-none" style={{ color: udderColor }}>
+                      {udderVal.toFixed(1)}<span className="text-sm font-bold text-slate-400">/5</span>
+                    </span>
                   </div>
-                )}
+                  <div className="flex gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="h-2.5 flex-1 rounded-full transition-all" style={{ background: i < Math.round(udderVal) ? udderColor : '#e2e8f0' }} />
+                    ))}
+                  </div>
+                  <div className="mt-3 space-y-1">
+                    {[['1','Severe atrophy/scarred'],['2','Asymmetric quarters'],['3','Average — moderate capacity'],['4','Good attachment & balance'],['5','Excellent dairy udder']].map(([s, desc]) => (
+                      <div key={s} className="flex items-center gap-2 text-xs">
+                        <span className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-white flex-shrink-0" style={{ background: Math.round(udderVal) === parseInt(s) ? udderColor : '#e2e8f0', color: Math.round(udderVal) === parseInt(s) ? 'white' : '#94a3b8' }}>{s}</span>
+                        <span className={Math.round(udderVal) === parseInt(s) ? 'font-black text-slate-900' : 'text-slate-400'}>{desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 {/* Teat Score */}
-                {teatScore > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <p className="text-xs font-black text-slate-600 uppercase tracking-wider">Teat Score</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{teatLabel} condition</p>
-                      </div>
-                      <span className="font-black text-2xl leading-none" style={{ color: teatColor }}>
-                        {teatScore.toFixed(1)}<span className="text-sm font-bold text-slate-400">/5</span>
-                      </span>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-xs font-black text-slate-600 uppercase tracking-wider">Teat Score</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{teatLabel} condition</p>
                     </div>
-                    <div className="flex gap-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="h-2.5 flex-1 rounded-full transition-all" style={{ background: i < Math.round(teatScore) ? teatColor : '#e2e8f0' }} />
-                      ))}
-                    </div>
-                    <div className="mt-3 space-y-1">
-                      {[['1','Inverted/deformed'],['2','Short, uneven placement'],['3','Average — suitable for milking'],['4','Good, uniform cylinders'],['5','Ideal for machine milking']].map(([s, desc]) => (
-                        <div key={s} className="flex items-center gap-2 text-xs">
-                          <span className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black flex-shrink-0" style={{ background: Math.round(teatScore) === parseInt(s) ? teatColor : '#e2e8f0', color: Math.round(teatScore) === parseInt(s) ? 'white' : '#94a3b8' }}>{s}</span>
-                          <span className={Math.round(teatScore) === parseInt(s) ? 'font-black text-slate-900' : 'text-slate-400'}>{desc}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <span className="font-black text-2xl leading-none" style={{ color: teatColor }}>
+                      {teatVal.toFixed(1)}<span className="text-sm font-bold text-slate-400">/5</span>
+                    </span>
                   </div>
-                )}
+                  <div className="flex gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="h-2.5 flex-1 rounded-full transition-all" style={{ background: i < Math.round(teatVal) ? teatColor : '#e2e8f0' }} />
+                    ))}
+                  </div>
+                  <div className="mt-3 space-y-1">
+                    {[['1','Inverted/deformed'],['2','Short, uneven placement'],['3','Average — suitable for milking'],['4','Good, uniform cylinders'],['5','Ideal for machine milking']].map(([s, desc]) => (
+                      <div key={s} className="flex items-center gap-2 text-xs">
+                        <span className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black flex-shrink-0" style={{ background: Math.round(teatVal) === parseInt(s) ? teatColor : '#e2e8f0', color: Math.round(teatVal) === parseInt(s) ? 'white' : '#94a3b8' }}>{s}</span>
+                        <span className={Math.round(teatVal) === parseInt(s) ? 'font-black text-slate-900' : 'text-slate-400'}>{desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           );
-        })()
-        }
+        })()}
 
         {/* ── Muzzle Photo Gallery ─────────────────────────────────────────── */}
         {cattle.muzzle_images && cattle.muzzle_images.length > 0 && (
@@ -1897,7 +2340,7 @@ export default function CattleDetail() {
           <button onClick={() => navigate('/muzzle-check')} className="btn-primary">Run Muzzle Check</button>
         </div>
 
-        {/* ── Retest Modal (5-Angle Camera & File Upload) ───────────────── */}
+        {/* ── Retest Modal (6-Angle Camera & File Upload) ───────────────── */}
         {isRetakeModalOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
@@ -1909,7 +2352,7 @@ export default function CattleDetail() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-slate-900">5-Angle Retest Photos & Live Camera</h3>
+                    <h3 className="text-base font-black text-slate-900">6-Angle Retest Photos & Live Camera</h3>
                     <p className="text-xs text-slate-500">Weekly AI Retest {testHistory.length + 1} for {cattle.name}</p>
                   </div>
                 </div>
@@ -1917,6 +2360,7 @@ export default function CattleDetail() {
                   onClick={() => {
                     setIsRetakeModalOpen(false);
                     setRetakeMessage(null);
+                    setRetestFront(null); setRetestLeft(null); setRetestRight(null); setRetestBack(null); setRetestUdder(null); setRetestManure(null);
                   }}
                   className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
                 >
@@ -1969,11 +2413,18 @@ export default function CattleDetail() {
                     { name: 'right', label: 'Right Side View', file: retestRight, setFile: setRetestRight },
                     { name: 'left', label: 'Left Side View', file: retestLeft, setFile: setRetestLeft },
                     { name: 'back', label: 'Back Side View', file: retestBack, setFile: setRetestBack },
-                    { name: 'udder', label: 'Udder & Teat Close-Up View', file: retestUdder, setFile: setRetestUdder, span: true },
+                    { name: 'udder', label: 'Udder & Teat Close-Up View', file: retestUdder, setFile: setRetestUdder },
+                    { name: 'manure', label: 'Manure Image View', file: retestManure, setFile: setRetestManure, span: true },
                   ].map((slot) => (
-                    <div key={slot.name} className={`bg-slate-50 border border-slate-200 rounded-2xl p-3 text-center flex flex-col justify-between ${slot.span ? 'sm:col-span-2 bg-purple-50/50 border-purple-200' : ''}`}>
+                    <div key={slot.name} className={`bg-slate-50 border border-slate-200 rounded-2xl p-3 text-center flex flex-col justify-between ${
+                      slot.name === 'udder' ? 'sm:col-span-2 bg-purple-50/50 border-purple-200' :
+                      slot.name === 'manure' ? 'sm:col-span-2 bg-amber-50/50 border-amber-200' : ''
+                    }`}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${slot.name === 'udder' ? 'text-purple-700' : 'text-slate-600'}`}>{slot.label}</span>
+                        <span className={`text-[10px] font-black uppercase tracking-wider ${
+                          slot.name === 'udder' ? 'text-purple-700' :
+                          slot.name === 'manure' ? 'text-amber-700' : 'text-slate-600'
+                        }`}>{slot.label}</span>
                         {slot.file && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">✓ Ready</span>}
                       </div>
 
@@ -2025,6 +2476,7 @@ export default function CattleDetail() {
                     onClick={() => {
                       setIsRetakeModalOpen(false);
                       setRetakeMessage(null);
+                      setRetestFront(null); setRetestLeft(null); setRetestRight(null); setRetestBack(null); setRetestUdder(null); setRetestManure(null);
                     }}
                     className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors"
                   >
@@ -2035,7 +2487,7 @@ export default function CattleDetail() {
                     disabled={retakeLoading}
                     className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition-colors"
                   >
-                    {retakeLoading ? 'Analyzing 5-Angle Photos...' : `Submit 5-Angle Retest (Test ${testHistory.length + 1})`}
+                    {retakeLoading ? 'Analyzing 6-Angle Photos...' : `Submit 6-Angle Retest (Test ${testHistory.length + 1})`}
                   </button>
                 </div>
               </form>
@@ -2069,6 +2521,7 @@ export default function CattleDetail() {
               else if (activeCameraSlot.name === 'left') setRetestLeft(file);
               else if (activeCameraSlot.name === 'back') setRetestBack(file);
               else if (activeCameraSlot.name === 'udder') setRetestUdder(file);
+              else if (activeCameraSlot.name === 'manure') setRetestManure(file);
             }}
             onClose={() => setActiveCameraSlot(null)}
           />

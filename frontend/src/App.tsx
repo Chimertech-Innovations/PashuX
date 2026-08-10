@@ -17,6 +17,7 @@ import AITransparency from '@/pages/AITransparency';
 import DataConsent from '@/pages/DataConsent';
 import ContactUs from '@/pages/ContactUs';
 import FarmManagement from '@/pages/FarmManagement';
+import MuzzleCheck from '@/pages/MuzzleCheck';
 import CattleDetail from '@/pages/CattleDetail';
 
 export default function App() {
@@ -33,7 +34,7 @@ export default function App() {
               <Route path="/auth"           element={<Auth />} />
               <Route path="/farm"           element={<FarmManagement />} />
               <Route path="/cattle/:id"     element={<CattleDetail />} />
-              <Route path="/muzzle-check"   element={<Navigate to="/farm" replace />} />
+              <Route path="/muzzle-check"   element={<MuzzleCheck />} />
               <Route path="/live"           element={<Navigate to="/farm" replace />} />
               <Route path="/bcs"            element={<Navigate to="/farm" replace />} />
               <Route path="/disease"        element={<Navigate to="/farm" replace />} />

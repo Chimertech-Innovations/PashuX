@@ -6,7 +6,7 @@ const IHERD_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.
 
 const AI_MODULES = [
   { to: '/farm', label: 'Farm Management',     desc: 'Register cattle with AI Muzzle Scan' },
-  { to: '/farm', label: 'Muzzle Identity Check', desc: 'Identify cattle by muzzle pattern' },
+  { to: '/muzzle-check', label: 'Muzzle Identity Check', desc: 'Identify cattle by muzzle pattern' },
   { to: '/farm', label: 'BCS Score Detection', desc: 'Body condition score AI analysis' },
   { to: '/farm', label: 'Disease Detection',   desc: 'Visible cattle health screening' },
   { to: '/farm', label: 'Analysis History',    desc: 'Past diagnostic reports & scans' },
@@ -34,7 +34,7 @@ export default function Navbar() {
       <div className="hidden sm:flex bg-[#0f172a] text-white py-1.5 px-3 text-center text-[10px] sm:text-xs font-bold tracking-wide items-center justify-center gap-1.5 sm:gap-2 border-b border-slate-800 flex-wrap">
         <span className="bg-emerald-500 text-slate-950 font-black text-[9px] px-2 py-0.5 rounded-full uppercase flex-shrink-0">PashuX AI</span>
         <span className="truncate max-w-[240px] sm:max-w-none">Cattle Health Intelligence & Biometric AI Muzzle Scanner</span>
-        <Link to="/farm" className="underline hover:text-emerald-300 font-black ml-0.5 flex-shrink-0">Try Muzzle Scan →</Link>
+        <Link to="/muzzle-check" className="underline hover:text-emerald-300 font-black ml-0.5 flex-shrink-0">Try Muzzle Scan →</Link>
       </div>
 
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 min-h-[72px] py-2 flex items-center justify-between gap-3">
@@ -76,9 +76,9 @@ export default function Navbar() {
 
           {/* Muzzle Scan */}
           <Link
-            to="/farm"
+            to="/muzzle-check"
             className={`px-3 py-2 text-xs font-black transition-colors duration-150 whitespace-nowrap ${
-              pathname === '/farm'
+              pathname === '/muzzle-check'
                 ? 'text-emerald-600 font-black'
                 : 'text-slate-800 font-bold hover:text-emerald-600'
             }`}
@@ -267,10 +267,10 @@ export default function Navbar() {
           </Link>
 
           <Link
-            to="/farm"
+            to="/muzzle-check"
             onClick={() => setMenuOpen(false)}
             className={`block px-4 py-2.5 rounded-xl text-sm font-black transition-all ${
-              pathname === '/farm' ? 'text-emerald-950 bg-emerald-100 border border-emerald-300' : 'text-slate-900 hover:bg-slate-100'
+              pathname === '/muzzle-check' ? 'text-emerald-950 bg-emerald-100 border border-emerald-300' : 'text-slate-900 hover:bg-slate-100'
             }`}
           >
             Muzzle Scan

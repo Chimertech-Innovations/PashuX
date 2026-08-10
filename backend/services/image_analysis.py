@@ -277,8 +277,8 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
         logger.info("Executing Video Analysis via OpenAI Vision service...")
         return await openai_service.analyse_video_stats(frame_paths, expected_gender=expected_gender)
     except Exception as exc:
-        logger.error(f"OpenAI Video Analysis failed: [{type(exc).__name__}] {exc}")
-        raise exc
+        logger.error(f"OpenAI Video Analysis failed: [{type(exc).__name__}] {exc}. Using fallback video stats.")
+        return openai_service._smart_fallback_video_stats(expected_gender)
 
 
 

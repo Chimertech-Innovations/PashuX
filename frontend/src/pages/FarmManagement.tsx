@@ -5,6 +5,7 @@ import { BASE_URL } from '@/lib/api';
 import CattleQRCodeCard from '@/components/cattle/CattleQRCodeCard';
 import AIDisclaimerFooter from '@/components/ui/AIDisclaimerFooter';
 import AngleCameraModal from '@/components/ui/AngleCameraModal';
+import LiveVideoRecorderModal from '@/components/ui/LiveVideoRecorderModal';
 import { compressImage } from '@/utils/imageCompressor';
 
 export default function FarmManagement() {
@@ -63,6 +64,8 @@ export default function FarmManagement() {
   const [retestBack, setRetestBack] = useState<File | null>(null);
   const [retestUdder, setRetestUdder] = useState<File | null>(null);
   const [activeCameraSlot, setActiveCameraSlot] = useState<{ name: string; label: string; slot?: number } | null>(null);
+  const [isVideoRecorderOpen, setIsVideoRecorderOpen] = useState(false);
+  const [traceMaps, setTraceMaps] = useState<string[]>([]);
   const [retestLoading, setRetestLoading] = useState(false);
   const [retestMessage, setRetestMessage] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null);
 
@@ -339,6 +342,9 @@ export default function FarmManagement() {
         setMessage({ type: 'success', text: `Cattle registered successfully! Proceeding to Step 2...` });
         // data.cattle_id is now the real UUID from the database
         setCurrentCattleId(data.cattle_id);
+        if (data.trace_maps && data.trace_maps.length > 0) {
+          setTraceMaps(data.trace_maps);
+        }
         fetchCattle();
         setTimeout(() => {
             setStep(2);
@@ -633,11 +639,23 @@ export default function FarmManagement() {
                             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm text-emerald-500 mb-2">
                                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                             </div>
-                            <p className="text-sm font-bold text-slate-700">Select Video</p>
-                            <div className="flex gap-4 mt-4">
-                                <button type="button" onClick={() => videoInputRef.current?.click()} className="btn-primary py-3 px-6 text-sm flex items-center gap-2">
+                            <p className="text-sm font-bold text-slate-700">Record Live Camera Video or Upload File</p>
+                            <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full justify-center">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsVideoRecorderOpen(true)}
+                                  className="btn-primary py-3 px-6 text-sm flex items-center justify-center gap-2"
+                                >
+                                    <svg className="w-4 h-4 text-rose-400 animate-pulse" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /></svg>
+                                    Record Live Video (15s)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => videoInputRef.current?.click()}
+                                  className="btn-secondary py-3 px-6 text-sm flex items-center justify-center gap-2"
+                                >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                                    Upload / Record
+                                    Upload Video File
                                 </button>
                             </div>
                             <input type="file" accept="video/*" capture="environment" onChange={handleVideoChange} className="hidden" ref={videoInputRef} />
@@ -702,6 +720,29 @@ export default function FarmManagement() {
                 </div>
               </div>
             </div>
+
+            {/* AI Biometric Muzzle Pattern Extraction Maps */}
+            {traceMaps.length > 0 && (
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    AI Muzzle Biometric Ridge Extraction Maps ({traceMaps.length})
+                  </h4>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">OpenCV OpenCV Ridge Trace</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {traceMaps.map((tm, idx) => (
+                    <div key={idx} className="bg-slate-950 rounded-xl p-2.5 border border-slate-800 text-center shadow-inner">
+                      <img src={tm} alt={`Muzzle Trace ${idx + 1}`} className="w-full h-36 object-contain rounded-lg mb-2 bg-black" />
+                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-wider">
+                        {idx === 0 ? 'Straight-on Ridge Pattern' : idx === 1 ? 'Slight Left Ridge Pattern' : 'Slight Right Ridge Pattern'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Retake Banner — shown when parts are missing */}
             {videoStats?.missing_parts?.length > 0 && (
@@ -1234,6 +1275,18 @@ export default function FarmManagement() {
               setActiveCameraSlot(null);
             }}
             onClose={() => setActiveCameraSlot(null)}
+          />
+        )}
+
+        {/* Live Video Recorder Modal Overlay */}
+        {isVideoRecorderOpen && (
+          <LiveVideoRecorderModal
+            onVideoRecorded={(file) => {
+              setVideoFile(file);
+              setVideoPreview(URL.createObjectURL(file));
+              setIsVideoRecorderOpen(false);
+            }}
+            onClose={() => setIsVideoRecorderOpen(false)}
           />
         )}
 

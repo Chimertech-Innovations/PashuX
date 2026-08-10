@@ -577,11 +577,23 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
                 data["coat_color"] = _safe_str(data.get("coat_color"), "Unknown / Multi-colored")
                 data["estimated_value"] = _safe_str(data.get("estimated_value"), "N/A")
                 data["disease_status"] = _safe_str(data.get("disease_status"), "Healthy")
-                data["age_estimate"] = _safe_str(data.get("age_estimate"), "4 - 5 years")
 
                 data["bcs_score"] = _safe_float(data.get("bcs_score"), 3.0)
                 w_kg = _safe_float(data.get("weight_kg"), 450.0)
                 h_cm = _safe_float(data.get("height_cm"), 135.0)
+
+                # Compute dynamic age if not provided explicitly by vision model
+                raw_age = _safe_str(data.get("age_estimate"), "")
+                if not raw_age or raw_age.lower() in ["unknown", "n/a", "none"]:
+                    if w_kg < 260:
+                        raw_age = "1 - 2 years (Young Heifer)"
+                    elif w_kg < 380:
+                        raw_age = "2 - 3 years (Young Adult)"
+                    elif w_kg < 500:
+                        raw_age = "3 - 5 years (Prime Adult)"
+                    else:
+                        raw_age = "5 - 7 years (Mature Adult)"
+                data["age_estimate"] = raw_age
                 data["weight_kg"] = w_kg
                 data["height_cm"] = h_cm
 
@@ -596,7 +608,7 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
                     h_high = int(round(h_cm * 1.04))
                     data["height_range"] = f"{h_low} - {h_high} cm"
 
-                data["cleanliness_score"] = min(100, max(0, _safe_int(data.get("cleanliness_score"), 85)))
+                data["cleanliness_score"] = min(100, max(0, _safe_int(data.get("cleanliness_score"), 0)))
                 data["udder_score"] = _safe_float(data.get("udder_score"), 0.0)
                 data["teat_score"] = _safe_float(data.get("teat_score"), 0.0)
                 data["udder_visible"] = bool(data.get("udder_visible") or False)
@@ -610,8 +622,21 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
                 is_detected = data.get("is_cattle_detected")
                 if is_detected is False or any(w in obs_str or w in dis_str for w in ["non-bovine", "human", "no cattle", "unidentified subject", "developer screen"]):
                     data["is_cattle_detected"] = False
-                elif _safe_float(data.get("bcs_score"), 0.0) == 0.0 and data["total_cattle_count"] == 0:
-                    data["is_cattle_detected"] = False
+                    data["disease_status"] = "Non-Bovine Subject Detected"
+                    data["breed"] = "Unidentified Subject"
+                    data["gender"] = "N/A (Non-Cattle Subject)"
+                    data["age_estimate"] = "N/A (Non-Cattle Subject)"
+                    data["bcs_score"] = 0.0
+                    data["weight_kg"] = 0.0
+                    data["height_cm"] = 0.0
+                    data["weight_range"] = "N/A"
+                    data["height_range"] = "N/A"
+                    data["cleanliness_score"] = 0
+                    data["udder_score"] = 0.0
+                    data["teat_score"] = 0.0
+                    data["udder_visible"] = False
+                    data["teat_visible"] = False
+                    data["coat_color"] = "Unknown / Multi-colored"
                 else:
                     data["is_cattle_detected"] = True
                 raw_u_score = _safe_float(data.get("udder_score"), 0.0)
@@ -621,8 +646,10 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
                 is_udder_truly_scored = raw_u_score > 0 and bool(data.get("udder_visible"))
 
                 # GENDER DECISION LOGIC:
-                # DEFAULT TO FEMALE (Cow / Buffalo) UNLESS MALE GENITALIA EXPLICITLY DETECTED
-                if has_male_genitalia and not has_udder_signal:
+                if not data["is_cattle_detected"]:
+                    data["gender"] = "N/A (Non-Cattle Subject)"
+                    is_male = False
+                elif has_male_genitalia and not has_udder_signal:
                     data["gender"] = "Male"
                     is_male = True
                 else:

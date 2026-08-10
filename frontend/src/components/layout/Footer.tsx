@@ -48,15 +48,16 @@ export default function Footer() {
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4">Platform Modules</h4>
             <ul className="space-y-2.5">
               {[
-                ['Live 10s Scanner', '/live'],
-                ['BCS Score Detection', '/bcs'],
-                ['Disease Screening', '/disease'],
-                ['Analysis History', '/history'],
+                ['Farm Management', '/farm'],
+                ['Muzzle Scan', '/farm'],
+                ['BCS Score Detection', '/farm'],
+                ['Disease Screening', '/farm'],
+                ['Analysis History', '/farm'],
                 ['Products Catalogue', '/products'],
                 ['AI Transparency', '/ai-transparency'],
                 ['Contact Us', '/contact'],
               ].map(([label, to]) => (
-                <li key={to}>
+                <li key={label}>
                   <Link to={to} className="text-xs text-slate-600 hover:text-slate-950 font-medium transition-colors">{label}</Link>
                 </li>
               ))}

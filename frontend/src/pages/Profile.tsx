@@ -50,10 +50,10 @@ export default function Profile() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Link to="/bcs" className="btn-secondary text-center text-xs py-2.5">
+            <Link to="/farm" className="btn-secondary text-center text-xs py-2.5">
               New BCS Analysis
             </Link>
-            <Link to="/disease" className="btn-secondary text-center text-xs py-2.5">
+            <Link to="/farm" className="btn-secondary text-center text-xs py-2.5">
               New Disease Screening
             </Link>
           </div>

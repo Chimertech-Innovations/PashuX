@@ -414,6 +414,7 @@ interface CattleTestRecord {
   date: string;
   bcs_score: number;
   health_status: string;
+  is_cattle_detected?: boolean;
   weight_kg?: number;
   height_cm?: number;
   coat_color?: string;
@@ -585,7 +586,7 @@ export default function CattleDetail() {
   const [selectedRetestImg, setSelectedRetestImg] = useState<string | null>(null);
   const [isRetakeModalOpen, setIsRetakeModalOpen] = useState(false);
   const [retakeVideoFile, setRetakeVideoFile] = useState<File | null>(null);
-  const [retakeVideoPrev , setRetakeVideoPreview] = useState<string | null>(null);
+  const [retakeVideoPreview , setRetakeVideoPreview] = useState<string | null>(null);
   const [retakeLoading, setRetakeLoading] = useState(false);
   const [retakeMessage, setRetakeMessage] = useState<{ type: 'success' | 'warning' | 'error'; text: string } | null>(null);
   const detailUdderPhotoRef = useRef<HTMLInputElement>(null);
@@ -731,10 +732,10 @@ export default function CattleDetail() {
       });
       const initialTest: CattleTestRecord = {
         test_number: 1,
-        test_label: 'Test 1 (Initial Registration)',
+        test_label: cattle.bcs_score != null && cattle.bcs_score > 0 ? 'Test 1 (Initial Registration)' : 'Test 1 (Initial Muzzle Scan)',
         date: regDateStr,
-        bcs_score: cattle.bcs_score ?? 3.0,
-        health_status: cattle.disease || cattle.disease_status || 'Healthy',
+        bcs_score: cattle.bcs_score ?? 0,
+        health_status: cattle.disease || cattle.disease_status || (cattle.bcs_score != null && cattle.bcs_score > 0 ? 'Healthy' : 'Pending Video Scan'),
         weight_kg: cattle.weight_kg,
         height_cm: cattle.height_cm,
         coat_color: cattle.color || cattle.coat_color,
@@ -743,6 +744,7 @@ export default function CattleDetail() {
         age_estimate: cattle.age_estimate,
         udder_score: cattle.udder_score,
         teat_score: cattle.teat_score,
+        cleanliness_score: cattle.cleanliness_score ?? 0,
       };
       history = [initialTest];
       localStorage.setItem(storageKey, JSON.stringify(history));
@@ -803,7 +805,7 @@ export default function CattleDetail() {
   const cleanlinessTests = testHistory.filter(t => t.cleanliness_score && t.cleanliness_score > 0);
   const avgCleanlinessScore = cleanlinessTests.length > 0
     ? Math.round(cleanlinessTests.reduce((acc, t) => acc + (t.cleanliness_score || 0), 0) / cleanlinessTests.length)
-    : (cattle.cleanliness_score || 85);
+    : (cattle.cleanliness_score || 0);
 
   const bcsScore = activeTest ? (activeTest.bcs_score ?? 0) : avgBcsScore;
   const weightKg = activeTest ? activeTest.weight_kg : avgWeightKg;
@@ -811,20 +813,51 @@ export default function CattleDetail() {
   const udderScore = activeTest ? activeTest.udder_score : avgUdderScore;
   const teatScore = activeTest ? activeTest.teat_score : avgTeatScore;
   const cleanlinessScore = activeTest ? (activeTest.cleanliness_score ?? avgCleanlinessScore) : avgCleanlinessScore;
+  
+  const rawStatus = (activeTest?.health_status) || cattle.disease || cattle.disease_status || 'Unknown';
+  const isNonBovine = (activeTest && activeTest.is_cattle_detected === false) ||
+    (activeTest?.health_status && (activeTest.health_status.toLowerCase().includes('non-bovine') || activeTest.health_status.toLowerCase().includes('unidentified'))) ||
+    rawStatus.toLowerCase().includes('non-bovine') ||
+    rawStatus.toLowerCase().includes('unidentified') ||
+    (cattle.disease && (cattle.disease.toLowerCase().includes('non-bovine') || cattle.disease.toLowerCase().includes('unidentified')));
+
+  const hasVideoAnalysis = !isNonBovine && ((bcsScore > 0) || (cattle.bcs_score != null && cattle.bcs_score > 0));
 
   const coatColor = (activeTest?.coat_color) || cattle.color || cattle.coat_color || '';
-  const ageEstimate = (activeTest?.age_estimate) || cattle.age_estimate || '';
-  const breed = (activeTest?.breed) || cattle.breed;
-  const gender = (activeTest?.gender) || cattle.gender || cattle.sex || 'Unknown';
-  const isUnknownGender = !gender || gender.toLowerCase() === 'unknown' || gender.toLowerCase() === 'unverified';
-  const isMale = !isUnknownGender && (gender.toLowerCase() === 'male' || gender.toLowerCase().includes('bull') || gender.toLowerCase().includes('ox'));
+  const rawAge = (activeTest?.age_estimate) || cattle.age_estimate || '';
+  
+  // Dynamic age evaluation fallback based on weight and body metrics
+  const currentW = weightKg || 0;
+  const dynamicAgeFallback = (currentW > 0)
+    ? (currentW < 280 ? '1 - 2 years (Young Heifer)' : currentW < 400 ? '2 - 3 years (Young Adult)' : currentW < 520 ? '3 - 5 years (Prime Adult)' : '5 - 7 years (Mature Adult)')
+    : '2 - 4 years';
+
+  const ageEstimate = isNonBovine
+    ? 'N/A (Non-Cattle Subject)'
+    : !hasVideoAnalysis
+    ? 'Pending Video Scan'
+    : (rawAge && rawAge !== 'N/A' && rawAge !== 'Unknown' ? rawAge : dynamicAgeFallback);
+
+  const breed = isNonBovine ? 'Unidentified Subject' : ((activeTest?.breed) || cattle.breed || 'Unidentified Subject');
+
+  const rawGender = (activeTest?.gender) || cattle.gender || cattle.sex || 'Unknown';
+  const isUnknownGender = isNonBovine || !rawGender || rawGender.toLowerCase() === 'unknown' || rawGender.toLowerCase() === 'unverified' || rawGender.includes('N/A');
+  const isMale = !isNonBovine && !isUnknownGender && (rawGender.toLowerCase() === 'male' || rawGender.toLowerCase().includes('bull') || rawGender.toLowerCase().includes('ox'));
+  const displayGender = isNonBovine
+    ? 'N/A (Non-Cattle Subject)'
+    : isUnknownGender
+    ? 'Unknown — Select'
+    : isMale
+    ? 'Male (Bull/Ox)'
+    : 'Female (Cow/Buffalo)';
 
   // Use DB-stored range values if available, otherwise compute them
   const displayWeightRange = cattle.weight_range || formatWeightRange(weightKg || cattle.weight_kg);
   const displayHeightRange = cattle.height_range || formatHeightRange(heightCm || cattle.height_cm);
 
-  const rawStatus = (activeTest?.health_status) || cattle.disease || cattle.disease_status || 'Unknown';
-  const healthStatus = rawStatus.toLowerCase().includes('no visible') || rawStatus.toLowerCase().includes('healthy')
+  const healthStatus = isNonBovine
+    ? 'Non-Bovine Subject Detected'
+    : rawStatus.toLowerCase().includes('no visible') || rawStatus.toLowerCase().includes('healthy')
     ? 'Healthy'
     : rawStatus;
   const isHealthy = HEALTH_COLOR(healthStatus) === '#10b981';
@@ -835,7 +868,8 @@ export default function CattleDetail() {
   });
 
   const muzzleID  = muzzleTag(cattle.name, cattle.id);
-  const userShort = user ? userId(user.id) : 'USR---------';
+  const userShort = cattle.user_id ? userId(cattle.user_id) : (user ? userId(user.id) : 'USR---------');
+  const isOwner   = Boolean(user && cattle?.user_id && (user.id === cattle.user_id || user.id.replace(/-/g, '').substring(0, 8).toLowerCase() === cattle.user_id.replace(/-/g, '').substring(0, 8).toLowerCase()));
   const swatchBg  = coatSwatch(coatColor);
   const isSwatch  = swatchBg.startsWith('linear');
 
@@ -941,7 +975,7 @@ export default function CattleDetail() {
       userId: userShort,
       registeredDate: registeredDate,
       breed: breed,
-      gender: gender,
+      gender: displayGender,
       ageEstimate: ageEstimate,
       weightKg: weightKg,
       heightCm: heightCm,
@@ -1027,15 +1061,54 @@ export default function CattleDetail() {
             Back to Farm Management
           </button>
 
-          <button
-            onClick={handleDeleteInDetail}
-            className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 border border-rose-200 transition-all shadow-sm"
-          >
-            <span></span> Delete Cattle Profile
-          </button>
+          {isOwner ? (
+            <button
+              onClick={handleDeleteInDetail}
+              className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 border border-rose-200 transition-all shadow-sm"
+            >
+              <span></span> Delete Cattle Profile
+            </button>
+          ) : (
+            <span className="bg-emerald-100 text-emerald-800 text-xs font-black px-3.5 py-1.5 rounded-full border border-emerald-300 shadow-sm flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Verified Public Passport (Read-Only)
+            </span>
+          )}
         </div>
 
         {/* ── Hero Card ────────────────────────────────────────────────────── */}
+        {!hasVideoAnalysis && (
+          <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-amber-400 text-white flex items-center justify-center font-black flex-shrink-0 shadow-sm">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-amber-950 font-black text-base">Muzzle Registered — Video Scan Pending</h4>
+                <p className="text-amber-800 text-xs font-medium mt-0.5">
+                  You have registered the cattle muzzle scan. Record or upload a 15-second cattle video to calculate real Body Condition Score (BCS), weight, height, breed, and health stats.
+                </p>
+              </div>
+            </div>
+            {isOwner && (
+              <button
+                onClick={() => {
+                  setRetestMode('video');
+                  setIsRetakeModalOpen(true);
+                }}
+                className="btn-primary bg-amber-600 hover:bg-amber-700 text-white font-black text-xs py-3 px-5 rounded-xl shadow-md flex-shrink-0 transition-all"
+              >
+                Record / Upload Video Now
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-xl shadow-slate-200/60 mb-8">
           {/* Colour stripe based on health */}
           <div className={`h-2 w-full ${isHealthy ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-600' : 'bg-gradient-to-r from-rose-400 via-orange-400 to-rose-600'}`} />
@@ -1122,25 +1195,25 @@ export default function CattleDetail() {
                     <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider ml-1">{isAvgView ? 'AVG BCS/5' : 'BCS/5'}</span>
                   </div>
                 )}
-                {weightKg && (
+                {!!weightKg && weightKg > 0 && (
                   <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5 text-center">
                     <span className="text-xl font-black text-blue-700">{weightKg}</span>
                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-wider ml-1">{isAvgView ? 'AVG KG' : 'KG'}</span>
                   </div>
                 )}
-                {heightCm && (
+                {!!heightCm && heightCm > 0 && (
                   <div className="bg-purple-50 border border-purple-200 rounded-xl px-3 py-1.5 text-center">
                     <span className="text-xl font-black text-purple-700">{heightCm}</span>
                     <span className="text-[10px] font-black text-purple-600 uppercase tracking-wider ml-1">{isAvgView ? 'AVG CM' : 'CM'}</span>
                   </div>
                 )}
-                {ageEstimate && (
+                {!!ageEstimate && (
                   <div className="bg-teal-50 border border-teal-200 rounded-xl px-3 py-1.5 text-center">
                     <span className="text-sm font-black text-teal-800">{ageEstimate}</span>
                     <span className="text-[10px] font-black text-teal-600 uppercase tracking-wider ml-1">AGE</span>
                   </div>
                 )}
-                {coatColor && (
+                {!!coatColor && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5 flex items-center gap-2">
                     <div
                       className="w-4 h-4 rounded-full border border-amber-300 shadow-sm flex-shrink-0"
@@ -1193,32 +1266,36 @@ export default function CattleDetail() {
                 <option value="avg">Overall Average Summary ({testHistory.length} Weekly Tests)</option>
                 {testHistory.map((t) => (
                   <option key={t.test_number} value={t.test_number.toString()}>
-                    Test {t.test_number} ({t.date}) — BCS {t.bcs_score?.toFixed(1) || '3.0'}
+                    Test {t.test_number} ({t.date}) — {t.bcs_score && t.bcs_score > 0 ? `BCS ${t.bcs_score.toFixed(1)}` : 'Pending Video Scan'}
                   </option>
                 ))}
               </select>
 
-              <button
-                onClick={() => detailUdderPhotoRef.current?.click()}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 00-2 2V9z" />
-                </svg>
-                <span>Upload Udder Photo Only</span>
-              </button>
-              <button
-                onClick={() => {
-                  setRetestMode('photos');
-                  setIsRetakeModalOpen(true);
-                }}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 00-2 2V9z" />
-                </svg>
-                <span> Multi-Angle Retest Photos (Test {testHistory.length + 1})</span>
-              </button>
+              {isOwner && (
+                <>
+                  <button
+                    onClick={() => detailUdderPhotoRef.current?.click()}
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 00-2 2V9z" />
+                    </svg>
+                    <span>Upload Udder Photo Only</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRetestMode('photos');
+                      setIsRetakeModalOpen(true);
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 00-2 2V9z" />
+                    </svg>
+                    <span> Multi-Angle Retest Photos (Test {testHistory.length + 1})</span>
+                  </button>
+                </>
+              )}
               <input
                 type="file"
                 accept="image/*"
@@ -1244,15 +1321,21 @@ export default function CattleDetail() {
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
               <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">BCS Score</p>
-                <p className="text-base font-black text-emerald-700 mt-0.5">{bcsScore.toFixed(1)} / 5.0</p>
+                <p className="text-base font-black text-emerald-700 mt-0.5">
+                  {!isNonBovine && hasVideoAnalysis && bcsScore > 0 ? `${bcsScore.toFixed(1)} / 5.0` : 'N/A'}
+                </p>
               </div>
               <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Health Status</p>
-                <p className="text-xs font-black text-slate-800 mt-0.5 truncate">{healthStatus}</p>
+                <p className="text-xs font-black text-slate-800 mt-0.5 truncate">
+                  {isNonBovine ? 'Non-Bovine Subject' : (hasVideoAnalysis ? healthStatus : 'Pending Video Scan')}
+                </p>
               </div>
               <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Cleanliness</p>
-                <p className="text-xs font-black text-emerald-700 mt-0.5">{cattle.cleanliness_score || activeTest?.cleanliness_score || 85} / 100</p>
+                <p className="text-xs font-black text-emerald-700 mt-0.5">
+                  {!isNonBovine && hasVideoAnalysis && cleanlinessScore > 0 ? `${cleanlinessScore} / 100` : 'N/A'}
+                </p>
               </div>
               <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Cattle Breed</p>
@@ -1260,15 +1343,19 @@ export default function CattleDetail() {
               </div>
               <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Est. Weight Range</p>
-                <p className="text-xs font-black text-blue-700 mt-0.5">{displayWeightRange}</p>
+                <p className="text-xs font-black text-blue-700 mt-0.5">
+                  {!isNonBovine && hasVideoAnalysis ? displayWeightRange : 'N/A'}
+                </p>
               </div>
               <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Est. Height Range</p>
-                <p className="text-xs font-black text-purple-700 mt-0.5">{displayHeightRange}</p>
+                <p className="text-xs font-black text-purple-700 mt-0.5">
+                  {!isNonBovine && hasVideoAnalysis ? displayHeightRange : 'N/A'}
+                </p>
               </div>
 
-              {/* Gender Cell — shows Unknown with manual selector if unconfirmed */}
-              {isUnknownGender ? (
+              {/* Gender Cell — shows Unknown with manual selector if unconfirmed and viewer is owner */}
+              {isUnknownGender && isOwner ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 col-span-2 sm:col-span-1">
                   <p className="text-[10px] font-black text-amber-600 uppercase tracking-wider">Gender / Sex</p>
                   <p className="text-[10px] font-bold text-amber-800 mt-0.5 mb-2">Unknown — Select manually:</p>
@@ -1286,8 +1373,8 @@ export default function CattleDetail() {
               ) : (
                 <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Gender / Sex</p>
-                  <p className={`text-xs font-black mt-0.5 ${isMale ? 'text-blue-600' : 'text-pink-600'}`}>
-                    {isMale ? 'Male (Bull / Ox)' : 'Female (Cow / Buffalo)'}
+                  <p className={`text-xs font-black mt-0.5 ${isMale ? 'text-blue-600' : (isUnknownGender ? 'text-slate-400' : 'text-pink-600')}`}>
+                    {displayGender}
                   </p>
                 </div>
               )}
@@ -1356,10 +1443,10 @@ export default function CattleDetail() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {(cattle.weight_kg || cattle.height_cm || cattle.body_length_cm) && (
+          {!!((cattle.weight_kg && cattle.weight_kg > 0) || (cattle.height_cm && cattle.height_cm > 0) || (cattle.body_length_cm && cattle.body_length_cm > 0)) && (
             <BodyMetricsChart weight={cattle.weight_kg} height={cattle.height_cm} bodyLength={cattle.body_length_cm} />
           )}
-          {cattle.breed && <BreedChart breed={cattle.breed} />}
+          {!!cattle.breed && <BreedChart breed={cattle.breed} />}
         </div>
 
         {/* ── Coat Color section ───────────────────────────────────────────── */}
@@ -1394,7 +1481,7 @@ export default function CattleDetail() {
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
                   <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
-                    <span>📋</span> Test-by-Test Diagnostics & Photo Gallery ({historyItems.length} Tests)
+                    <span></span> Test-by-Test Diagnostics & Photo Gallery ({historyItems.length} Tests)
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">Complete record of captured photos, videos, and AI vitals for each test iteration.</p>
                 </div>
@@ -1404,11 +1491,24 @@ export default function CattleDetail() {
                 {historyItems.map((th: any, tIdx: number) => {
                   const testNum = th.test_number || tIdx + 1;
                   const testDate = th.date || new Date(cattle.created_at || Date.now()).toLocaleDateString('en-IN');
-                  const testBcs = th.bcs_score || cattle.bcs_score || 3.5;
-                  const testHealth = th.health_status || th.disease_status || cattle.disease || 'Healthy';
-                  const testClean = th.cleanliness_score || cattle.cleanliness_score || 85;
-                  const testUdder = th.udder_score || cattle.udder_score || 4.0;
-                  const testTeat = th.teat_score || cattle.teat_score || 4.0;
+                  
+                  const isNonBovine = th.is_cattle_detected === false ||
+                    (th.health_status && (th.health_status.toLowerCase().includes('non-bovine') || th.health_status.toLowerCase().includes('unidentified')));
+
+                  const rawBcs = th.bcs_score ?? (tIdx === 0 ? cattle.bcs_score : null);
+                  const testBcsStr = isNonBovine || !rawBcs || rawBcs === 0 ? 'N/A' : `${Number(rawBcs).toFixed(1)} / 5`;
+                  const bcsBadgeStr = isNonBovine || !rawBcs || rawBcs === 0 ? 'BCS N/A' : `BCS ${Number(rawBcs).toFixed(1)}`;
+                  
+                  const testHealth = th.health_status || th.disease_status || cattle.disease || (rawBcs ? 'Healthy' : 'Pending Video Scan');
+                  
+                  const rawClean = th.cleanliness_score ?? (tIdx === 0 ? cattle.cleanliness_score : null);
+                  const testCleanStr = isNonBovine || !rawClean || rawClean === 0 ? 'N/A' : `${rawClean} / 100`;
+                  const cleanBadgeStr = isNonBovine || !rawClean || rawClean === 0 ? 'Cleanliness N/A' : `Cleanliness ${rawClean}/100`;
+                  
+                  const rawUdder = th.udder_score ?? (tIdx === 0 ? cattle.udder_score : null);
+                  const rawTeat = th.teat_score ?? (tIdx === 0 ? cattle.teat_score : null);
+                  const testUdderStr = isNonBovine || !rawUdder || rawUdder === 0 ? 'N/A' : `${rawUdder} / ${rawTeat || rawUdder}`;
+
                   const testPhotos = th.retest_photos || (tIdx === 0 ? cattle.retest_photos : null);
 
                   const photoList: Array<{ label: string; url: string }> = [];
@@ -1434,7 +1534,9 @@ export default function CattleDetail() {
                     <div key={tIdx} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-black text-xs flex items-center justify-center border border-emerald-300">
+                          <span className={`w-6 h-6 rounded-full font-black text-xs flex items-center justify-center border ${
+                            isNonBovine ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          }`}>
                             {testNum}
                           </span>
                           <div>
@@ -1446,11 +1548,13 @@ export default function CattleDetail() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
-                            BCS {testBcs}
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${
+                            isNonBovine ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          }`}>
+                            {isNonBovine ? 'Non-Bovine Video' : bcsBadgeStr}
                           </span>
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-cyan-100 text-cyan-800 border border-cyan-300">
-                            Cleanliness {testClean}/100
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300">
+                            {cleanBadgeStr}
                           </span>
                         </div>
                       </div>
@@ -1458,26 +1562,26 @@ export default function CattleDetail() {
                       <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-bold bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
                         <div>
                           <span className="text-slate-400 block uppercase text-[8px]">BCS Score</span>
-                          <span className="text-emerald-700 font-black text-xs">{testBcs} / 5</span>
+                          <span className={`font-black text-xs ${isNonBovine || testBcsStr === 'N/A' ? 'text-slate-400' : 'text-emerald-700'}`}>{testBcsStr}</span>
                         </div>
                         <div>
                           <span className="text-slate-400 block uppercase text-[8px]">Health</span>
-                          <span className="text-amber-700 font-black text-xs truncate block">{testHealth}</span>
+                          <span className={`font-black text-xs truncate block ${isNonBovine ? 'text-rose-700 font-black' : 'text-emerald-700'}`}>{testHealth}</span>
                         </div>
                         <div>
                           <span className="text-slate-400 block uppercase text-[8px]">Cleanliness</span>
-                          <span className="text-cyan-700 font-black text-xs">{testClean} / 100</span>
+                          <span className={`font-black text-xs ${isNonBovine || testCleanStr === 'N/A' ? 'text-slate-400' : 'text-cyan-700'}`}>{testCleanStr}</span>
                         </div>
                         <div>
                           <span className="text-slate-400 block uppercase text-[8px]">Udder / Teat</span>
-                          <span className="text-purple-700 font-black text-xs">{testUdder} / {testTeat}</span>
+                          <span className={`font-black text-xs ${isNonBovine || testUdderStr === 'N/A' ? 'text-slate-400' : 'text-purple-700'}`}>{testUdderStr}</span>
                         </div>
                       </div>
 
                       {photoList.length > 0 ? (
                         <div className="space-y-1.5 pt-1">
                           <span className="text-[10px] font-black uppercase text-slate-700 tracking-wider block">
-                            📷 Retest & Scan Photos Captured for Test {testNum} ({photoList.length} Photos):
+                             Retest & Scan Photos Captured for Test {testNum} ({photoList.length} Photos):
                           </span>
                           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                             {photoList.map((photo, pIdx) => (
@@ -1511,123 +1615,176 @@ export default function CattleDetail() {
         {/* ── Full Stats Grid ──────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
           <h2 className="text-lg font-black text-slate-900">Cattle Profile</h2>
-          {isUnknownGender ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-amber-700">Gender Unknown — Confirm:</span>
+          {isOwner && (
+            isUnknownGender ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-amber-700">Gender Unknown — Confirm:</span>
+                <button
+                  type="button"
+                  onClick={() => handleToggleGenderInDetail('Female')}
+                  className="bg-pink-50 hover:bg-pink-100 text-pink-800 font-bold text-xs px-3 py-2 rounded-xl border border-pink-200 transition-all shadow-sm"
+                >Female (Cow/Buffalo)</button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleGenderInDetail('Male')}
+                  className="bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs px-3 py-2 rounded-xl border border-blue-200 transition-all shadow-sm"
+                >Male (Bull/Ox)</button>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={() => handleToggleGenderInDetail('Female')}
-                className="bg-pink-50 hover:bg-pink-100 text-pink-800 font-bold text-xs px-3 py-2 rounded-xl border border-pink-200 transition-all shadow-sm"
-              >Female (Cow/Buffalo)</button>
-              <button
-                type="button"
-                onClick={() => handleToggleGenderInDetail('Male')}
-                className="bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs px-3 py-2 rounded-xl border border-blue-200 transition-all shadow-sm"
-              >Male (Bull/Ox)</button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => handleToggleGenderInDetail(isMale ? 'Female' : 'Male')}
-              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 border border-emerald-200 transition-all shadow-sm"
-            >
-              <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-              <span>Incorrect Gender? Switch to {isMale ? 'Female (Cow/Buffalo)' : 'Male (Bull/Ox)'}</span>
-            </button>
+                onClick={() => handleToggleGenderInDetail(isMale ? 'Female' : 'Male')}
+                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 border border-emerald-200 transition-all shadow-sm"
+              >
+                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                <span>Incorrect Gender? Switch to {isMale ? 'Female (Cow/Buffalo)' : 'Male (Bull/Ox)'}</span>
+              </button>
+            )
           )}
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
-          {cattle.breed && (
-            <StatCard label="Breed" value={cattle.breed} color="emerald" icon={
+          <StatCard
+            label="Breed"
+            value={breed}
+            color={isNonBovine ? "slate" : "emerald"}
+            icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-            } />
-          )}
-          {(weightKg || cattle.weight_kg) && (
-            <StatCard label="Est. Weight Range" value={displayWeightRange} color="blue" icon={
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-              </svg>
-            } />
-          )}
-          {(heightCm || cattle.height_cm) && (
-            <StatCard label="Est. Height Range" value={displayHeightRange} color="purple" icon={
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-              </svg>
-            } />
-          )}
-          {coatColor && (
-            <StatCard label="Coat Color" value={coatColor} color="amber" icon={
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-              </svg>
-            } />
-          )}
-          {(cattle.estimated_value || activeTest?.estimated_value) && (
-            <StatCard label="Est. Value" value={cattle.estimated_value || activeTest?.estimated_value || ''} color="emerald" icon={
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            } />
-          )}
-          {ageEstimate && (
-            <StatCard label="Age Estimate" value={ageEstimate} color="slate" icon={
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            } />
-          )}
-          {bcsScore > 0 && (
-            <StatCard label="BCS Score" value={`${bcsScore.toFixed(1)} / 5.0`} color="emerald" icon={
+            }
+          />
+          <StatCard
+            label="BCS Score"
+            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (bcsScore > 0 ? `${bcsScore.toFixed(1)} / 5.0` : 'Pending Video Scan')}
+            color={isNonBovine ? 'slate' : (bcsScore > 0 ? 'emerald' : 'amber')}
+            icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-            } />
-          )}
+            }
+          />
+          <StatCard
+            label="Health Status"
+            value={isNonBovine ? 'Non-Bovine Subject Detected' : (hasVideoAnalysis ? healthStatus : 'Pending Video Scan')}
+            color={isNonBovine ? 'rose' : (isHealthy ? 'emerald' : (hasVideoAnalysis ? 'rose' : 'amber'))}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            }
+          />
           <StatCard
             label="Cleanliness Score"
-            value={`${cattle.cleanliness_score || activeTest?.cleanliness_score || 85} / 100`}
-            color="emerald"
+            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (cleanlinessScore > 0 ? `${cleanlinessScore} / 100` : (cattle.cleanliness_score ? `${cattle.cleanliness_score} / 100` : 'Pending Video Scan'))}
+            color={isNonBovine ? 'slate' : (cleanlinessScore > 0 ? 'cyan' : 'amber')}
             icon={
-              <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg className="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Est. Weight Range"
+            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (((weightKg && weightKg > 0) || cattle.weight_kg || cattle.weight_range) ? displayWeightRange : 'Pending Video Scan')}
+            color={isNonBovine ? 'slate' : (weightKg && weightKg > 0 ? 'blue' : 'amber')}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Est. Height Range"
+            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (((heightCm && heightCm > 0) || cattle.height_cm || cattle.height_range) ? displayHeightRange : 'Pending Video Scan')}
+            color={isNonBovine ? 'slate' : (heightCm && heightCm > 0 ? 'purple' : 'amber')}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Coat Color"
+            value={coatColor || cattle.color || cattle.coat_color || 'Unknown / Multi-colored'}
+            color="amber"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
               </svg>
             }
           />
           <StatCard
             label="Gender / Sex"
-            value={isUnknownGender ? 'Unknown — Please Select' : (isMale ? 'Male (Bull/Ox)' : 'Female (Cow/Buffalo)')}
-            color={isUnknownGender ? 'amber' : (isMale ? 'blue' : 'rose')}
+            value={displayGender}
+            color={isNonBovine ? 'slate' : (isUnknownGender ? 'amber' : (isMale ? 'blue' : 'rose'))}
             icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             }
           />
-          {!isMale && !isUnknownGender && (cattle.udder_score !== undefined && cattle.udder_score !== null && cattle.udder_score > 0) && (
-            <StatCard label="Udder Score" value={`${cattle.udder_score.toFixed(1)} / 5.0`} color="purple" icon={
+          <StatCard
+            label="Age Estimate"
+            value={ageEstimate}
+            color={isNonBovine ? 'slate' : (hasVideoAnalysis ? 'teal' : 'amber')}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Est. Value"
+            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (cattle.estimated_value || activeTest?.estimated_value || 'N/A')}
+            color={isNonBovine ? 'slate' : 'emerald'}
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Udder Score"
+            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (!isMale ? (udderScore && udderScore > 0 ? `${udderScore.toFixed(1)} / 5.0` : 'Pending / Not Visible') : 'N/A (Male)')}
+            color={isNonBovine ? 'slate' : (!isMale && udderScore && udderScore > 0 ? 'purple' : 'slate')}
+            icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-            } />
-          )}
-          {!isMale && (cattle.teat_score !== undefined && cattle.teat_score !== null && cattle.teat_score > 0) && (
-            <StatCard label="Teat Score" value={`${cattle.teat_score.toFixed(1)} / 5.0`} color="blue" icon={
+            }
+          />
+          <StatCard
+            label="Teat Score"
+            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (!isMale ? (teatScore && teatScore > 0 ? `${teatScore.toFixed(1)} / 5.0` : 'Pending / Not Visible') : 'N/A (Male)')}
+            color={isNonBovine ? 'slate' : (!isMale && teatScore && teatScore > 0 ? 'blue' : 'slate')}
+            icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-            } />
-          )}
-          {/* Muzzle ID always shown */}
-          <StatCard label="Muzzle ID" value={muzzleID} color="teal" icon={
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
-            </svg>
-          } />
+            }
+          />
+          <StatCard
+            label="Muzzle ID"
+            value={muzzleID}
+            color="teal"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Owner User ID"
+            value={userShort}
+            color="slate"
+            icon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            }
+          />
         </div>
 
         {/* ── Udder & Teat Health Section ──────────────────────────────────── */}

@@ -71,7 +71,7 @@ class VideoAnalysisResult(BaseModel):
     teat_visible: bool = False
     # Parts AI could not clearly see — triggers retake prompt on frontend
     missing_parts: List[str] = Field(default_factory=list)
-    age_estimate: Optional[str] = "4 - 5 years"
+    age_estimate: Optional[str] = None
     # Cleanliness / Hygiene Score out of 100
     cleanliness_score: int = Field(default=85, ge=0, le=100)
     # Multi-cattle support (e.g. Cow + Calf)

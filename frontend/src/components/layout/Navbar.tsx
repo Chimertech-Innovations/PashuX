@@ -5,11 +5,11 @@ import { useState } from 'react';
 const IHERD_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.chimertech.iherd&hl=en_IN';
 
 const AI_MODULES = [
-  { to: '/farm',    label: 'Farm Management',     desc: 'Register cattle with AI Muzzle Scan' },
-  { to: '/muzzle-check', label: 'Muzzle Identity Check', desc: 'Identify cattle by muzzle pattern' },
-  { to: '/bcs',     label: 'BCS Score Detection', desc: 'Body condition score AI analysis' },
-  { to: '/disease', label: 'Disease Detection',   desc: 'Visible cattle health screening' },
-  { to: '/history', label: 'Analysis History',    desc: 'Past diagnostic reports & scans' },
+  { to: '/farm', label: 'Farm Management',     desc: 'Register cattle with AI Muzzle Scan' },
+  { to: '/farm', label: 'Muzzle Identity Check', desc: 'Identify cattle by muzzle pattern' },
+  { to: '/farm', label: 'BCS Score Detection', desc: 'Body condition score AI analysis' },
+  { to: '/farm', label: 'Disease Detection',   desc: 'Visible cattle health screening' },
+  { to: '/farm', label: 'Analysis History',    desc: 'Past diagnostic reports & scans' },
 ];
 
 const SUBMENU_ITEMS = [
@@ -33,8 +33,8 @@ export default function Navbar() {
       {/* Top Announcement Banner (Hidden on Mobile) */}
       <div className="hidden sm:flex bg-[#0f172a] text-white py-1.5 px-3 text-center text-[10px] sm:text-xs font-bold tracking-wide items-center justify-center gap-1.5 sm:gap-2 border-b border-slate-800 flex-wrap">
         <span className="bg-emerald-500 text-slate-950 font-black text-[9px] px-2 py-0.5 rounded-full uppercase flex-shrink-0">PashuX AI</span>
-        <span className="truncate max-w-[240px] sm:max-w-none">Cattle Health Intelligence & 10s Video BCS Scanner</span>
-        <Link to="/live" className="underline hover:text-emerald-300 font-black ml-0.5 flex-shrink-0">Try Scan →</Link>
+        <span className="truncate max-w-[240px] sm:max-w-none">Cattle Health Intelligence & Biometric AI Muzzle Scanner</span>
+        <Link to="/farm" className="underline hover:text-emerald-300 font-black ml-0.5 flex-shrink-0">Try Muzzle Scan →</Link>
       </div>
 
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 min-h-[72px] py-2 flex items-center justify-between gap-3">
@@ -62,17 +62,28 @@ export default function Navbar() {
             Home
           </Link>
 
-          {/* Live 10s Scan */}
+          {/* Farm Management */}
           <Link
-            to="/live"
-            className={`px-3 py-2 text-xs font-black transition-colors duration-150 whitespace-nowrap flex items-center gap-1.5 ${
-              pathname === '/live'
+            to="/farm"
+            className={`px-3 py-2 text-xs font-black transition-colors duration-150 whitespace-nowrap ${
+              pathname === '/farm'
                 ? 'text-emerald-600 font-black'
                 : 'text-slate-800 font-bold hover:text-emerald-600'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-sm flex-shrink-0" />
-            <span>Live 10s Scan</span>
+            Farm Management
+          </Link>
+
+          {/* Muzzle Scan */}
+          <Link
+            to="/farm"
+            className={`px-3 py-2 text-xs font-black transition-colors duration-150 whitespace-nowrap ${
+              pathname === '/farm'
+                ? 'text-emerald-600 font-black'
+                : 'text-slate-800 font-bold hover:text-emerald-600'
+            }`}
+          >
+            Muzzle Scan
           </Link>
 
           {/* AI Detection Dropdown */}
@@ -102,7 +113,7 @@ export default function Navbar() {
                     const isCurrent = pathname === item.to;
                     return (
                       <Link
-                        key={item.to}
+                        key={item.label}
                         to={item.to}
                         onClick={() => setAiDropdownOpen(false)}
                         className={`block px-3.5 py-2 rounded-xl transition-all duration-150 ${
@@ -246,14 +257,23 @@ export default function Navbar() {
           </Link>
 
           <Link
-            to="/live"
+            to="/farm"
             onClick={() => setMenuOpen(false)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black transition-all ${
-              pathname === '/live' ? 'text-emerald-950 bg-emerald-100 border border-emerald-300' : 'text-slate-900 hover:bg-slate-100'
+            className={`block px-4 py-2.5 rounded-xl text-sm font-black transition-all ${
+              pathname === '/farm' ? 'text-emerald-950 bg-emerald-100 border border-emerald-300' : 'text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-            <span>Live 10s Scan</span>
+            Farm Management
+          </Link>
+
+          <Link
+            to="/farm"
+            onClick={() => setMenuOpen(false)}
+            className={`block px-4 py-2.5 rounded-xl text-sm font-black transition-all ${
+              pathname === '/farm' ? 'text-emerald-950 bg-emerald-100 border border-emerald-300' : 'text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            Muzzle Scan
           </Link>
 
           {/* AI Modules Mobile Submenu */}
@@ -261,7 +281,7 @@ export default function Navbar() {
             <p className="px-4 text-[10px] uppercase font-black tracking-widest text-slate-400">AI Detection Modules</p>
             {AI_MODULES.map((item) => (
               <Link
-                key={item.to}
+                key={item.label}
                 to={item.to}
                 onClick={() => setMenuOpen(false)}
                 className={`block px-4 py-2 rounded-xl text-xs font-black ${

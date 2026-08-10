@@ -48,40 +48,40 @@ const ACCORDION_ITEMS = [
 
 const ANALYSIS_MODULES = [
   {
-    title: 'Live 10s BCS & Disease Scan',
-    desc: 'Turn on camera for 10 seconds. Auto-stops stream and delivers instant dual BCS scoring & disease screening results.',
-    to: '/live',
-    image: '/card_live.png',
+    title: 'Biometric Muzzle Detection',
+    desc: 'Scan cattle muzzle nose print with AI neural vision to generate unique biometric identification and instant passport.',
+    to: '/muzzle-check',
+    image: '/muzzle_detection_card.png',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-emerald-700">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5" />
       </svg>
     ),
-    tag: 'Live Camera Scanner',
+    tag: 'Biometric Muzzle ID',
   },
   {
-    title: 'Cattle BCS Score Detection',
-    desc: 'Analyse body condition on the 1–5 scale. Get feeding and management recommendations tailored to your cattle.',
-    to: '/bcs',
-    image: '/card_bcs.png',
+    title: 'Farm & Herd Management',
+    desc: 'Manage your entire cattle herd dashboard, track weight trends, health status, and complete digital health passports.',
+    to: '/farm',
+    image: '/farm_management_card.png',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-emerald-700">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-blue-700">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1.5-3m1.5 3l1.5-3m-4.5-3l1.5-3m-1.5 3l-1.5-3" />
       </svg>
     ),
-    tag: 'BCS Analysis',
+    tag: 'Farm Management',
   },
   {
-    title: 'Cattle Disease Detection',
-    desc: 'Screen for visible signs of mastitis, skin conditions, locomotion issues and more. AI-assisted, farmer-friendly.',
-    to: '/disease',
-    image: '/card_disease.png',
+    title: 'Cattle Health Scoring & Disease Detection',
+    desc: 'Register new cattle in seconds with muzzle scan, track 10s video vitals, BCS scores, and receive Chimertech recommendations.',
+    to: '/farm',
+    image: '/add_cattle_monitoring_card.png',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-emerald-700">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-purple-700">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    tag: 'Health Screening',
+    tag: 'Live AI Monitoring',
   },
 ];
 
@@ -105,27 +105,37 @@ export default function Landing() {
             </div>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.12] tracking-tight">
-              Cattle Health & BCS AI Intelligence
+              Biometric Cattle Muzzle ID & Farm Health Monitoring
             </h1>
 
             <p className="text-sm sm:text-lg text-slate-700 font-bold leading-relaxed max-w-xl">
-              Analyse cattle body condition scores (BCS 1-5 scale), detect early disease risks, and receive targeted product recommendations from Chimertech with our 10-second camera AI scanner.
+              Register cattle instantly with biometric muzzle recognition, track Body Condition Scores (BCS 1-5), and manage complete herd vitals with Chimertech AI intelligence.
             </p>
 
             {/* CTAs */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-1">
               <Link
-                to="/live"
-                className="w-full sm:w-auto text-center px-7 py-3.5 sm:py-4 rounded-2xl bg-[#0f172a] hover:bg-slate-800 text-white font-black text-xs sm:text-sm shadow-xl shadow-slate-900/20 hover:scale-105 transition-all flex items-center justify-center gap-2"
+                to="/muzzle-check"
+                className="w-full sm:w-auto text-center px-7 py-3.5 sm:py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm shadow-xl shadow-emerald-600/20 hover:scale-105 transition-all flex items-center justify-center gap-2"
               >
-                <span>Start Live 10s Camera Scan</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Add Your Cattle via Muzzle Scan</span>
+              </Link>
+
+              <Link
+                to="/farm"
+                className="w-full sm:w-auto text-center px-6 py-3.5 sm:py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs sm:text-sm shadow-md hover:scale-105 transition-all flex items-center justify-center gap-2"
+              >
+                <span>Open Farm Management</span>
               </Link>
 
               <a
                 href={IHERD_PLAY_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto text-center px-6 py-3.5 sm:py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-900 border-2 border-slate-300 font-black text-xs sm:text-sm shadow-md hover:scale-105 transition-all flex items-center justify-center gap-2.5"
+                className="w-full sm:w-auto text-center px-5 py-3.5 sm:py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-900 border-2 border-slate-300 font-black text-xs sm:text-sm shadow-md hover:scale-105 transition-all flex items-center justify-center gap-2.5"
               >
                 <img src="/iherd_logo.png" alt="iHerd Logo" className="w-5 h-5 rounded-md object-contain" />
                 <span>Get iHerd App</span>
@@ -147,7 +157,7 @@ export default function Landing() {
                   
                   {/* Phone Header */}
                   <div className="pt-7 px-3 sm:px-4 pb-2 bg-slate-900/90 backdrop-blur-sm border-b border-slate-800 text-white flex items-center justify-between text-xs z-20 relative">
-                    <span className="font-black tracking-wider text-emerald-400 text-[10px] sm:text-[11px]">PashuX AI Scanner</span>
+                    <span className="font-black tracking-wider text-emerald-400 text-[10px] sm:text-[11px]">Muzzle Scanner</span>
                     <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
                   </div>
 
@@ -172,7 +182,7 @@ export default function Landing() {
                       <img src="/chimertech_logo.png" alt="Logo" className="w-3.5 sm:w-4 h-3.5 sm:h-4 object-contain" />
                       <span className="font-black text-xs tracking-tight">PashuX</span>
                     </div>
-                    <span className="text-[9px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">BCS 3.5</span>
+                    <span className="text-[9px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">MUZZLE VERIFIED</span>
                   </div>
 
                   {/* Cattle Image & Live UI */}
@@ -273,36 +283,43 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* SECTION 3: CHOOSE YOUR ANALYSIS (Original 3-Card Design with Real Cattle Images) */}
-      <section className="py-20 px-6 max-w-7xl mx-auto">
-        <div className="text-center max-w-xl mx-auto mb-12 space-y-2">
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Choose your analysis</h2>
-          <p className="text-sm font-bold text-slate-600">Select the type of analysis you want to perform.</p>
+      {/* SECTION 3: FEATURE SHOWCASE MODULES (Muzzle Detection, Farm Management, Add & Monitor Cattle) */}
+      <section className="py-20 px-6 max-w-7xl mx-auto border-b border-slate-200">
+        <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
+          <span className="px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black tracking-wider uppercase border border-emerald-300">
+            HERD MANAGEMENT & AI BIOMETRICS
+          </span>
+          <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
+            Add Your Cattle & Monitor Vitals in Real-Time
+          </h2>
+          <p className="text-sm sm:text-base font-bold text-slate-600">
+            Register your livestock with biometric muzzle recognition, track Body Condition Scores (BCS), and access live health analytics from your phone or desktop.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {ANALYSIS_MODULES.map(card => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {ANALYSIS_MODULES.map((card) => (
             <Link
-              key={card.to}
+              key={card.title}
               to={card.to}
-              className="glass-card bg-white border border-slate-300 rounded-[2rem] flex flex-col justify-between overflow-hidden group hover:border-emerald-500 hover:shadow-2xl transition-all duration-300 text-left"
+              className="glass-card bg-white border border-slate-200 rounded-[2.5rem] flex flex-col justify-between overflow-hidden group hover:border-emerald-500 hover:shadow-2xl transition-all duration-300 text-left shadow-sm"
             >
               {/* Card Image Banner */}
-              <div className="relative h-48 w-full overflow-hidden bg-slate-100 border-b border-slate-200">
+              <div className="relative h-56 w-full overflow-hidden bg-slate-100 border-b border-slate-200">
                 <img
                   src={card.image}
                   alt={card.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[11px] font-black bg-white/95 backdrop-blur-md text-slate-950 border border-emerald-300 shadow-md flex items-center gap-1.5">
+                <div className="absolute top-4 left-4 px-3.5 py-1.5 rounded-full text-[11px] font-black bg-white/95 backdrop-blur-md text-slate-950 border border-emerald-300 shadow-md flex items-center gap-2">
                   {card.icon}
                   <span>{card.tag}</span>
                 </div>
               </div>
 
-              <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+              <div className="p-7 flex-1 flex flex-col justify-between space-y-4">
                 <div>
-                  <h3 className="text-lg font-black text-slate-900 mb-2 group-hover:text-emerald-700 transition-colors">
+                  <h3 className="text-xl font-black text-slate-900 mb-2 group-hover:text-emerald-700 transition-colors">
                     {card.title}
                   </h3>
                   <p className="text-xs text-slate-600 font-bold leading-relaxed">
@@ -311,7 +328,7 @@ export default function Landing() {
                 </div>
 
                 <div className="pt-2 flex items-center gap-2 text-xs font-black text-emerald-700 group-hover:text-emerald-800">
-                  <span>Get started</span>
+                  <span>Get started now</span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4 group-hover:translate-x-1 transition-transform">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>

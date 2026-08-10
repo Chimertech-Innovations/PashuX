@@ -536,13 +536,33 @@ async def analyze_cattle_video(
         # Build test iteration record to persist test history in database
         existing_history = (existing_cattle.get("test_history") if existing_cattle else None) or []
         next_test_num = len(existing_history) + 1
+
+        def _calc_dynamic_age_str(stats_obj) -> str:
+            if not getattr(stats_obj, "is_cattle_detected", True):
+                return "N/A (Non-Cattle Subject)"
+            if getattr(stats_obj, "age_estimate", None) and stats_obj.age_estimate not in ["Unknown", "N/A", ""]:
+                return stats_obj.age_estimate
+            w = getattr(stats_obj, "weight_kg", 0.0) or 0.0
+            if w > 0:
+                if w < 260:
+                    return "1 - 2 years (Young Heifer)"
+                elif w < 380:
+                    return "2 - 3 years (Young Adult)"
+                elif w < 500:
+                    return "3 - 5 years (Prime Adult)"
+                else:
+                    return "5 - 7 years (Mature Adult)"
+            return "2 - 4 years"
+
+        calculated_age = _calc_dynamic_age_str(stats)
+
         new_test_entry = {
             "test_number": next_test_num,
-            "test_label": f"Test {next_test_num} (Weekly Retest)",
-            "date": datetime.datetime.now().strftime("%d %b %Y"),
+            "test_label": f"Test {next_test_num} (Video Scan)",
+            "date": datetime.date.today().strftime("%d %b %Y"),
             "bcs_score": stats.bcs_score,
             "health_status": stats.disease_status,
-            "cleanliness_score": getattr(stats, "cleanliness_score", 85),
+            "cleanliness_score": getattr(stats, "cleanliness_score", 0),
             "weight_kg": stats.weight_kg,
             "weight_range": w_range,
             "height_cm": stats.height_cm,
@@ -551,7 +571,7 @@ async def analyze_cattle_video(
             "breed": stats.breed,
             "gender": stats.gender,
             "estimated_value": stats.estimated_value,
-            "age_estimate": stats.age_estimate or "4 - 5 years",
+            "age_estimate": calculated_age,
             "udder_score": stats.udder_score,
             "teat_score": stats.teat_score,
             "observations": stats.observations,
@@ -564,7 +584,7 @@ async def analyze_cattle_video(
             "bcs_score": stats.bcs_score,
             "disease": stats.disease_status,
             "disease_status": stats.disease_status,
-            "cleanliness_score": getattr(stats, "cleanliness_score", 85),
+            "cleanliness_score": getattr(stats, "cleanliness_score", 0),
             "breed": stats.breed,
             "gender": stats.gender,
             "sex": stats.gender,
@@ -573,7 +593,7 @@ async def analyze_cattle_video(
             "color": stats.coat_color,
             "coat_color": stats.coat_color,
             "estimated_value": stats.estimated_value,
-            "age_estimate": stats.age_estimate or "4 - 5 years",
+            "age_estimate": calculated_age,
             "weight_range": w_range,
             "height_range": h_range,
             "video_url": retest_video_url or (existing_cattle.get("video_url") if existing_cattle else ""),
@@ -621,7 +641,7 @@ async def analyze_cattle_video(
         result_data = stats.dict()
         result_data["weight_range"] = w_range
         result_data["height_range"] = h_range
-        result_data["age_estimate"] = stats.age_estimate or "4 - 5 years"
+        result_data["age_estimate"] = calculated_age
         result_data["retest_video_url"] = retest_video_url
         result_data["test_history"] = updated_history
         result_data["retake_required"] = len(stats.missing_parts) > 0

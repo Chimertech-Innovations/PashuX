@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -6,10 +6,7 @@ import ScrollToTop from '@/components/utils/ScrollToTop';
 import ConsentBanner from '@/components/ui/ConsentBanner';
 import Landing from '@/pages/Landing';
 import Auth from '@/pages/Auth';
-import BCSDetection from '@/pages/BCSDetection';
-import DiseaseDetection from '@/pages/DiseaseDetection';
 import LiveDetection from '@/pages/LiveDetection';
-import AnalysisHistory from '@/pages/AnalysisHistory';
 import Products from '@/pages/Products';
 import Profile from '@/pages/Profile';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
@@ -20,7 +17,6 @@ import AITransparency from '@/pages/AITransparency';
 import DataConsent from '@/pages/DataConsent';
 import ContactUs from '@/pages/ContactUs';
 import FarmManagement from '@/pages/FarmManagement';
-import MuzzleCheck from '@/pages/MuzzleCheck';
 import CattleDetail from '@/pages/CattleDetail';
 
 export default function App() {
@@ -37,11 +33,11 @@ export default function App() {
               <Route path="/auth"           element={<Auth />} />
               <Route path="/farm"           element={<FarmManagement />} />
               <Route path="/cattle/:id"     element={<CattleDetail />} />
-              <Route path="/muzzle-check"   element={<MuzzleCheck />} />
-              <Route path="/live"           element={<LiveDetection />} />
-              <Route path="/bcs"            element={<BCSDetection />} />
-              <Route path="/disease"        element={<DiseaseDetection />} />
-              <Route path="/history"        element={<AnalysisHistory />} />
+              <Route path="/muzzle-check"   element={<Navigate to="/farm" replace />} />
+              <Route path="/live"           element={<Navigate to="/farm" replace />} />
+              <Route path="/bcs"            element={<Navigate to="/farm" replace />} />
+              <Route path="/disease"        element={<Navigate to="/farm" replace />} />
+              <Route path="/history"        element={<Navigate to="/farm" replace />} />
               <Route path="/products"       element={<Products />} />
               <Route path="/contact"        element={<ContactUs />} />
               <Route path="/profile"         element={<Profile />} />

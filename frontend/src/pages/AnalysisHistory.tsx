@@ -71,8 +71,8 @@ export default function AnalysisHistory() {
             <p className="text-slate-700 text-sm font-bold mb-8">Upload a cattle photo or video to get started with your first analysis.</p>
             <div className="flex gap-3 justify-center">
               <Link to="/live" className="btn-primary py-3 px-6 text-xs font-black">Live 10s Scan</Link>
-              <Link to="/bcs" className="btn-secondary py-3 px-6 text-xs font-bold">BCS Detection</Link>
-              <Link to="/disease" className="btn-secondary py-3 px-6 text-xs font-bold">Disease Detection</Link>
+              <Link to="/farm" className="btn-secondary py-3 px-6 text-xs font-bold">BCS Detection</Link>
+              <Link to="/farm" className="btn-secondary py-3 px-6 text-xs font-bold">Disease Detection</Link>
             </div>
           </div>
         ) : (

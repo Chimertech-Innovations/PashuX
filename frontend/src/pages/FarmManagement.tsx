@@ -1436,7 +1436,7 @@ export default function FarmManagement() {
 
               <div className="mb-6">
                 <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                  <span>✏️</span> Edit Cattle Profile
+                  <span></span> Edit Cattle Profile
                 </h3>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
                   Update profile information stored in the Supabase database.

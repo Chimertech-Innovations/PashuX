@@ -72,19 +72,25 @@ export const AngleCameraModal: React.FC<AngleCameraModalProps> = ({ angleName, a
         <canvas ref={canvasRef} className="hidden" />
 
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-0 overflow-hidden">
-          {angleName === 'front' && (
+          {(angleName.includes('muzzle') || angleName === 'front' || angleName === 'straight' || angleName === 'left' || angleName === 'right') && (
             <div className="relative w-full h-full flex items-center justify-center">
               <img
                 src="/outlines/mouth.jpg"
-                alt="Front Muzzle Outline"
+                alt="Muzzle Outline"
                 className="w-full h-full object-contain opacity-90 scale-[1.35] sm:scale-[1.45] transform origin-center"
                 style={{ filter: 'invert(1) contrast(160%)', mixBlendMode: 'screen' }}
               />
-              <span className="absolute top-3 text-[11px] font-black text-emerald-400 uppercase tracking-wider bg-slate-900/85 px-4 py-1.5 rounded-full border border-emerald-500/50 shadow-lg">ALIGN FRONT HEAD & MUZZLE</span>
+              <span className="absolute top-3 text-[11px] font-black text-emerald-400 uppercase tracking-wider bg-slate-900/85 px-4 py-1.5 rounded-full border border-emerald-500/50 shadow-lg">
+                {angleName === 'left' || angleName === 'muzzle_left' 
+                  ? 'ALIGN MUZZLE PATTERN - SLIGHT LEFT' 
+                  : angleName === 'right' || angleName === 'muzzle_right'
+                  ? 'ALIGN MUZZLE PATTERN - SLIGHT RIGHT'
+                  : 'ALIGN FRONT HEAD & MUZZLE'}
+              </span>
             </div>
           )}
 
-          {angleName === 'right' && (
+          {angleName === 'right_body' && (
             <div className="relative w-full h-full flex items-center justify-center">
               <img
                 src="/outlines/right.jpg"
@@ -96,7 +102,7 @@ export const AngleCameraModal: React.FC<AngleCameraModalProps> = ({ angleName, a
             </div>
           )}
 
-          {angleName === 'left' && (
+          {angleName === 'left_body' && (
             <div className="relative w-full h-full flex items-center justify-center">
               <img
                 src="/outlines/left.jpg"

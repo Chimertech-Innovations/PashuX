@@ -30,8 +30,8 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm">
-      {/* Top Announcement Banner */}
-      <div className="bg-[#0f172a] text-white py-1.5 px-3 text-center text-[10px] sm:text-xs font-bold tracking-wide flex items-center justify-center gap-1.5 sm:gap-2 border-b border-slate-800 flex-wrap">
+      {/* Top Announcement Banner (Hidden on Mobile) */}
+      <div className="hidden sm:flex bg-[#0f172a] text-white py-1.5 px-3 text-center text-[10px] sm:text-xs font-bold tracking-wide items-center justify-center gap-1.5 sm:gap-2 border-b border-slate-800 flex-wrap">
         <span className="bg-emerald-500 text-slate-950 font-black text-[9px] px-2 py-0.5 rounded-full uppercase flex-shrink-0">PashuX AI</span>
         <span className="truncate max-w-[240px] sm:max-w-none">Cattle Health Intelligence & 10s Video BCS Scanner</span>
         <Link to="/live" className="underline hover:text-emerald-300 font-black ml-0.5 flex-shrink-0">Try Scan →</Link>

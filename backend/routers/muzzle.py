@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 import io
 import torch
 from torchvision import models, transforms
-from PIL import Image
+from PIL import Image, ImageOps
 
 # Initialize the Real Pre-trained AI Model (ResNet50)
 print("Loading Pre-trained ResNet50 AI Model...")
@@ -41,6 +41,7 @@ preprocess = transforms.Compose([
 ])
 
 try:
+    # pyrefly: ignore [missing-import]
     from pillow_heif import register_heif_opener
     register_heif_opener()
 except ImportError:
@@ -50,13 +51,18 @@ def load_image_bytes(image_bytes: bytes) -> Optional[np.ndarray]:
     """
     Universal image decoder that handles standard JPEG/PNG/WEBP as well as
     Apple iPhone HEIC/HEIF images seamlessly. Returns OpenCV BGR image array.
+    Auto-transposes EXIF orientation for mobile camera photos.
     """
     try:
-        pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        pil_img = Image.open(io.BytesIO(image_bytes))
+        pil_img = ImageOps.exif_transpose(pil_img).convert("RGB")
         return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
     except Exception:
-        np_img = np.frombuffer(image_bytes, np.uint8)
-        return cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+        try:
+            np_img = np.frombuffer(image_bytes, np.uint8)
+            return cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+        except Exception:
+            return None
 
 def extract_muzzle_features(image_bytes: bytes) -> list[float]:
     """
@@ -64,7 +70,8 @@ def extract_muzzle_features(image_bytes: bytes) -> list[float]:
     Uses ResNet50 to look at the muzzle and generate a unique pattern vector.
     """
     try:
-        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        image = Image.open(io.BytesIO(image_bytes))
+        image = ImageOps.exif_transpose(image).convert("RGB")
     except Exception:
         img_np = load_image_bytes(image_bytes)
         if img_np is None:
@@ -308,14 +315,36 @@ async def register_cattle_muzzle(
         
         # 3. Check for global duplicates across ALL users in the system (biometric uniqueness)
         def _check_duplicate():
-            return sb.rpc(
-                "match_cattle_muzzle",
-                {
-                    "query_embedding": master_embedding,
-                    "match_threshold": 0.94,
-                    "match_count": 1
-                }
-            ).execute()
+            try:
+                return sb.rpc(
+                    "match_cattle_muzzle",
+                    {
+                        "query_embedding": master_embedding,
+                        "match_threshold": 0.94,
+                        "match_count": 1
+                    }
+                ).execute()
+            except Exception as rpc_err:
+                logger.warning(f"RPC match_cattle_muzzle failed during duplicate check: {rpc_err}")
+                try:
+                    res = sb.table("cattle").select("id, name, muzzle_embedding").execute()
+                    if res.data:
+                        q_vec = np.array(master_embedding)
+                        for c in res.data:
+                            emb = c.get("muzzle_embedding")
+                            if emb and isinstance(emb, list):
+                                db_vec = np.array(emb)
+                                if len(db_vec) == len(q_vec):
+                                    sim = np.dot(q_vec, db_vec) / (np.linalg.norm(q_vec) * np.linalg.norm(db_vec) + 1e-9)
+                                    if sim >= 0.94:
+                                        class DummyResp:
+                                            data = [c]
+                                        return DummyResp()
+                except Exception as fb_err:
+                    logger.warning(f"Python fallback duplicate check failed: {fb_err}")
+                class EmptyResp:
+                    data = []
+                return EmptyResp()
         duplicate_check = await asyncio.to_thread(_check_duplicate)
 
         if duplicate_check.data and len(duplicate_check.data) > 0:
@@ -870,19 +899,46 @@ async def identify_cattle_muzzle(
         # 2. AI Feature Extraction
         master_embedding = await asyncio.to_thread(extract_muzzle_features, enhanced_image_bytes)
         
-        # 2. Search in Supabase using the RPC function we created
+        # 2. Search in Supabase using the RPC function we created (with Python NumPy fallback)
         sb = db.get_client()
         
-        # We call the SQL function 'match_cattle_muzzle' we created earlier
         def _match():
-            return sb.rpc(
-                "match_cattle_muzzle", 
-                {
-                    "query_embedding": master_embedding,
-                    "match_threshold": 0.85,
-                    "match_count": 1
-                }
-            ).execute()
+            try:
+                return sb.rpc(
+                    "match_cattle_muzzle", 
+                    {
+                        "query_embedding": master_embedding,
+                        "match_threshold": 0.85,
+                        "match_count": 1
+                    }
+                ).execute()
+            except Exception as rpc_err:
+                logger.warning(f"RPC match_cattle_muzzle failed during identify: {rpc_err}")
+                try:
+                    res = sb.table("cattle").select("id, name, user_id, gender, image_url, muzzle_embedding, bcs_score, breed, estimated_weight").execute()
+                    if res.data:
+                        best_sim = -1.0
+                        best_c = None
+                        q_vec = np.array(master_embedding)
+                        for c in res.data:
+                            emb = c.get("muzzle_embedding")
+                            if emb and isinstance(emb, list):
+                                db_vec = np.array(emb)
+                                if len(db_vec) == len(q_vec):
+                                    sim = np.dot(q_vec, db_vec) / (np.linalg.norm(q_vec) * np.linalg.norm(db_vec) + 1e-9)
+                                    if sim > best_sim:
+                                        best_sim = sim
+                                        best_c = c
+                        if best_c and best_sim >= 0.85:
+                            best_c["similarity"] = float(best_sim)
+                            class MatchResp:
+                                data = [best_c]
+                            return MatchResp()
+                except Exception as fb_err:
+                    logger.warning(f"Python fallback match failed: {fb_err}")
+                class EmptyMatchResp:
+                    data = []
+                return EmptyMatchResp()
         response = await asyncio.to_thread(_match)
         
         matches = response.data

@@ -5,6 +5,7 @@ import { BASE_URL } from '@/lib/api';
 import CattleQRCodeCard from '@/components/cattle/CattleQRCodeCard';
 import AIDisclaimerFooter from '@/components/ui/AIDisclaimerFooter';
 import AngleCameraModal from '@/components/ui/AngleCameraModal';
+import { compressImage } from '@/utils/imageCompressor';
 
 export default function FarmManagement() {
   const { user, loading: authLoading } = useAuth();
@@ -61,7 +62,7 @@ export default function FarmManagement() {
   const [retestRight, setRetestRight] = useState<File | null>(null);
   const [retestBack, setRetestBack] = useState<File | null>(null);
   const [retestUdder, setRetestUdder] = useState<File | null>(null);
-  const [activeCameraSlot, setActiveCameraSlot] = useState<{ name: string; label: string } | null>(null);
+  const [activeCameraSlot, setActiveCameraSlot] = useState<{ name: string; label: string; slot?: number } | null>(null);
   const [retestLoading, setRetestLoading] = useState(false);
   const [retestMessage, setRetestMessage] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null);
 
@@ -270,9 +271,10 @@ export default function FarmManagement() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, slot: number) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, slot: number) => {
     if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
+      const rawFile = e.target.files[0];
+      const selectedFile = await compressImage(rawFile);
       const previewUrl = URL.createObjectURL(selectedFile);
       
       if (slot === 1) {
@@ -504,7 +506,7 @@ export default function FarmManagement() {
                       <p className="text-sm font-bold text-slate-700">Straight-on</p>
                       
                       <div className="grid grid-cols-2 gap-2 mt-4">
-                        <button type="button" onClick={() => fileInputRefCamera1.current?.click()} className="btn-primary py-2 text-xs flex justify-center items-center gap-1">
+                        <button type="button" onClick={() => setActiveCameraSlot({ name: 'straight', label: 'Straight-on Muzzle', slot: 1 })} className="btn-primary py-2 text-xs flex justify-center items-center gap-1">
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
                           Camera
                         </button>
@@ -513,8 +515,8 @@ export default function FarmManagement() {
                            Upload
                         </button>
                       </div>
-                      <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 1)} className="hidden" ref={fileInputRefGallery1} />
-                      <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 1)} className="hidden" ref={fileInputRefCamera1} />
+                      <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefGallery1} />
+                      <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefCamera1} />
                     </div>
                   )}
                 </div>
@@ -534,7 +536,7 @@ export default function FarmManagement() {
                       <p className="text-sm font-bold text-slate-700">Slight Left</p>
                       
                       <div className="grid grid-cols-2 gap-2 mt-4">
-                        <button type="button" onClick={() => fileInputRefCamera2.current?.click()} className="btn-primary py-2 text-xs flex justify-center items-center gap-1">
+                        <button type="button" onClick={() => setActiveCameraSlot({ name: 'left', label: 'Slight Left Muzzle', slot: 2 })} className="btn-primary py-2 text-xs flex justify-center items-center gap-1">
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
                           Camera
                         </button>
@@ -543,8 +545,8 @@ export default function FarmManagement() {
                            Upload
                         </button>
                       </div>
-                      <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 2)} className="hidden" ref={fileInputRefGallery2} />
-                      <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 2)} className="hidden" ref={fileInputRefCamera2} />
+                      <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefGallery2} />
+                      <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefCamera2} />
                     </div>
                   )}
                 </div>
@@ -564,7 +566,7 @@ export default function FarmManagement() {
                       <p className="text-sm font-bold text-slate-700">Slight Right</p>
                       
                       <div className="grid grid-cols-2 gap-2 mt-4">
-                        <button type="button" onClick={() => fileInputRefCamera3.current?.click()} className="btn-primary py-2 text-xs flex justify-center items-center gap-1">
+                        <button type="button" onClick={() => setActiveCameraSlot({ name: 'right', label: 'Slight Right Muzzle', slot: 3 })} className="btn-primary py-2 text-xs flex justify-center items-center gap-1">
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
                           Camera
                         </button>
@@ -573,8 +575,8 @@ export default function FarmManagement() {
                            Upload
                         </button>
                       </div>
-                      <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 3)} className="hidden" ref={fileInputRefGallery3} />
-                      <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 3)} className="hidden" ref={fileInputRefCamera3} />
+                      <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefGallery3} />
+                      <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefCamera3} />
                     </div>
                   )}
                 </div>
@@ -1213,12 +1215,23 @@ export default function FarmManagement() {
           <AngleCameraModal
             angleName={activeCameraSlot.name}
             angleLabel={activeCameraSlot.label}
-            onCapture={(file) => {
-              if (activeCameraSlot.name === 'front') setRetestFront(file);
-              else if (activeCameraSlot.name === 'right') setRetestRight(file);
-              else if (activeCameraSlot.name === 'left') setRetestLeft(file);
-              else if (activeCameraSlot.name === 'back') setRetestBack(file);
-              else if (activeCameraSlot.name === 'udder') setRetestUdder(file);
+            onCapture={async (capturedFile) => {
+              const compressed = await compressImage(capturedFile);
+              if (activeCameraSlot.slot === 1) {
+                setFile1(compressed);
+                setPreview1(URL.createObjectURL(compressed));
+              } else if (activeCameraSlot.slot === 2) {
+                setFile2(compressed);
+                setPreview2(URL.createObjectURL(compressed));
+              } else if (activeCameraSlot.slot === 3) {
+                setFile3(compressed);
+                setPreview3(URL.createObjectURL(compressed));
+              } else if (activeCameraSlot.name === 'front') setRetestFront(compressed);
+              else if (activeCameraSlot.name === 'right') setRetestRight(compressed);
+              else if (activeCameraSlot.name === 'left') setRetestLeft(compressed);
+              else if (activeCameraSlot.name === 'back') setRetestBack(compressed);
+              else if (activeCameraSlot.name === 'udder') setRetestUdder(compressed);
+              setActiveCameraSlot(null);
             }}
             onClose={() => setActiveCameraSlot(null)}
           />

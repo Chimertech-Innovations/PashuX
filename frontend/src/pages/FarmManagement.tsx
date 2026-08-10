@@ -698,54 +698,57 @@ export default function FarmManagement() {
           ) : (
           <div className="space-y-6">
             {/* Header */}
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 text-white relative overflow-hidden">
-              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-              <div className="relative flex items-center gap-4">
-                <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/30">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-white font-black text-xl leading-tight">Registration Complete</h3>
-                  <p className="text-emerald-100 font-medium text-sm mt-0.5">Cattle Profile Successfully Analyzed & Stored by Chimertech AI</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs bg-white/20 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/20">{name || 'Cattle'}</span>
-                    {currentCattleId && (
-                      <span className="text-xs bg-white/20 text-white font-mono font-bold px-2.5 py-0.5 rounded-full border border-white/20">
-                        MUZZ-{currentCattleId.slice(0, 8).toUpperCase()}
-                      </span>
-                    )}
+            {videoStats?.is_cattle_detected === false ? (
+              <div className="bg-gradient-to-br from-rose-600 to-rose-800 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg">
+                <div className="relative flex items-center gap-4">
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/30">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-black text-xl leading-tight">Video Analysis Alert — Non-Cattle Subject</h3>
+                    <p className="text-rose-100 font-medium text-sm mt-0.5">The uploaded video frames do not contain a cattle or water buffalo</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-xs bg-white/20 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/20">{name || 'Cattle'}</span>
+                      {currentCattleId && (
+                        <span className="text-xs bg-white/20 text-white font-mono font-bold px-2.5 py-0.5 rounded-full border border-white/20">
+                          MUZZ-{currentCattleId.slice(0, 8).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* AI Biometric Muzzle Pattern Extraction Maps */}
-            {traceMaps.length > 0 && (
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    AI Muzzle Biometric Ridge Extraction Maps ({traceMaps.length})
-                  </h4>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">OpenCV OpenCV Ridge Trace</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {traceMaps.map((tm, idx) => (
-                    <div key={idx} className="bg-slate-950 rounded-xl p-2.5 border border-slate-800 text-center shadow-inner">
-                      <img src={tm} alt={`Muzzle Trace ${idx + 1}`} className="w-full h-36 object-contain rounded-lg mb-2 bg-black" />
-                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-wider">
-                        {idx === 0 ? 'Straight-on Ridge Pattern' : idx === 1 ? 'Slight Left Ridge Pattern' : 'Slight Right Ridge Pattern'}
-                      </p>
+            ) : (
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 text-white relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                <div className="relative flex items-center gap-4">
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/30">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-black text-xl leading-tight">Registration Complete</h3>
+                    <p className="text-emerald-100 font-medium text-sm mt-0.5">Cattle Profile Successfully Analyzed & Stored by Chimertech AI</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-xs bg-white/20 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/20">{name || 'Cattle'}</span>
+                      {currentCattleId && (
+                        <span className="text-xs bg-white/20 text-white font-mono font-bold px-2.5 py-0.5 rounded-full border border-white/20">
+                          MUZZ-{currentCattleId.slice(0, 8).toUpperCase()}
+                        </span>
+                      )}
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
             )}
 
+
+
             {/* Retake Banner — shown when parts are missing */}
-            {videoStats?.missing_parts?.length > 0 && (
+            {videoStats?.is_cattle_detected !== false && videoStats?.missing_parts?.length > 0 && (
               <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-5">
                 <div className="flex items-start gap-3 mb-3">
                   <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -825,7 +828,31 @@ export default function FarmManagement() {
                 <div className="space-y-3">
                   <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider">AI Analysis Results</h4>
                   
-                  {/* Core Vitals Row */}
+                  {videoStats.is_cattle_detected === false ? (
+                    <div className="bg-rose-50 border-2 border-rose-400 rounded-2xl p-6 text-center shadow-lg space-y-4">
+                      <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="text-rose-950 font-black text-xl mb-1">Unidentified / Non-Cattle Subject Detected in Video</h4>
+                        <p className="text-rose-800 text-sm max-w-lg mx-auto font-medium leading-relaxed">
+                          {videoStats.observations?.[0] || 'The uploaded video contains human or room objects rather than cattle. Please record or upload a clear video showing cattle or water buffalo.'}
+                        </p>
+                      </div>
+                      <div className="pt-2">
+                        <button
+                          onClick={retakeVideo}
+                          className="btn-primary bg-rose-600 hover:bg-rose-700 text-white font-black text-sm py-3.5 px-6 rounded-xl shadow-md transition-all inline-flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                          Re-record / Upload Cattle Video
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
                       <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Breed</p>
@@ -1070,6 +1097,8 @@ export default function FarmManagement() {
                       </div>
                     </div>
                   )}
+                  </>
+                )}
                 </div>
               );
             })()}

@@ -411,8 +411,30 @@ ANALYZE ALL FRAMES CAREFULLY AT 1 FPS AND RETURN A STRICT, EMPIRICAL ASSESSMENT:
    - `coat_color`: Coat color description (e.g. "Glossy Black", "Light Brown / Tan", "White with Brown Spots")
    - `gender`: "Female" (Cow / Buffalo) or "Male" (Bull / Ox)
 
+4. NON-BOVINE / UNIDENTIFIED SUBJECT PROTOCOL (CRITICAL):
+   - If the video contains a HUMAN, office room, computer developer screen, dog, vehicle, equipment, or any subject that is NOT a cattle or water buffalo:
+     Set:
+     "is_cattle_detected": false,
+     "total_cattle_count": 0,
+     "bcs_score": 0.0,
+     "disease_status": "Non-Bovine Subject Detected",
+     "breed": "Unidentified Subject",
+     "coat_color": "N/A",
+     "weight_kg": 0.0,
+     "weight_range": "N/A",
+     "height_cm": 0.0,
+     "height_range": "N/A",
+     "estimated_value": "N/A",
+     "age_estimate": "N/A",
+     "gender": "Unknown",
+     "observations": [
+       "Non-bovine content detected in video frames (The uploaded video frames do not contain a cattle or water buffalo). No cattle or water buffalo visible.",
+       "Please record or upload a clear video showing cattle or water buffalo for livestock health analysis."
+     ]
+
 Return ONLY a raw JSON object (without markdown code blocks) matching this schema:
 {
+  "is_cattle_detected": true,
   "total_cattle_count": 1,
   "bcs_score": 3.8,
   "disease_status": "Healthy",
@@ -545,6 +567,18 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
                     except (ValueError, TypeError):
                         return default
 
+                def _safe_str(val: Any, default: str = "Unknown") -> str:
+                    if val is None:
+                        return default
+                    s = str(val).strip()
+                    return s if s and s.lower() not in ["none", "null", "undefined", "n/a"] else default
+
+                data["breed"] = _safe_str(data.get("breed"), "Crossbred Cattle")
+                data["coat_color"] = _safe_str(data.get("coat_color"), "Unknown / Multi-colored")
+                data["estimated_value"] = _safe_str(data.get("estimated_value"), "N/A")
+                data["disease_status"] = _safe_str(data.get("disease_status"), "Healthy")
+                data["age_estimate"] = _safe_str(data.get("age_estimate"), "4 - 5 years")
+
                 data["bcs_score"] = _safe_float(data.get("bcs_score"), 3.0)
                 w_kg = _safe_float(data.get("weight_kg"), 450.0)
                 h_cm = _safe_float(data.get("height_cm"), 135.0)
@@ -562,9 +596,6 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
                     h_high = int(round(h_cm * 1.04))
                     data["height_range"] = f"{h_low} - {h_high} cm"
 
-                if not data.get("age_estimate") or "year" not in str(data.get("age_estimate")).lower():
-                    data["age_estimate"] = "4 - 5 years"
-
                 data["cleanliness_score"] = min(100, max(0, _safe_int(data.get("cleanliness_score"), 85)))
                 data["udder_score"] = _safe_float(data.get("udder_score"), 0.0)
                 data["teat_score"] = _safe_float(data.get("teat_score"), 0.0)
@@ -573,6 +604,16 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
                 data["total_cattle_count"] = _safe_int(data.get("total_cattle_count"), 1)
 
                 obs_str = " ".join([str(o).lower() for o in data.get("observations", [])])
+                dis_str = str(data.get("disease_status") or "").lower()
+
+                # Infer is_cattle_detected flag
+                is_detected = data.get("is_cattle_detected")
+                if is_detected is False or any(w in obs_str or w in dis_str for w in ["non-bovine", "human", "no cattle", "unidentified subject", "developer screen"]):
+                    data["is_cattle_detected"] = False
+                elif _safe_float(data.get("bcs_score"), 0.0) == 0.0 and data["total_cattle_count"] == 0:
+                    data["is_cattle_detected"] = False
+                else:
+                    data["is_cattle_detected"] = True
                 raw_u_score = _safe_float(data.get("udder_score"), 0.0)
                 raw_t_score = _safe_float(data.get("teat_score"), 0.0)
                 has_male_genitalia = any(w in obs_str for w in ["penile sheath", "prepuce", "testicle", "scrotum", "bull hump"])

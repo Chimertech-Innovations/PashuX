@@ -1,5 +1,6 @@
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from typing import Optional
+import asyncio
 import datetime
 import logging
 import uuid
@@ -288,8 +289,29 @@ async def register_cattle_muzzle(
         img2_bytes = await file2.read()
         img3_bytes = await file3.read()
         
-        import asyncio
-        
+        # 0. OpenAI Vision Muzzle Validation (using OpenAI API key)
+        val1, val2, val3 = await asyncio.gather(
+            validate_muzzle_image(img1_bytes),
+            validate_muzzle_image(img2_bytes),
+            validate_muzzle_image(img3_bytes)
+        )
+
+        invalid_reasons = []
+        if not val1.get("valid", True):
+            invalid_reasons.append(f"Slot 1 (Straight-on): {val1.get('message', 'Not a valid cattle muzzle photo')}")
+        if not val2.get("valid", True):
+            invalid_reasons.append(f"Slot 2 (Slight Left): {val2.get('message', 'Not a valid cattle muzzle photo')}")
+        if not val3.get("valid", True):
+            invalid_reasons.append(f"Slot 3 (Slight Right): {val3.get('message', 'Not a valid cattle muzzle photo')}")
+
+        if invalid_reasons:
+            error_detail = " | ".join(invalid_reasons)
+            logger.warning(f"Muzzle validation failed via OpenAI Vision: {error_detail}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"OpenAI Muzzle Validation Failed: {error_detail}. Please capture or upload clear, close-up photos of the cattle muzzle (snout)."
+            )
+
         # 1. Smart Auto-Enhance image (only for AI extraction)
         enh1, enh2, enh3 = await asyncio.gather(
             asyncio.to_thread(auto_enhance_image_bytes, img1_bytes),
@@ -890,9 +912,15 @@ async def identify_cattle_muzzle(
     try:
         original_image_bytes = await file.read()
         
-        import asyncio
-        
-        # 1. Smart Auto-Enhance image (only for AI extraction)
+        # 0. OpenAI Vision Muzzle Validation (using OpenAI API key)
+        val = await validate_muzzle_image(original_image_bytes)
+        if not val.get("valid", True):
+            logger.warning(f"Single muzzle identify validation failed: {val.get('message')}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"OpenAI Muzzle Validation Failed: {val.get('message', 'Not a valid cattle muzzle photo')}. Please upload a clear, close-up photo of the cattle muzzle (snout)."
+            )
+
         # 1. Smart Auto-Enhance image (only for AI extraction)
         enhanced_image_bytes = await asyncio.to_thread(auto_enhance_image_bytes, original_image_bytes)
         

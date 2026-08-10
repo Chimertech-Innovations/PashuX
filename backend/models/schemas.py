@@ -54,23 +54,24 @@ class SecondaryCattleInfo(BaseModel):
     notes: Optional[str] = None
 
 class VideoAnalysisResult(BaseModel):
-    bcs_score: float = Field(..., ge=0.0, le=5.0)
-    disease_status: str
-    breed: str
-    weight_kg: float
-    height_cm: float
-    coat_color: str
+    is_cattle_detected: bool = True
+    bcs_score: float = Field(default=3.0, ge=0.0, le=5.0)
+    disease_status: str = "Healthy"
+    breed: str = "Crossbred Cattle"
+    weight_kg: float = 450.0
+    height_cm: float = 135.0
+    coat_color: str = "Unknown"
     gender: str = "Female"
-    estimated_value: str
-    observations: List[str]
+    estimated_value: str = "N/A"
+    observations: List[str] = Field(default_factory=list)
     # Udder & Teat scoring (0 = not visible/not applicable)
     udder_score: float = Field(default=0.0, ge=0.0, le=5.0)
     teat_score: float = Field(default=0.0, ge=0.0, le=5.0)
     udder_visible: bool = False
     teat_visible: bool = False
     # Parts AI could not clearly see — triggers retake prompt on frontend
-    missing_parts: List[str] = []
-    age_estimate: Optional[str] = None
+    missing_parts: List[str] = Field(default_factory=list)
+    age_estimate: Optional[str] = "4 - 5 years"
     # Cleanliness / Hygiene Score out of 100
     cleanliness_score: int = Field(default=85, ge=0, le=100)
     # Multi-cattle support (e.g. Cow + Calf)

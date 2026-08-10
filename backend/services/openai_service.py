@@ -195,12 +195,68 @@ OUTPUT FORMAT (Return raw JSON only):
 
 async def validate_muzzle_image(image_bytes: bytes) -> dict:
     """
-    Validate uploaded image for muzzle processing.
-    Bypasses external OpenAI API key requirements to ensure unblocked biometric matching and registration.
+    Validate uploaded image for muzzle processing using OpenAI Vision.
     """
     if not image_bytes or len(image_bytes) < 100:
         return {"valid": False, "message": "Uploaded image file is empty or corrupted."}
-    return {"valid": True, "message": "Valid cattle muzzle photo"}
+
+    import base64
+    import json
+    
+    try:
+        clean_bytes = normalize_image_to_jpeg_bytes(image_bytes)
+        b64 = base64.b64encode(clean_bytes).decode("utf-8")
+        
+        messages = [
+            {"role": "system", "content": MUZZLE_VALIDATION_PROMPT},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Please validate this cattle muzzle image."},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}}
+                ]
+            }
+        ]
+        
+        client = _get_client()
+        models_to_try = get_openai_models()
+        last_err = None
+        
+        for model in models_to_try:
+            try:
+                try:
+                    res = await client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        response_format={"type": "json_object"},
+                        max_completion_tokens=300,
+                    )
+                except Exception as pe:
+                    if "max_completion_tokens" in str(pe) or "unsupported" in str(pe).lower() or "response_format" in str(pe).lower():
+                        res = await client.chat.completions.create(
+                            model=model,
+                            messages=messages,
+                            max_tokens=300,
+                        )
+                    else:
+                        raise pe
+                        
+                content = res.choices[0].message.content
+                if content:
+                    data = parse_json_from_response(content)
+                    return {
+                        "valid": bool(data.get("valid", True)),
+                        "message": str(data.get("message", "Valid muzzle"))
+                    }
+            except Exception as err:
+                logger.warning(f"Muzzle validation error with {model}: {err}")
+                last_err = err
+                continue
+    except Exception as exc:
+        logger.error(f"Error in validate_muzzle_image: {exc}")
+            
+    # Fallback to True if API is failing so we don't completely block registration
+    return {"valid": True, "message": "Valid cattle muzzle photo (fallback)"}
     
 async def _generate_openai_vision(
     frame_paths: List[str],

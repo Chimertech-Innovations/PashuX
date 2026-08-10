@@ -239,6 +239,30 @@ def generate_trace_map(image_bytes: bytes) -> str:
                                   cv2.THRESH_BINARY_INV, 15, 4)
     valid_edges = cv2.bitwise_and(edges, valid_mask)
     traced_img[valid_edges > 0] = (255, 0, 255)
+
+    # 6b. ResNet50 Pattern Trace (Purple-Blue / Deep-learning Feature Activations)
+    try:
+        pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        input_tensor = preprocess(pil_img).unsqueeze(0)
+        with torch.no_grad():
+            x = resnet.conv1(input_tensor)
+            x = resnet.bn1(x)
+            x = resnet.relu(x)
+            x = resnet.maxpool(x)
+            x = resnet.layer1(x)
+            x = resnet.layer2(x) # [1, 512, 28, 28]
+            feat_map = torch.mean(x, dim=1).squeeze().cpu().numpy()
+        
+        feat_min = np.min(feat_map)
+        feat_max = np.max(feat_map)
+        if feat_max > feat_min:
+            feat_map = ((feat_map - feat_min) / (feat_max - feat_min) * 255).astype(np.uint8)
+            feat_map_resized = cv2.resize(feat_map, (w, h))
+            _, resnet_edges = cv2.threshold(feat_map_resized, 140, 255, cv2.THRESH_BINARY)
+            resnet_pattern = cv2.bitwise_and(resnet_edges, valid_mask)
+            traced_img[resnet_pattern > 0] = (255, 0, 128)
+    except Exception as re_err:
+        logger.warning(f"Failed to generate ResNet50 feature trace map: {re_err}")
     
     # 7. Landmarks (Orange)
     if main_contour is not None:

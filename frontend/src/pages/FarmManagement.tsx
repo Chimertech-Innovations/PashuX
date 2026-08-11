@@ -486,7 +486,7 @@ export default function FarmManagement() {
                 disabled={loading}
               />
               <p className="text-xs text-slate-400 font-medium pt-1">
-                 Gender, breed, weight, height & BCS will be automatically detected by AI from your video in Step 2.
+                 
               </p>
             </div>
 

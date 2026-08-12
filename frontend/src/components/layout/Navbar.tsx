@@ -9,7 +9,7 @@ const AI_MODULES = [
   { to: '/muzzle-check', label: 'Muzzle Identity Check', desc: 'Identify cattle by muzzle pattern' },
   { to: '/farm', label: 'BCS Score Detection', desc: 'Body condition score AI analysis' },
   { to: '/farm', label: 'Disease Detection',   desc: 'Visible cattle health screening' },
-  { to: '/history', label: 'Analysis History',    desc: 'Past diagnostic reports & scans' },
+  { to: '/history', label: 'Cattle Health Records',    desc: 'Past diagnostic reports & scans' },
 ];
 
 const SUBMENU_ITEMS = [

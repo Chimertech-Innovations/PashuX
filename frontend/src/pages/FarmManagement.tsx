@@ -7,6 +7,11 @@ import AIDisclaimerFooter from '@/components/ui/AIDisclaimerFooter';
 import AngleCameraModal from '@/components/ui/AngleCameraModal';
 import LiveVideoRecorderModal from '@/components/ui/LiveVideoRecorderModal';
 import { compressImage } from '@/utils/imageCompressor';
+import muzzleWireframeBanner from '@/assets/muzzle_wireframe_banner.png';
+import muzzleStraightGuide from '@/assets/muzzle_straight_guide.png';
+import muzzleLeftGuide from '@/assets/muzzle_left_guide.png';
+import muzzleRightGuide from '@/assets/muzzle_right_guide.png';
+import muzzleScanDiagram from '@/assets/muzzle_scan_diagram.png';
 
 export default function FarmManagement() {
   const { user, loading: authLoading } = useAuth();
@@ -466,20 +471,31 @@ export default function FarmManagement() {
   if (!user) return null;
 
   return (
-    <div className="pt-24 pb-20 min-h-screen bg-slate-50">
+    <div className="pt-28 sm:pt-32 lg:pt-36 pb-20 min-h-screen bg-slate-50">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-3xl font-black text-slate-900 mb-1">Farm Management</h1>
-        <p className="text-slate-500 font-medium mb-2">Register new cattle using AI Muzzle Scanning and Video Analysis.</p>
-        {/* User ID chip */}
-        {user && (
-          <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm mb-8">
-            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">User ID:</span>
-            <span className="font-mono font-black text-xs text-slate-700">USR-{user.id.replace(/-/g,'').substring(0,8).toUpperCase()}</span>
+        {/* Premium Header Banner Card */}
+        <div className="glass-card p-6 sm:p-8 mb-8 relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 bg-gradient-to-r from-white to-slate-50/50">
+          <div className="relative z-10 space-y-3 max-w-lg">
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Register new cattle</h1>
+            <p className="text-slate-500 font-medium text-sm">Create a biometric profile using AI muzzle scanning and video analysis.</p>
+            {user && (
+              <div className="inline-flex items-center gap-2 bg-slate-100 border border-slate-200/85 rounded-xl px-3 py-1.5 shadow-sm">
+                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">User ID:</span>
+                <span className="font-mono font-black text-xs text-emerald-600">USR-{user.id.replace(/-/g,'').substring(0,8).toUpperCase()}</span>
+              </div>
+            )}
           </div>
-        )}
+          <div className="relative w-full sm:w-48 h-20 flex-shrink-0 flex items-center justify-end">
+            <img 
+              src={muzzleWireframeBanner} 
+              alt="AI Muzzle Wireframe Scan" 
+              className="max-h-24 sm:max-h-28 object-contain filter drop-shadow-sm select-none pointer-events-none" 
+            />
+          </div>
+        </div>
 
         {/* WIZARD PROGRESS */}
         <div className="flex items-center justify-center gap-4 mb-8">
@@ -499,693 +515,687 @@ export default function FarmManagement() {
             </div>
         </div>
 
-        {/* REGISTRATION FORM */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 border border-slate-200 mb-12">
-            
-          {step === 1 ? (
-          <form onSubmit={handleSubmit} className="space-y-8">
-            
-            <div className="space-y-2 max-w-md">
-              <label className="text-xs font-black text-slate-700 uppercase tracking-wider">Cattle Name / Tag</label>
-              <input 
-                type="text" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="input-field" 
-                placeholder="e.g. Bessie or Tag #102"
-                disabled={loading}
-              />
-              <p className="text-xs text-slate-400 font-medium pt-1">
-                 
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-black text-slate-700 uppercase tracking-wider">Multi-Angle Muzzle Scan (3 Images Required)</label>
-                <p className="text-sm text-slate-500 mt-1">Upload three clear photos to generate a robust 3D biometric profile.</p>
-              </div>
+        {/* REGISTRATION WIZARD STAGE */}
+        {step === 1 ? (
+          <div className="max-w-4xl mx-auto mb-12">
+            {/* Left Card: Form (Full width, centered) */}
+            <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600" />
               
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {/* Slot 1 */}
-                <div className={`relative border-2 ${preview1 ? 'border-emerald-500 bg-emerald-50/30 border-solid' : 'border-slate-300 bg-slate-50 border-dashed'} rounded-xl p-4 text-center transition-all min-h-[180px] flex flex-col justify-center items-center`}>
-                  {preview1 ? (
-                    <div className="flex flex-col items-center">
-                      <img src={preview1} alt="Preview 1" className={`max-h-32 w-auto object-contain rounded-lg shadow-sm mb-3 ${loading ? 'opacity-50' : ''}`} />
-                      {!loading && <button type="button" onClick={() => removeFile(1)} className="text-[10px] font-bold text-rose-500 hover:text-rose-600 uppercase">Remove</button>}
-                    </div>
-                  ) : (
-                    <div className="space-y-3 w-full">
-                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-emerald-500 mb-2">
-                         <span className="font-black text-lg">1</span>
-                      </div>
-                      <p className="text-sm font-bold text-slate-700">Straight-on</p>
-                      
-                      <div className="grid grid-cols-2 gap-2 mt-4">
-                        <button type="button" onClick={() => setActiveCameraSlot({ name: 'straight', label: 'Straight-on Muzzle', slot: 1 })} className="btn-primary py-2 text-xs flex justify-center items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
-                          Camera
-                        </button>
-                        <button type="button" onClick={() => fileInputRefGallery1.current?.click()} className="btn-secondary py-2 text-xs flex justify-center items-center gap-1">
-                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                           Upload
-                        </button>
-                      </div>
-                      <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefGallery1} />
-                      <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefCamera1} />
-                    </div>
-                  )}
-                </div>
-
-                {/* Slot 2 */}
-                <div className={`relative border-2 ${preview2 ? 'border-emerald-500 bg-emerald-50/30 border-solid' : 'border-slate-300 bg-slate-50 border-dashed'} rounded-xl p-4 text-center transition-all min-h-[180px] flex flex-col justify-center items-center`}>
-                  {preview2 ? (
-                    <div className="flex flex-col items-center">
-                      <img src={preview2} alt="Preview 2" className={`max-h-32 w-auto object-contain rounded-lg shadow-sm mb-3 ${loading ? 'opacity-50' : ''}`} />
-                      {!loading && <button type="button" onClick={() => removeFile(2)} className="text-[10px] font-bold text-rose-500 hover:text-rose-600 uppercase">Remove</button>}
-                    </div>
-                  ) : (
-                    <div className="space-y-3 w-full">
-                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-emerald-500 mb-2">
-                         <span className="font-black text-lg">2</span>
-                      </div>
-                      <p className="text-sm font-bold text-slate-700">Slight Left</p>
-                      
-                      <div className="grid grid-cols-2 gap-2 mt-4">
-                        <button type="button" onClick={() => setActiveCameraSlot({ name: 'left', label: 'Slight Left Muzzle', slot: 2 })} className="btn-primary py-2 text-xs flex justify-center items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
-                          Camera
-                        </button>
-                        <button type="button" onClick={() => fileInputRefGallery2.current?.click()} className="btn-secondary py-2 text-xs flex justify-center items-center gap-1">
-                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                           Upload
-                        </button>
-                      </div>
-                      <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefGallery2} />
-                      <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefCamera2} />
-                    </div>
-                  )}
-                </div>
-
-                {/* Slot 3 */}
-                <div className={`relative border-2 ${preview3 ? 'border-emerald-500 bg-emerald-50/30 border-solid' : 'border-slate-300 bg-slate-50 border-dashed'} rounded-xl p-4 text-center transition-all min-h-[180px] flex flex-col justify-center items-center`}>
-                  {preview3 ? (
-                    <div className="flex flex-col items-center">
-                      <img src={preview3} alt="Preview 3" className={`max-h-32 w-auto object-contain rounded-lg shadow-sm mb-3 ${loading ? 'opacity-50' : ''}`} />
-                      {!loading && <button type="button" onClick={() => removeFile(3)} className="text-[10px] font-bold text-rose-500 hover:text-rose-600 uppercase">Remove</button>}
-                    </div>
-                  ) : (
-                    <div className="space-y-3 w-full">
-                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-emerald-500 mb-2">
-                         <span className="font-black text-lg">3</span>
-                      </div>
-                      <p className="text-sm font-bold text-slate-700">Slight Right</p>
-                      
-                      <div className="grid grid-cols-2 gap-2 mt-4">
-                        <button type="button" onClick={() => setActiveCameraSlot({ name: 'right', label: 'Slight Right Muzzle', slot: 3 })} className="btn-primary py-2 text-xs flex justify-center items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
-                          Camera
-                        </button>
-                        <button type="button" onClick={() => fileInputRefGallery3.current?.click()} className="btn-secondary py-2 text-xs flex justify-center items-center gap-1">
-                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                           Upload
-                        </button>
-                      </div>
-                      <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefGallery3} />
-                      <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefCamera3} />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {message && (
-              <div className={`p-4 rounded-xl text-sm font-bold flex items-start gap-3 ${
-                message.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800 border border-rose-200'
-              }`}>
-                {message.type === 'success' ? (
-                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                ) : (
-                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                )}
-                <span>{message.text}</span>
-              </div>
-            )}
-
-            <button 
-              type="submit" 
-              disabled={loading || !file1 || !file2 || !file3}
-              className="w-full btn-primary py-4 text-base shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 disabled:opacity-70"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  <span>Validating & Fusing AI Profile...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <span>Register Cattle</span>
-                </>
-              )}
-            </button>
-          </form>
-          ) : step === 2 ? (
-          <form onSubmit={handleVideoSubmit} className="space-y-8">
-            <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-black text-slate-700 uppercase tracking-wider">Upload 15-Second Video</label>
-                  <p className="text-sm text-slate-500 mt-1">Capture a short video of the cattle. Our AI will analyze frames to estimate BCS, weight, breed, and health status.</p>
-                </div>
-                
-                <div className={`relative border-2 ${videoPreview ? 'border-emerald-500 bg-emerald-50/30 border-solid' : 'border-slate-300 bg-slate-50 border-dashed'} rounded-xl p-8 text-center transition-all min-h-[250px] flex flex-col justify-center items-center`}>
-                    {videoPreview ? (
-                        <div className="flex flex-col items-center w-full">
-                            <video src={videoPreview} controls className="max-h-48 w-full object-contain rounded-lg shadow-sm mb-4" />
-                            {!loading && <button type="button" onClick={() => { setVideoFile(null); setVideoPreview(null); }} className="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase bg-rose-50 px-4 py-2 rounded-lg">Change Video</button>}
-                        </div>
-                    ) : (
-                        <div className="space-y-4 w-full flex flex-col items-center">
-                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm text-emerald-500 mb-2">
-                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                            </div>
-                            <p className="text-sm font-bold text-slate-700">Record Live Camera Video or Upload File</p>
-                            <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full justify-center">
-                                <button
-                                  type="button"
-                                  onClick={() => setIsVideoRecorderOpen(true)}
-                                  className="btn-primary py-3 px-6 text-sm flex items-center justify-center gap-2"
-                                >
-                                    <svg className="w-4 h-4 text-rose-400 animate-pulse" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /></svg>
-                                    Record Live Video (15s)
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => videoInputRef.current?.click()}
-                                  className="btn-secondary py-3 px-6 text-sm flex items-center justify-center gap-2"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                                    Upload Video File
-                                </button>
-                            </div>
-                            <input type="file" accept="video/*" capture="environment" onChange={handleVideoChange} className="hidden" ref={videoInputRef} />
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {message && (
-              <div className={`p-4 rounded-xl text-sm font-bold flex items-start gap-3 ${
-                message.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800 border border-rose-200'
-              }`}>
-                {message.type === 'success' ? (
-                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                ) : (
-                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                )}
-                <span>{message.text}</span>
-              </div>
-            )}
-
-            <button 
-              type="submit" 
-              disabled={loading || !videoFile}
-              className="w-full btn-primary py-4 text-base shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 disabled:opacity-70"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  <span>Analyzing Video Frames...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <span>Complete Registration</span>
-                </>
-              )}
-            </button>
-          </form>
-          ) : (
-          <div className="space-y-6">
-            {/* Header */}
-            {videoStats?.is_cattle_detected === false ? (
-              <div className="bg-gradient-to-br from-rose-600 to-rose-800 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg">
-                <div className="relative flex items-center gap-4">
-                  <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/30">
-                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="space-y-2.5 max-w-md">
+                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                  </div>
+                    <span>Cattle Name / Tag</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    className="w-full border border-slate-200 rounded-xl px-5 py-4 text-sm text-slate-900 bg-white placeholder:text-slate-400 outline-none transition-all duration-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-bold shadow-inner" 
+                    placeholder="e.g. Bessie or Tag #102"
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="space-y-4">
                   <div>
-                    <h3 className="text-white font-black text-xl leading-tight">Video Analysis Alert — Non-Cattle Subject</h3>
-                    <p className="text-rose-100 font-medium text-sm mt-0.5">The uploaded video frames do not contain a cattle or water buffalo</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs bg-white/20 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/20">{name || 'Cattle'}</span>
-                      {currentCattleId && (
-                        <span className="text-xs bg-white/20 text-white font-mono font-bold px-2.5 py-0.5 rounded-full border border-white/20">
-                          MUZZ-{currentCattleId.slice(0, 8).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
+                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                      <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      <span>Multi-Angle Muzzle Scan (3 Images Required)</span>
+                    </label>
+                    <p className="text-xs text-slate-400 font-bold mt-1.5 leading-relaxed">Upload three clear photos to generate a robust 3D biometric profile.</p>
                   </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 text-white relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-                <div className="relative flex items-center gap-4">
-                  <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/30">
-                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-white font-black text-xl leading-tight">Registration Complete</h3>
-                    <p className="text-emerald-100 font-medium text-sm mt-0.5">Cattle Profile Successfully Analyzed & Stored by Chimertech AI</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs bg-white/20 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/20">{name || 'Cattle'}</span>
-                      {currentCattleId && (
-                        <span className="text-xs bg-white/20 text-white font-mono font-bold px-2.5 py-0.5 rounded-full border border-white/20">
-                          MUZZ-{currentCattleId.slice(0, 8).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-
-
-            {/* Retake Banner — shown when parts are missing */}
-            {videoStats?.is_cattle_detected !== false && videoStats?.missing_parts?.length > 0 && (
-              <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-5">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="text-amber-900 font-black text-base">Retake Required — Body Parts Not Captured</h4>
-                    <p className="text-amber-800 text-sm mt-0.5">
-                      The AI could not clearly see the following in your video:
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {videoStats.missing_parts.map((part: string) => (
-                        <span key={part} className="text-xs font-black bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full capitalize border border-amber-300">
-                          {part.replace('_', ' ')}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-amber-100 rounded-xl p-3 mb-3 border border-amber-200">
-                  <p className="text-amber-800 text-xs font-medium">
-                    <strong>Quick Fix:</strong> Upload a clear close-up photo of the udder/teat area for instant AI visual scoring, or re-record the video.
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    onClick={() => udderPhotoRef.current?.click()}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    </svg>
-                    Upload Udder Photo Only (AI Score)
-                  </button>
-                  <button
-                    onClick={retakeVideo}
-                    className="bg-amber-600 hover:bg-amber-700 text-white font-black text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-600/20"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Re-record Video (Keep Muzzle Scan)
-                  </button>
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleUdderPhotoUpload}
-                  className="hidden"
-                  ref={udderPhotoRef}
-                />
-              </div>
-            )}
-
-            {/* AI Analysis Stats Grid */}
-            {videoStats && (() => {
-              const bcsLabel = videoStats.bcs_score >= 4.5 ? 'Obese' : videoStats.bcs_score >= 3.5 ? 'Overconditioned' : videoStats.bcs_score >= 2.5 ? 'Ideal' : videoStats.bcs_score >= 1.5 ? 'Thin' : videoStats.bcs_score > 0 ? 'Emaciated' : 'N/A';
-              const udderLabel = videoStats.udder_score >= 4.5 ? 'Excellent' : videoStats.udder_score >= 3.5 ? 'Good' : videoStats.udder_score >= 2.5 ? 'Average' : videoStats.udder_score >= 1.5 ? 'Below Average' : videoStats.udder_score > 0 ? 'Poor' : 'Not Visible';
-              const teatLabel = videoStats.teat_score >= 4.5 ? 'Ideal' : videoStats.teat_score >= 3.5 ? 'Good' : videoStats.teat_score >= 2.5 ? 'Average' : videoStats.teat_score >= 1.5 ? 'Short' : videoStats.teat_score > 0 ? 'Deformed' : 'Not Visible';
-              const isHealthy = !videoStats.disease_status || videoStats.disease_status.toLowerCase() === 'healthy';
-
-              const ScoreDots = ({ score, max = 5, color = '#10b981' }: { score: number; max?: number; color?: string }) => (
-                <div className="flex gap-0.5 mt-1">
-                  {Array.from({ length: max }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-1.5 flex-1 rounded-full"
-                      style={{ background: i < Math.round(score) ? color : '#e2e8f0' }}
-                    />
-                  ))}
-                </div>
-              );
-
-              return (
-                <div className="space-y-3">
-                  <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider">AI Analysis Results</h4>
                   
-                  {videoStats.is_cattle_detected === false ? (
-                    <div className="bg-rose-50 border-2 border-rose-400 rounded-2xl p-6 text-center shadow-lg space-y-4">
-                      <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
-                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    {/* Slot 1 */}
+                    <div className={`relative border-2 rounded-2xl overflow-hidden p-5 text-center transition-all duration-300 group flex flex-col justify-between items-center min-h-[280px] ${
+                      preview1 ? 'border-emerald-500 bg-emerald-50/10' : 'border-dashed border-slate-200 bg-slate-50/40 hover:bg-white hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/5'
+                    }`}>
+                      {preview1 ? (
+                        <div className="flex flex-col items-center justify-between h-full w-full">
+                          <div className="relative w-full h-44 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden shadow-md">
+                            <img src={preview1} alt="Preview 1" className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`} />
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 flex items-end justify-center">
+                              <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">1. Straight-on Muzzle</span>
+                            </div>
+                          </div>
+                          {!loading && (
+                            <button type="button" onClick={() => removeFile(1)} className="text-[10px] mt-4 font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest flex items-center gap-1.5 transition-colors">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> 
+                              <span>Remove</span>
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col justify-between h-full w-full relative">
+                          {/* Guide background with opacity */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-300 rounded-xl overflow-hidden pointer-events-none">
+                            <img src={muzzleStraightGuide} alt="Straight Guide" className="w-full h-full object-cover" />
+                          </div>
+                          
+                          <div className="space-y-2 relative z-10 w-full">
+                            <div className="flex items-center justify-between w-full">
+                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-black text-[9px] px-2 py-0.5 rounded-md tracking-wider uppercase">Straight-on</span>
+                              <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center font-mono text-[10px] font-black text-slate-400">1</span>
+                            </div>
+                            <div className="h-28 flex items-center justify-center w-full relative">
+                              <div className="absolute w-20 h-20 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition-all duration-300" />
+                              <img 
+                                src={muzzleStraightGuide} 
+                                alt="Straight Guide" 
+                                className="h-24 w-24 object-contain filter drop-shadow opacity-90 group-hover:scale-105 group-hover:opacity-100 transition-all duration-300 select-none pointer-events-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 mt-4 relative z-10 w-full">
+                            <button type="button" onClick={() => setActiveCameraSlot({ name: 'straight', label: 'Straight-on Muzzle', slot: 1 })} className="py-2 px-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] rounded-xl transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95">
+                              Camera
+                            </button>
+                            <button type="button" onClick={() => fileInputRefGallery1.current?.click()} className="py-2 px-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-extrabold text-[11px] rounded-xl transition-all active:scale-95 shadow-sm">
+                              Upload
+                            </button>
+                          </div>
+                          <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefGallery1} />
+                          <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefCamera1} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Slot 2 */}
+                    <div className={`relative border-2 rounded-2xl overflow-hidden p-5 text-center transition-all duration-300 group flex flex-col justify-between items-center min-h-[280px] ${
+                      preview2 ? 'border-emerald-500 bg-emerald-50/10' : 'border-dashed border-slate-200 bg-slate-50/40 hover:bg-white hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/5'
+                    }`}>
+                      {preview2 ? (
+                        <div className="flex flex-col items-center justify-between h-full w-full">
+                          <div className="relative w-full h-44 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden shadow-md">
+                            <img src={preview2} alt="Preview 2" className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`} />
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 flex items-end justify-center">
+                              <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">2. Slight Left Muzzle</span>
+                            </div>
+                          </div>
+                          {!loading && (
+                            <button type="button" onClick={() => removeFile(2)} className="text-[10px] mt-4 font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest flex items-center gap-1.5 transition-colors">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> 
+                              <span>Remove</span>
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col justify-between h-full w-full relative">
+                          {/* Guide background with opacity */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-300 rounded-xl overflow-hidden pointer-events-none">
+                            <img src={muzzleLeftGuide} alt="Left Guide" className="w-full h-full object-cover" />
+                          </div>
+                          
+                          <div className="space-y-2 relative z-10 w-full">
+                            <div className="flex items-center justify-between w-full">
+                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-black text-[9px] px-2 py-0.5 rounded-md tracking-wider uppercase">Slight Left</span>
+                              <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center font-mono text-[10px] font-black text-slate-400">2</span>
+                            </div>
+                            <div className="h-28 flex items-center justify-center w-full relative">
+                              <div className="absolute w-20 h-20 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition-all duration-300" />
+                              <img 
+                                src={muzzleLeftGuide} 
+                                alt="Left Guide" 
+                                className="h-24 w-24 object-contain filter drop-shadow opacity-90 group-hover:scale-105 group-hover:opacity-100 transition-all duration-300 select-none pointer-events-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 mt-4 relative z-10 w-full">
+                            <button type="button" onClick={() => setActiveCameraSlot({ name: 'left', label: 'Slight Left Muzzle', slot: 2 })} className="py-2 px-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] rounded-xl transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95">
+                              Camera
+                            </button>
+                            <button type="button" onClick={() => fileInputRefGallery2.current?.click()} className="py-2 px-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-extrabold text-[11px] rounded-xl transition-all active:scale-95 shadow-sm">
+                              Upload
+                            </button>
+                          </div>
+                          <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefGallery2} />
+                          <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefCamera2} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Slot 3 */}
+                    <div className={`relative border-2 rounded-2xl overflow-hidden p-5 text-center transition-all duration-300 group flex flex-col justify-between items-center min-h-[280px] ${
+                      preview3 ? 'border-emerald-500 bg-emerald-50/10' : 'border-dashed border-slate-200 bg-slate-50/40 hover:bg-white hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/5'
+                    }`}>
+                      {preview3 ? (
+                        <div className="flex flex-col items-center justify-between h-full w-full">
+                          <div className="relative w-full h-44 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden shadow-md">
+                            <img src={preview3} alt="Preview 3" className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`} />
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 flex items-end justify-center">
+                              <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">3. Slight Right Muzzle</span>
+                            </div>
+                          </div>
+                          {!loading && (
+                            <button type="button" onClick={() => removeFile(3)} className="text-[10px] mt-4 font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest flex items-center gap-1.5 transition-colors">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> 
+                              <span>Remove</span>
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col justify-between h-full w-full relative">
+                          {/* Guide background with opacity */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-300 rounded-xl overflow-hidden pointer-events-none">
+                            <img src={muzzleRightGuide} alt="Right Guide" className="w-full h-full object-cover" />
+                          </div>
+                          
+                          <div className="space-y-2 relative z-10 w-full">
+                            <div className="flex items-center justify-between w-full">
+                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-black text-[9px] px-2 py-0.5 rounded-md tracking-wider uppercase">Slight Right</span>
+                              <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center font-mono text-[10px] font-black text-slate-400">3</span>
+                            </div>
+                            <div className="h-28 flex items-center justify-center w-full relative">
+                              <div className="absolute w-20 h-20 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition-all duration-300" />
+                              <img 
+                                src={muzzleRightGuide} 
+                                alt="Right Guide" 
+                                className="h-24 w-24 object-contain filter drop-shadow opacity-90 group-hover:scale-105 group-hover:opacity-100 transition-all duration-300 select-none pointer-events-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 mt-4 relative z-10 w-full">
+                            <button type="button" onClick={() => setActiveCameraSlot({ name: 'right', label: 'Slight Right Muzzle', slot: 3 })} className="py-2 px-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] rounded-xl transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95">
+                              Camera
+                            </button>
+                            <button type="button" onClick={() => fileInputRefGallery3.current?.click()} className="py-2 px-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-extrabold text-[11px] rounded-xl transition-all active:scale-95 shadow-sm">
+                              Upload
+                            </button>
+                          </div>
+                          <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefGallery3} />
+                          <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefCamera3} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {message && (
+                  <div className={`p-4 rounded-xl text-sm font-bold flex items-start gap-3 ${
+                    message.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800 border border-rose-200'
+                  }`}>
+                    {message.type === 'success' ? (
+                      <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                    ) : (
+                      <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    )}
+                    <span>{message.text}</span>
+                  </div>
+                )}
+
+                <button 
+                  type="submit" 
+                  disabled={loading || !file1 || !file2 || !file3}
+                  className="w-full btn-primary py-4 text-base shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 disabled:opacity-70 transition-all hover:scale-[1.01] active:scale-95"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                      <span>Validating & Fusing AI Profile...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <span>Register Cattle</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 border border-slate-200 mb-12">
+            {step === 2 ? (
+              <form onSubmit={handleVideoSubmit} className="space-y-8">
+                <div className="space-y-4">
+                    <div>
+                      <label className="text-xs font-black text-slate-700 uppercase tracking-wider">Upload 15-Second Video</label>
+                      <p className="text-sm text-slate-500 mt-1">Capture a short video of the cattle. Our AI will analyze frames to estimate BCS, weight, breed, and health status.</p>
+                    </div>
+                    
+                    <div className={`relative border-2 ${videoPreview ? 'border-emerald-500 bg-emerald-50/30 border-solid' : 'border-slate-300 bg-slate-50 border-dashed'} rounded-xl p-8 text-center transition-all min-h-[250px] flex flex-col justify-center items-center`}>
+                        {videoPreview ? (
+                            <div className="flex flex-col items-center w-full">
+                                <video src={videoPreview} controls className="max-h-48 w-full object-contain rounded-lg shadow-sm mb-4" />
+                                {!loading && <button type="button" onClick={() => { setVideoFile(null); setVideoPreview(null); }} className="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase bg-rose-50 px-4 py-2 rounded-lg">Change Video</button>}
+                            </div>
+                        ) : (
+                            <div className="space-y-4 w-full flex flex-col items-center">
+                                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm text-emerald-500 mb-2">
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                </div>
+                                <p className="text-sm font-bold text-slate-700">Record Live Camera Video or Upload File</p>
+                                <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full justify-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => setIsVideoRecorderOpen(true)}
+                                      className="btn-primary py-3 px-6 text-sm flex items-center justify-center gap-2"
+                                    >
+                                        <svg className="w-4 h-4 text-rose-400 animate-pulse" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /></svg>
+                                        Record Live Video (15s)
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => videoInputRef.current?.click()}
+                                      className="btn-secondary py-3 px-6 text-sm flex items-center justify-center gap-2"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                        Upload Video File
+                                    </button>
+                                </div>
+                                <input type="file" accept="video/*" capture="environment" onChange={handleVideoChange} className="hidden" ref={videoInputRef} />
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {message && (
+                  <div className={`p-4 rounded-xl text-sm font-bold flex items-start gap-3 ${
+                    message.type === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800 border border-rose-200'
+                  }`}>
+                    {message.type === 'success' ? (
+                      <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                    ) : (
+                      <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    )}
+                    <span>{message.text}</span>
+                  </div>
+                )}
+
+                <button 
+                  type="submit" 
+                  disabled={loading || !videoFile}
+                  className="w-full btn-primary py-4 text-base shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 disabled:opacity-70"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                      <span>Analyzing Video Frames...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <span>Complete Registration</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              <div className="space-y-6">
+                {/* Header */}
+                {videoStats?.is_cattle_detected === false ? (
+                  <div className="bg-gradient-to-br from-rose-600 to-rose-800 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg">
+                    <div className="relative flex items-center gap-4">
+                      <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/30">
+                        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                       </div>
                       <div>
-                        <h4 className="text-rose-950 font-black text-xl mb-1">Unidentified / Non-Cattle Subject Detected in Video</h4>
-                        <p className="text-rose-800 text-sm max-w-lg mx-auto font-medium leading-relaxed">
-                          {videoStats.observations?.[0] || 'The uploaded video contains human or room objects rather than cattle. Please record or upload a clear video showing cattle or water buffalo.'}
-                        </p>
+                        <h3 className="text-white font-black text-xl leading-tight">Video Analysis Alert — Non-Cattle Subject</h3>
+                        <p className="text-rose-100 font-medium text-sm mt-0.5">The uploaded video frames do not contain a cattle or water buffalo</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-xs bg-white/20 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/20">{name || 'Cattle'}</span>
+                          {currentCattleId && (
+                            <span className="text-xs bg-white/20 text-white font-mono font-bold px-2.5 py-0.5 rounded-full border border-white/20">
+                              MUZZ-{currentCattleId.slice(0, 8).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="pt-2">
-                        <button
-                          onClick={retakeVideo}
-                          className="btn-primary bg-rose-600 hover:bg-rose-700 text-white font-black text-sm py-3.5 px-6 rounded-xl shadow-md transition-all inline-flex items-center gap-2"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                          Re-record / Upload Cattle Video
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Breed</p>
-                      <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.breed || 'Unknown'}</p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Age Estimate</p>
-                      <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.age_estimate || 'N/A'}</p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Coat Color</p>
-                      <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.coat_color || 'Unknown'}</p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Weight Range</p>
-                      <p className="text-slate-900 font-black text-sm mt-0.5">
-                        {(() => {
-                          const str = String(videoStats.weight_range || '');
-                          if (str.includes('-') || str.includes('–')) return str.includes('kg') ? str : `${str} kg`;
-                          const num = parseFloat(str.replace(/[^0-9.]/g, '')) || parseFloat(videoStats.weight_kg) || 480;
-                          const low = Math.round((num * 0.93) / 5) * 5;
-                          const high = Math.round((num * 1.07) / 5) * 5;
-                          return `${low} – ${high} kg`;
-                        })()}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Height Range</p>
-                      <p className="text-slate-900 font-black text-sm mt-0.5">
-                        {(() => {
-                          const str = String(videoStats.height_range || '');
-                          if (str.includes('-') || str.includes('–')) return str.includes('cm') ? str : `${str} cm`;
-                          const num = parseFloat(str.replace(/[^0-9.]/g, '')) || parseFloat(videoStats.height_cm) || 135;
-                          const low = Math.round(num * 0.96);
-                          const high = Math.round(num * 1.04);
-                          return `${low} – ${high} cm`;
-                        })()}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Value</p>
-                      <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.estimated_value || 'N/A'}</p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Cleanliness Score</p>
-                      <p className="text-emerald-700 font-black text-sm mt-0.5">{videoStats.cleanliness_score || 85}<span className="text-xs font-bold text-emerald-400">/100</span></p>
                     </div>
                   </div>
-
-                  {/* Score Rows — BCS, Health, Udder, Teat */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-                    {/* BCS Score */}
-                    <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
-                      <div className="flex items-start justify-between mb-1">
-                        <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">BCS Score</p>
-                        <span className="text-emerald-700 font-black text-lg leading-none">{videoStats.bcs_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-emerald-500">/5</span></span>
+                ) : (
+                  <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 text-white relative overflow-hidden">
+                    <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                    <div className="relative flex items-center gap-4">
+                      <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/30">
+                        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
                       </div>
-                      <p className="text-emerald-800 font-bold text-xs">{bcsLabel}</p>
-                      <ScoreDots score={videoStats.bcs_score || 0} color="#10b981" />
+                      <div>
+                        <h3 className="text-white font-black text-xl leading-tight">Registration Complete</h3>
+                        <p className="text-emerald-100 font-medium text-sm mt-0.5">Cattle Profile Successfully Analyzed & Stored by Chimertech AI</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-xs bg-white/20 text-white font-bold px-2.5 py-0.5 rounded-full border border-white/20">{name || 'Cattle'}</span>
+                          {currentCattleId && (
+                            <span className="text-xs bg-white/20 text-white font-mono font-bold px-2.5 py-0.5 rounded-full border border-white/20">
+                              MUZZ-{currentCattleId.slice(0, 8).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
+                  </div>
+                )}
 
-                    {/* Health Status */}
-                    <div className={`bg-white rounded-xl p-4 border shadow-sm ${isHealthy ? 'border-emerald-200' : 'border-rose-200'}`}>
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1">Health Status</p>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-emerald-500' : 'bg-rose-500'} animate-pulse`} />
-                        <p className={`font-black text-sm ${isHealthy ? 'text-emerald-700' : 'text-rose-700'}`}>
-                          {videoStats.disease_status || 'Healthy'}
+                {/* Retake Banner — shown when parts are missing */}
+                {videoStats?.is_cattle_detected !== false && videoStats?.missing_parts?.length > 0 && (
+                  <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-5">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="text-amber-900 font-black text-base">Retake Required — Body Parts Not Captured</h4>
+                        <p className="text-amber-800 text-sm mt-0.5">
+                          The AI could not clearly see the following in your video:
                         </p>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {videoStats.missing_parts.map((part: string) => (
+                            <span key={part} className="text-xs font-black bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full capitalize border border-amber-300">
+                              {part.replace('_', ' ')}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
+                    <div className="bg-amber-100 rounded-xl p-3 mb-3 border border-amber-200">
+                      <p className="text-amber-800 text-xs font-medium">
+                        <strong>Quick Fix:</strong> Upload a clear close-up photo of the udder/teat area for instant AI visual scoring, or re-record the video.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        onClick={() => udderPhotoRef.current?.click()}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        </svg>
+                        Upload Udder Photo Only (AI Score)
+                      </button>
+                      <button
+                        onClick={retakeVideo}
+                        className="bg-amber-600 hover:bg-amber-700 text-white font-black text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-600/20"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Re-record Video (Keep Muzzle Scan)
+                      </button>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUdderPhotoUpload}
+                      className="hidden"
+                      ref={udderPhotoRef}
+                    />
+                  </div>
+                )}
 
-                    {videoStats?.gender === 'Female' && (
-                      <>
-                        {/* Udder Score */}
-                        <div className={`bg-white rounded-xl p-4 border shadow-sm ${videoStats.udder_visible ? 'border-purple-200' : 'border-slate-200 opacity-75'}`}>
-                          <div className="flex items-start justify-between mb-1">
-                            <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Udder Score</p>
-                            {videoStats.udder_visible ? (
-                              <span className="text-purple-700 font-black text-lg leading-none">{videoStats.udder_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-purple-400">/5</span></span>
-                            ) : (
-                              <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Not Captured</span>
-                            )}
-                          </div>
-                          <p className={`font-bold text-xs ${videoStats.udder_visible ? 'text-purple-700' : 'text-slate-400'}`}>{udderLabel}</p>
-                          {videoStats.udder_visible && <ScoreDots score={videoStats.udder_score || 0} color="#9333ea" />}
-                          {!videoStats.udder_visible && (
-                            <p className="text-[10px] text-slate-400 mt-1">Re-record video showing udder area</p>
-                          )}
-                        </div>
+                {/* AI Analysis Stats Grid */}
+                {videoStats && (() => {
+                  const bcsLabel = videoStats.bcs_score >= 4.5 ? 'Obese' : videoStats.bcs_score >= 3.5 ? 'Overconditioned' : videoStats.bcs_score >= 2.5 ? 'Ideal' : videoStats.bcs_score >= 1.5 ? 'Thin' : videoStats.bcs_score > 0 ? 'Emaciated' : 'N/A';
+                  const udderLabel = videoStats.udder_score >= 4.5 ? 'Excellent' : videoStats.udder_score >= 3.5 ? 'Good' : videoStats.udder_score >= 2.5 ? 'Average' : videoStats.udder_score >= 1.5 ? 'Below Average' : videoStats.udder_score > 0 ? 'Poor' : 'Not Visible';
+                  const teatLabel = videoStats.teat_score >= 4.5 ? 'Ideal' : videoStats.teat_score >= 3.5 ? 'Good' : videoStats.teat_score >= 2.5 ? 'Average' : videoStats.teat_score >= 1.5 ? 'Short' : videoStats.teat_score > 0 ? 'Deformed' : 'Not Visible';
+                  const isHealthy = !videoStats.disease_status || videoStats.disease_status.toLowerCase() === 'healthy';
 
-                        {/* Teat Score */}
-                        <div className={`bg-white rounded-xl p-4 border shadow-sm ${videoStats.teat_visible ? 'border-blue-200' : 'border-slate-200 opacity-75'}`}>
-                          <div className="flex items-start justify-between mb-1">
-                            <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Teat Score</p>
-                            {videoStats.teat_visible ? (
-                              <span className="text-blue-700 font-black text-lg leading-none">{videoStats.teat_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-blue-400">/5</span></span>
-                            ) : (
-                              <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Not Captured</span>
-                            )}
-                          </div>
-                          <p className={`font-bold text-xs ${videoStats.teat_visible ? 'text-blue-700' : 'text-slate-400'}`}>{teatLabel}</p>
-                          {videoStats.teat_visible && <ScoreDots score={videoStats.teat_score || 0} color="#2563eb" />}
-                          {!videoStats.teat_visible && (
-                            <p className="text-[10px] text-slate-400 mt-1">Re-record video showing teat area</p>
-                          )}
-                        </div>
-                      </>
-                    )}
+                  const ScoreDots = ({ score, max = 5, color = '#10b981' }: { score: number; max?: number; color?: string }) => (
+                    <div className="flex gap-0.5 mt-1">
+                      {Array.from({ length: max }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="h-1.5 flex-1 rounded-full"
+                          style={{ background: i < Math.round(score) ? color : '#e2e8f0' }}
+                        />
+                      ))}
+                    </div>
+                  );
 
-                    {/* Gender Card / Gender Unverified Warning */}
-                    {videoStats?.gender === 'Unknown' || videoStats?.gender?.toLowerCase() === 'unknown' || videoStats?.gender?.includes('Unverified') || videoStats?.gender_uncertain ? (
-                      <div className="col-span-1 sm:col-span-2 bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 shadow-sm space-y-3">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 bg-amber-500 text-white font-black text-lg rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  return (
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider">AI Analysis Results</h4>
+                      
+                      {videoStats.is_cattle_detected === false ? (
+                        <div className="bg-rose-50 border-2 border-rose-400 rounded-2xl p-6 text-center shadow-lg space-y-4">
+                          <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                           </div>
                           <div>
-                            <h4 className="font-black text-amber-950 text-base">Gender Unverified — Udder & Stomach Area Obscured</h4>
-                            <p className="text-amber-900 text-xs mt-1 font-medium leading-relaxed">
-                              The AI could not automatically verify gender because the udder and belly region were obscured in the video. Please select the correct gender below or retake the video:
+                            <h4 className="text-rose-950 font-black text-xl mb-1">Unidentified / Non-Cattle Subject Detected in Video</h4>
+                            <p className="text-rose-800 text-sm max-w-lg mx-auto font-medium leading-relaxed">
+                              {videoStats.observations?.[0] || 'The uploaded video contains human or room objects rather than cattle. Please record or upload a clear video showing cattle or water buffalo.'}
+                            </p>
+                          </div>
+                          <div className="pt-2">
+                            <button
+                              onClick={retakeVideo}
+                              className="btn-primary bg-rose-600 hover:bg-rose-700 text-white font-black text-sm py-3.5 px-6 rounded-xl shadow-md transition-all inline-flex items-center gap-2"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                              Re-record / Upload Cattle Video
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Breed</p>
+                          <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.breed || 'Unknown'}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Age Estimate</p>
+                          <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.age_estimate || 'N/A'}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Coat Color</p>
+                          <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.coat_color || 'Unknown'}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Weight Range</p>
+                          <p className="text-slate-900 font-black text-sm mt-0.5">
+                            {(() => {
+                              const str = String(videoStats.weight_range || '');
+                              if (str.includes('-') || str.includes('–')) return str.includes('kg') ? str : `${str} kg`;
+                              const num = parseFloat(str.replace(/[^0-9.]/g, '')) || parseFloat(videoStats.weight_kg) || 480;
+                              const low = Math.round((num * 0.93) / 5) * 5;
+                              const high = Math.round((num * 1.07) / 5) * 5;
+                              return `${low} – ${high} kg`;
+                            })()}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Height Range</p>
+                          <p className="text-slate-900 font-black text-sm mt-0.5">
+                            {(() => {
+                              const str = String(videoStats.height_range || '');
+                              if (str.includes('-') || str.includes('–')) return str.includes('cm') ? str : `${str} cm`;
+                              const num = parseFloat(str.replace(/[^0-9.]/g, '')) || parseFloat(videoStats.height_cm) || 135;
+                              const low = Math.round(num * 0.96);
+                              const high = Math.round(num * 1.04);
+                              return `${low} – ${high} cm`;
+                            })()}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Value</p>
+                          <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.estimated_value || 'N/A'}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Cleanliness Score</p>
+                          <p className="text-emerald-700 font-black text-sm mt-0.5">{videoStats.cleanliness_score || 85}<span className="text-xs font-bold text-emerald-400">/100</span></p>
+                        </div>
+                      </div>
+
+                      {/* Score Rows — BCS, Health, Udder, Teat */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                        {/* BCS Score */}
+                        <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
+                          <div className="flex items-start justify-between mb-1">
+                            <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">BCS Score</p>
+                            <span className="text-emerald-700 font-black text-lg leading-none">{videoStats.bcs_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-emerald-500">/5</span></span>
+                          </div>
+                          <p className="text-emerald-800 font-bold text-xs">{bcsLabel}</p>
+                          <ScoreDots score={videoStats.bcs_score || 0} color="#10b981" />
+                        </div>
+
+                        {/* Health Status */}
+                        <div className={`bg-white rounded-xl p-4 border shadow-sm ${isHealthy ? 'border-emerald-200' : 'border-rose-200'}`}>
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1">Health Status</p>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-emerald-500' : 'bg-rose-500'} animate-pulse`} />
+                            <p className={`font-black text-sm ${isHealthy ? 'text-emerald-700' : 'text-rose-700'}`}>
+                              {videoStats.disease_status || 'Healthy'}
                             </p>
                           </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-2.5 pt-2 border-t border-amber-200">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleGender('Female')}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all"
-                          >
-                            <span>Confirm Female (Cow / Buffalo)</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleGender('Male')}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20 transition-all"
-                          >
-                            <span>Confirm Male (Bull / Ox)</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={retakeVideo}
-                            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
-                          >
-                            <span>Retake Video</span>
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="col-span-1 sm:col-span-2 bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                        <div>
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Gender / Sex</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="font-black text-sm text-slate-800">
-                              {videoStats?.gender === 'Male' ? 'Male (Bull / Ox)' : 'Female (Cow / Buffalo)'}
-                            </span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              videoStats?.gender === 'Male' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'
-                            }`}>
-                              {videoStats?.gender === 'Male' ? 'Bull / Ox' : 'Cow / Buffalo'}
-                            </span>
+
+                        {videoStats?.gender === 'Female' && (
+                          <>
+                            {/* Udder Score */}
+                            <div className={`bg-white rounded-xl p-4 border shadow-sm ${videoStats.udder_visible ? 'border-purple-200' : 'border-slate-200 opacity-75'}`}>
+                              <div className="flex items-start justify-between mb-1">
+                                <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Udder Score</p>
+                                {videoStats.udder_visible ? (
+                                  <span className="text-purple-700 font-black text-lg leading-none">{videoStats.udder_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-purple-400">/5</span></span>
+                                ) : (
+                                  <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Not Captured</span>
+                                )}
+                              </div>
+                              <p className={`font-bold text-xs ${videoStats.udder_visible ? 'text-purple-700' : 'text-slate-400'}`}>{udderLabel}</p>
+                              {videoStats.udder_visible && <ScoreDots score={videoStats.udder_score || 0} color="#9333ea" />}
+                              {!videoStats.udder_visible && (
+                                <p className="text-[10px] text-slate-400 mt-1">Re-record video showing udder area</p>
+                              )}
+                            </div>
+
+                            {/* Teat Score */}
+                            <div className={`bg-white rounded-xl p-4 border shadow-sm ${videoStats.teat_visible ? 'border-blue-200' : 'border-slate-200 opacity-75'}`}>
+                              <div className="flex items-start justify-between mb-1">
+                                <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Teat Score</p>
+                                {videoStats.teat_visible ? (
+                                  <span className="text-blue-700 font-black text-lg leading-none">{videoStats.teat_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-blue-400">/5</span></span>
+                                ) : (
+                                  <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Not Captured</span>
+                                )}
+                              </div>
+                              <p className={`font-bold text-xs ${videoStats.teat_visible ? 'text-blue-700' : 'text-slate-400'}`}>{teatLabel}</p>
+                              {videoStats.teat_visible && <ScoreDots score={videoStats.teat_score || 0} color="#2563eb" />}
+                              {!videoStats.teat_visible && (
+                                <p className="text-[10px] text-slate-400 mt-1">Re-record video showing teat area</p>
+                              )}
+                            </div>
+                          </>
+                        )}
+
+                        {/* Gender Card / Gender Unverified Warning */}
+                        {videoStats?.gender === 'Unknown' || videoStats?.gender?.toLowerCase() === 'unknown' || videoStats?.gender?.includes('Unverified') || videoStats?.gender_uncertain ? (
+                          <div className="col-span-1 sm:col-span-2 bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 shadow-sm space-y-3">
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 bg-amber-500 text-white font-black text-lg rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <div>
+                                <h4 className="font-black text-amber-950 text-base">Gender Unverified — Udder & Stomach Area Obscured</h4>
+                                <p className="text-amber-900 text-xs mt-1 font-medium leading-relaxed">
+                                  The AI could not automatically verify gender because the udder and belly region were obscured in the video. Please select the correct gender below or retake the video:
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-2.5 pt-2 border-t border-amber-200">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleGender('Female')}
+                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all"
+                              >
+                                <span>Confirm Female (Cow / Buffalo)</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleGender('Male')}
+                                className="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-slate-800/20 transition-all"
+                              >
+                                <span>Confirm Male (Bull / Ox)</span>
+                              </button>
+                            </div>
                           </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleToggleGender(videoStats?.gender === 'Male' ? 'Female' : 'Male')}
-                          className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 border border-slate-300 transition-all"
-                        >
-                          <svg className="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-                          <span>Incorrect? Switch to {videoStats?.gender === 'Male' ? 'Female (Cow/Buffalo)' : 'Male (Bull/Ox)'}</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Observations */}
-                  {videoStats.observations?.length > 0 && (
-                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-2">AI Observations</p>
-                      <ul className="space-y-1.5">
-                        {videoStats.observations.map((obs: string, i: number) => (
-                          <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                            <span className="w-1 h-1 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
-                            {obs}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Secondary Cattle / Calf Card (when 2 animals detected in video) */}
-                  {videoStats.secondary_cattle && (
-                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300/70 rounded-2xl p-5 shadow-sm space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="w-7 h-7 rounded-xl bg-amber-500 text-white font-black text-xs flex items-center justify-center shadow-sm">2</span>
-                          <div>
-                            <h4 className="text-amber-950 font-black text-sm">{videoStats.secondary_cattle.label || 'Calf / 2nd Cattle'}</h4>
-                            <p className="text-amber-700 text-[10px] font-bold">Detected in video alongside primary cow</p>
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-black bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full border border-amber-300 uppercase">
-                          {videoStats.secondary_cattle.health_status || 'Healthy'}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
-                          <p className="text-[9px] uppercase font-black text-slate-400">Breed</p>
-                          <p className="text-slate-900 font-black text-xs mt-0.5 truncate">{videoStats.secondary_cattle.breed || 'Unknown'}</p>
-                        </div>
-                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
-                          <p className="text-[9px] uppercase font-black text-slate-400">Est. Age</p>
-                          <p className="text-slate-900 font-black text-xs mt-0.5">{videoStats.secondary_cattle.age_estimate || 'N/A'}</p>
-                        </div>
-                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
-                          <p className="text-[9px] uppercase font-black text-slate-400">Est. Weight</p>
-                          <p className="text-slate-900 font-black text-xs mt-0.5">{videoStats.secondary_cattle.weight_kg ? `${videoStats.secondary_cattle.weight_kg} kg` : 'N/A'}</p>
-                        </div>
-                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
-                          <p className="text-[9px] uppercase font-black text-slate-400">Est. Height</p>
-                          <p className="text-slate-900 font-black text-xs mt-0.5">{videoStats.secondary_cattle.height_cm ? `${videoStats.secondary_cattle.height_cm} cm` : 'N/A'}</p>
-                        </div>
-                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
-                          <p className="text-[9px] uppercase font-black text-slate-400">Coat Color</p>
-                          <p className="text-slate-900 font-black text-xs mt-0.5">{videoStats.secondary_cattle.coat_color || 'Unknown'}</p>
-                        </div>
-                        <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
-                          <p className="text-[9px] uppercase font-black text-slate-400">Est. Value</p>
-                          <p className="text-slate-900 font-black text-xs mt-0.5">{videoStats.secondary_cattle.estimated_value || 'N/A'}</p>
-                        </div>
-                        {videoStats.secondary_cattle.notes && (
-                          <div className="col-span-2 bg-white/80 backdrop-blur rounded-xl p-3 border border-amber-200">
-                            <p className="text-[9px] uppercase font-black text-slate-400">AI Notes</p>
-                            <p className="text-slate-700 text-xs mt-0.5 font-medium">{videoStats.secondary_cattle.notes}</p>
+                        ) : (
+                          <div className="col-span-1 sm:col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Cattle Gender</span>
+                              <span className="badge-grey">{videoStats.gender}</span>
+                            </div>
+                            <div className="flex gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleGender(videoStats?.gender === 'Female' ? 'Male' : 'Female')}
+                                className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 uppercase"
+                              >
+                                Swap Gender
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
-                    </div>
-                  )}
-                  </>
-                )}
-                </div>
-              );
-            })()}
 
-            {/* QR Code Card */}
-            {currentCattleId && (
-              <div className="mt-2">
-                <CattleQRCodeCard
-                  cattleId={currentCattleId}
-                  cattleName={name || 'Registered Cattle'}
-                  muzzleId={`MUZZ-${currentCattleId.slice(0, 8).toUpperCase()}`}
-                  breed={videoStats?.breed}
-                  healthStatus={videoStats?.disease_status || 'Healthy'}
-                  bcsScore={videoStats?.bcs_score}
-                />
+                      {/* Observations Panel */}
+                      {videoStats.observations && videoStats.observations.length > 0 && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-2">Observations</p>
+                          <ul className="space-y-1">
+                            {videoStats.observations.map((obs: string, idx: number) => (
+                              <li key={idx} className="text-xs font-bold text-slate-600 flex items-start gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
+                                <span>{obs}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleReset}
+                    className="flex-1 btn-secondary py-3 text-sm flex items-center justify-center gap-2"
+                  >
+                    Reset & Restart
+                  </button>
+
+                  <button
+                    onClick={() => handleReset()}
+                    className="flex-1 btn-primary py-3 text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Register Another Cattle</span>
+                  </button>
+                </div>
+
+                {/* AI Report Disclaimer Footer */}
+                <AIDisclaimerFooter />
               </div>
             )}
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap sm:flex-nowrap gap-3">
-              <button
-                onClick={() => setIsRetestPhotosModalOpen(true)}
-                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-black text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 00-2 2V9z" />
-                </svg>
-                <span>Retake Photos (5-Angles)</span>
-              </button>
-
-              <button
-                onClick={retakeVideo}
-                className="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-black text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md"
-              >
-                <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                <span>Retake Video</span>
-              </button>
-
-              <button
-                onClick={() => handleReset()}
-                className="flex-1 btn-primary py-3 text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Register Another Cattle</span>
-              </button>
-            </div>
-
-            {/* AI Report Disclaimer Footer */}
-            <AIDisclaimerFooter />
           </div>
-          )}
-        </div>
+        )}
 
         {/* ── Retest 5-Angle Photos Modal ─────────────────── */}
         {isRetestPhotosModalOpen && (
@@ -1497,21 +1507,21 @@ export default function FarmManagement() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Breed</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Breed</label>
                     <input
                       type="text"
                       value={editForm.breed}
-                      onChange={(e) => setEditForm({ ...editForm, breed: e.target.value })}
-                      className="input-field mt-1"
+                      disabled
+                      className="input-field mt-1 bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed select-none"
                       placeholder="e.g. Murrah Buffalo"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Gender / Sex</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Gender / Sex</label>
                     <select
                       value={editForm.gender}
-                      onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
-                      className="input-field mt-1 font-bold"
+                      disabled
+                      className="input-field mt-1 bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed select-none font-bold"
                     >
                       <option value="Female">Female (Cow/Buffalo)</option>
                       <option value="Male">Male (Bull/Ox)</option>
@@ -1521,42 +1531,42 @@ export default function FarmManagement() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Coat Color</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Coat Color</label>
                     <input
                       type="text"
                       value={editForm.color}
-                      onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
-                      className="input-field mt-1"
+                      disabled
+                      className="input-field mt-1 bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed select-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Est. Weight (kg)</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Est. Weight (kg)</label>
                     <input
                       type="number"
                       value={editForm.weight_kg}
-                      onChange={(e) => setEditForm({ ...editForm, weight_kg: e.target.value })}
-                      className="input-field mt-1"
+                      disabled
+                      className="input-field mt-1 bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed select-none"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Est. Height (cm)</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Est. Height (cm)</label>
                     <input
                       type="number"
                       value={editForm.height_cm}
-                      onChange={(e) => setEditForm({ ...editForm, height_cm: e.target.value })}
-                      className="input-field mt-1"
+                      disabled
+                      className="input-field mt-1 bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed select-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Est. Value (Rs./$)</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Est. Value (Rs./$)</label>
                     <input
                       type="text"
                       value={editForm.estimated_value}
-                      onChange={(e) => setEditForm({ ...editForm, estimated_value: e.target.value })}
-                      className="input-field mt-1"
+                      disabled
+                      className="input-field mt-1 bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed select-none"
                     />
                   </div>
                 </div>

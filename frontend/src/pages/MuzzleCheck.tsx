@@ -100,7 +100,7 @@ export default function MuzzleCheck() {
   if (!user) return null;
 
   return (
-    <div className="pt-24 pb-20 min-h-screen bg-slate-50">
+    <div className="pt-28 sm:pt-32 lg:pt-36 pb-20 min-h-screen bg-slate-50">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-10">
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-3 tracking-tight">AI Muzzle Identification</h1>

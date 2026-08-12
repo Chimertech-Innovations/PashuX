@@ -9,7 +9,7 @@ const AI_MODULES = [
   { to: '/muzzle-check', label: 'Muzzle Identity Check', desc: 'Identify cattle by muzzle pattern' },
   { to: '/farm', label: 'BCS Score Detection', desc: 'Body condition score AI analysis' },
   { to: '/farm', label: 'Disease Detection',   desc: 'Visible cattle health screening' },
-  { to: '/farm', label: 'Analysis History',    desc: 'Past diagnostic reports & scans' },
+  { to: '/history', label: 'Analysis History',    desc: 'Past diagnostic reports & scans' },
 ];
 
 const SUBMENU_ITEMS = [
@@ -218,7 +218,7 @@ export default function Navbar() {
               <Link to="/profile" className="btn-ghost text-xs font-black text-slate-900 hover:text-emerald-700 px-2 py-1 truncate max-w-[140px] whitespace-nowrap">
                 {user.user_metadata?.full_name || (user.email ? user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1) : 'User')}
               </Link>
-              <button onClick={() => signOut()} className="btn-secondary py-1.5 px-3 text-xs font-black border-slate-300 text-slate-900 whitespace-nowrap">
+              <button onClick={() => { if (window.confirm("Are you sure you want to sign out?")) signOut(); }} className="btn-secondary py-1.5 px-3 text-xs font-black border-slate-300 text-slate-900 whitespace-nowrap">
                 Sign out
               </button>
             </div>
@@ -339,7 +339,7 @@ export default function Navbar() {
               <span>Download iHerd Mobile App</span>
             </a>
             {user ? (
-              <button onClick={() => { signOut(); setMenuOpen(false); }} className="btn-secondary text-xs font-black text-slate-900 w-full py-2.5">
+              <button onClick={() => { if (window.confirm("Are you sure you want to sign out?")) { signOut(); setMenuOpen(false); } }} className="btn-secondary text-xs font-black text-slate-900 w-full py-2.5">
                 Sign out ({user.user_metadata?.full_name || (user.email ? user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1) : 'User')})
               </button>
             ) : (

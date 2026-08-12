@@ -26,9 +26,37 @@ export default function FarmManagement() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   
   // Wizard state
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [currentCattleId, setCurrentCattleId] = useState<string | null>(null);
-  const [videoStats, setVideoStats] = useState<any>(null);
+  const [step, setStep] = useState<1 | 2 | 3>(() => {
+    const saved = localStorage.getItem('muzzle_register_step');
+    return (saved ? Number(saved) : 1) as 1 | 2 | 3;
+  });
+  const [currentCattleId, setCurrentCattleId] = useState<string | null>(() => {
+    return localStorage.getItem('muzzle_register_currentCattleId');
+  });
+  const [videoStats, setVideoStats] = useState<any>(() => {
+    const saved = localStorage.getItem('muzzle_register_videoStats');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('muzzle_register_step', step.toString());
+  }, [step]);
+
+  useEffect(() => {
+    if (currentCattleId) {
+      localStorage.setItem('muzzle_register_currentCattleId', currentCattleId);
+    } else {
+      localStorage.removeItem('muzzle_register_currentCattleId');
+    }
+  }, [currentCattleId]);
+
+  useEffect(() => {
+    if (videoStats) {
+      localStorage.setItem('muzzle_register_videoStats', JSON.stringify(videoStats));
+    } else {
+      localStorage.removeItem('muzzle_register_videoStats');
+    }
+  }, [videoStats]);
 
   const handleToggleGender = async (newGender: 'Female' | 'Male') => {
     if (!currentCattleId) return;
@@ -370,6 +398,9 @@ export default function FarmManagement() {
     setCurrentCattleId(null);
     setVideoStats(null);
     setStep(1);
+    localStorage.removeItem('muzzle_register_step');
+    localStorage.removeItem('muzzle_register_currentCattleId');
+    localStorage.removeItem('muzzle_register_videoStats');
     if (clearMessage) setMessage(null);
   };
 
@@ -1320,85 +1351,94 @@ export default function FarmManagement() {
         )}
 
         {/* CATTLE LIST */}
-        <h2 className="text-xl font-black text-slate-900 mb-6">Registered Cattle ({cattleList.length})</h2>
-        
-        {cattleList.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {cattleList.map(cattle => {
-              // Extract muzzle tag from name e.g. "Bessie (MUZZ-AB12-0001)"
-              const tagMatch = cattle.name.match(/\(([^)]+)\)/);
-              const muzzleTag = tagMatch ? tagMatch[1] : cattle.id.substring(0, 8).toUpperCase();
-              return (
-              <div
-                key={cattle.id}
-                onClick={() => navigate(`/cattle/${cattle.id}`)}
-                className="bg-white rounded-2xl p-5 shadow-lg shadow-slate-200/50 border border-slate-200 flex flex-col items-center cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-300 hover:shadow-emerald-100/60 group"
-              >
-                <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 mb-4 border border-slate-200/60 relative">
-                  <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-emerald-400 text-[10px] font-black tracking-widest px-2 py-0.5 rounded border border-emerald-500/30">
-                    AI VERIFIED
-                  </div>
-                  <img src={cattle.display_image} alt={cattle.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                </div>
-                {/* Cattle name (without tag) */}
-                <h3 className="text-base font-black text-slate-900 w-full truncate text-center">
-                  {cattle.name.replace(/\s*\([^)]*\)/, '')}
-                </h3>
-                {/* Muzzle ID badge */}
-                <div className="mt-1.5 flex items-center gap-1 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-0.5">
-                  <svg className="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
-                  </svg>
-                  <span className="font-mono font-black text-[10px] text-emerald-700 tracking-wider">{muzzleTag}</span>
-                </div>
+        {(() => {
+          const displayedCattleList = currentCattleId && step < 3
+            ? cattleList.filter(c => c.id !== currentCattleId)
+            : cattleList;
+          return (
+            <>
+              <h2 className="text-xl font-black text-slate-900 mb-6">Registered Cattle ({displayedCattleList.length})</h2>
+              
+              {displayedCattleList.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {displayedCattleList.map(cattle => {
+                    // Extract muzzle tag from name e.g. "Bessie (MUZZ-AB12-0001)"
+                    const tagMatch = cattle.name.match(/\(([^)]+)\)/);
+                    const muzzleTag = tagMatch ? tagMatch[1] : cattle.id.substring(0, 8).toUpperCase();
+                    return (
+                    <div
+                      key={cattle.id}
+                      onClick={() => navigate(`/cattle/${cattle.id}`)}
+                      className="bg-white rounded-2xl p-5 shadow-lg shadow-slate-200/50 border border-slate-200 flex flex-col items-center cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-emerald-300 hover:shadow-emerald-100/60 group"
+                    >
+                      <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 mb-4 border border-slate-200/60 relative">
+                        <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-emerald-400 text-[10px] font-black tracking-widest px-2 py-0.5 rounded border border-emerald-500/30">
+                          AI VERIFIED
+                        </div>
+                        <img src={cattle.display_image} alt={cattle.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      </div>
+                      {/* Cattle name (without tag) */}
+                      <h3 className="text-base font-black text-slate-900 w-full truncate text-center">
+                        {cattle.name.replace(/\s*\([^)]*\)/, '')}
+                      </h3>
+                      {/* Muzzle ID badge */}
+                      <div className="mt-1.5 flex items-center gap-1 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-0.5">
+                        <svg className="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+                        </svg>
+                        <span className="font-mono font-black text-[10px] text-emerald-700 tracking-wider">{muzzleTag}</span>
+                      </div>
 
-                <div className="mt-3 flex flex-wrap gap-1.5 w-full pt-2 border-t border-slate-100">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedQrCattle(cattle);
-                    }}
-                    className="flex-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-slate-200"
-                  >
-                    QR Code
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openEditModal(cattle);
-                    }}
-                    className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-amber-200"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteCattle(cattle.id, cattle.name.replace(/\s*\([^)]*\)/, ''));
-                    }}
-                    className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-rose-200"
-                    title="Delete Cattle Profile"
-                  >
-                     Delete
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/cattle/${cattle.id}`);
-                    }}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors shadow-sm mt-1"
-                  >
-                    View Details →
-                  </button>
+                      <div className="mt-3 flex flex-wrap gap-1.5 w-full pt-2 border-t border-slate-100">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedQrCattle(cattle);
+                          }}
+                          className="flex-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-slate-200"
+                        >
+                          QR Code
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditModal(cattle);
+                          }}
+                          className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-amber-200"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCattle(cattle.id, cattle.name.replace(/\s*\([^)]*\)/, ''));
+                          }}
+                          className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-rose-200"
+                          title="Delete Cattle Profile"
+                        >
+                           Delete
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/cattle/${cattle.id}`);
+                          }}
+                          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors shadow-sm mt-1"
+                        >
+                          View Details →
+                        </button>
+                      </div>
+                    </div>
+                  );})}
                 </div>
-              </div>
-            );})}
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl p-8 text-center border-2 border-dashed border-slate-200 text-slate-500">
-            You haven't registered any cattle yet. Upload a muzzle scan above to get started!
-          </div>
-        )}
+              ) : (
+                <div className="bg-white rounded-2xl p-8 text-center border-2 border-dashed border-slate-200 text-slate-500">
+                  You haven't registered any cattle yet. Upload a muzzle scan above to get started!
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {/* QR Code Modal */}
         {selectedQrCattle && (

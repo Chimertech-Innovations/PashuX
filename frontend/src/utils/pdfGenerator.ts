@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { PASHUX_LOGO_BASE64 } from './pashuxLogoBase64';
+import { PASHUX_LOGO_BASE64 } from './Pashuxlogo';
 import { CHIMERTECH_LOGO_BASE64 } from './logoBase64';
 import { IHERD_LOGO_BASE64, GOOGLE_PLAY_BASE64 } from './iherdLogoBase64';
 
@@ -468,6 +468,9 @@ export interface CattleProfilePDFData {
   healthStatus?: string;
   udderScore?: number;
   teatScore?: number;
+  cleanlinessScore?: number;
+  manureScore?: number;
+  pashuScore?: number;
   testHistory?: any[];
   observations?: string[];
   bodyConditionDetail?: string;
@@ -479,9 +482,15 @@ async function urlToBase64(url: string): Promise<string | null> {
   if (!url) return null;
   if (url.startsWith('data:image')) return url;
   return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      console.warn('urlToBase64 timed out for:', url);
+      resolve(null);
+    }, 3000);
+
     const img = new Image();
     img.crossOrigin = 'Anonymous';
     img.onload = () => {
+      clearTimeout(timer);
       try {
         const canvas = document.createElement('canvas');
         canvas.width = img.naturalWidth || 400;
@@ -497,7 +506,10 @@ async function urlToBase64(url: string): Promise<string | null> {
       }
       resolve(null);
     };
-    img.onerror = () => resolve(null);
+    img.onerror = () => {
+      clearTimeout(timer);
+      resolve(null);
+    };
     img.src = url;
   });
 }
@@ -530,13 +542,7 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
       console.warn('Could not embed Chimertech logo:', e);
     }
 
-    // 2. PashuX Logo Box (Sleek Dark Badge next to it to blend the black logo background beautifully)
-    doc.setFillColor(15, 23, 42);
-    doc.roundedRect(39, 5.5, 42, 21, 2.5, 2.5, 'F');
-    doc.setDrawColor(16, 185, 129);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(39, 5.5, 42, 21, 2.5, 2.5, 'S');
-
+    // 2. PashuX Logo (Background and border removed)
     try {
       doc.addImage(PASHUX_LOGO_BASE64, 'PNG', 40.5, 6.5, 39, 19);
     } catch (e) {
@@ -691,6 +697,9 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
       { label: 'Coat Color', val: data.coatColor || 'N/A' },
       { label: 'Est. Weight Range', val: w_range_pdf },
       { label: 'Est. Height Range', val: h_range_pdf },
+      { label: 'Est. Value', val: data.estimatedValue || 'N/A' },
+      { label: 'Cleanliness Score', val: data.cleanlinessScore !== undefined ? `${data.cleanlinessScore} / 100` : 'N/A' },
+      { label: 'Manure Score', val: data.manureScore !== undefined ? `${data.manureScore.toFixed(1)} / 5.0` : 'N/A' },
     ];
 
     const gridColW = (pageWidth - 28) / 3;
@@ -714,54 +723,38 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
       doc.text(item.val, vx + 3, vy + 9.5);
     });
 
-    y += 32;
+    y += 46;
 
     // --- Key AI Health Scores Row ---
-    const scoreBoxW = (pageWidth - 28) / (isMale ? 2 : 4);
-
-    // BCS
-    doc.setFillColor(236, 253, 245);
-    doc.roundedRect(14, y, scoreBoxW - 3, 16, 2, 2, 'F');
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(4, 120, 87);
-    doc.text('BCS SCORE', 17, y + 4);
-    doc.setFontSize(11);
-    doc.text(`${data.bcsScore ? data.bcsScore.toFixed(1) : '—'} / 5.0`, 17, y + 11);
-
-    // Health Status
     const isHealthy = !data.healthStatus || data.healthStatus.toLowerCase().includes('healthy');
-    doc.setFillColor(isHealthy ? 240 : 254, isHealthy ? 253 : 242, isHealthy ? 244 : 242);
-    doc.roundedRect(14 + scoreBoxW, y, scoreBoxW - 3, 16, 2, 2, 'F');
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(isHealthy ? 5 : 185, isHealthy ? 150 : 28, isHealthy ? 105 : 28);
-    doc.text('HEALTH STATUS', 17 + scoreBoxW, y + 4);
-    doc.setFontSize(10);
     const cleanHealth = String(data.healthStatus || 'Healthy').replace(/[^\x20-\x7E]/g, '');
-    doc.text(cleanHealth.length > 15 ? `${cleanHealth.slice(0, 14)}...` : cleanHealth, 17 + scoreBoxW, y + 11);
-
+    const scoreBoxes = [
+      { label: 'PASHU SCORE', val: data.pashuScore !== undefined ? `${data.pashuScore} / 100` : '—', bg: [240, 253, 250], text: [13, 148, 136] }, // Teal
+      { label: 'BCS SCORE', val: data.bcsScore ? `${data.bcsScore.toFixed(1)} / 5.0` : '—', bg: [236, 253, 245], text: [4, 120, 87] }, // Emerald
+      { label: 'HEALTH STATUS', val: cleanHealth.length > 15 ? `${cleanHealth.slice(0, 14)}...` : cleanHealth, bg: isHealthy ? [240, 253, 244] : [254, 242, 242], text: isHealthy ? [5, 150, 105] : [185, 28, 28] },
+    ];
     if (!isMale) {
-      // Udder Score
-      doc.setFillColor(245, 243, 255);
-      doc.roundedRect(14 + scoreBoxW * 2, y, scoreBoxW - 3, 16, 2, 2, 'F');
-      doc.setFontSize(7.5);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(109, 40, 217);
-      doc.text('UDDER SCORE', 17 + scoreBoxW * 2, y + 4);
-      doc.setFontSize(11);
-      doc.text(data.udderScore ? `${data.udderScore.toFixed(1)} / 5.0` : 'N/A', 17 + scoreBoxW * 2, y + 11);
-
-      // Teat Score
-      doc.setFillColor(238, 242, 255);
-      doc.roundedRect(14 + scoreBoxW * 3, y, scoreBoxW - 3, 16, 2, 2, 'F');
-      doc.setFontSize(7.5);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(67, 56, 202);
-      doc.text('TEAT SCORE', 17 + scoreBoxW * 3, y + 4);
-      doc.setFontSize(11);
-      doc.text(data.teatScore ? `${data.teatScore.toFixed(1)} / 5.0` : 'N/A', 17 + scoreBoxW * 3, y + 11);
+      scoreBoxes.push(
+        { label: 'UDDER SCORE', val: data.udderScore ? `${data.udderScore.toFixed(1)} / 5.0` : 'N/A', bg: [245, 243, 255], text: [109, 40, 217] },
+        { label: 'TEAT SCORE', val: data.teatScore ? `${data.teatScore.toFixed(1)} / 5.0` : 'N/A', bg: [238, 242, 255], text: [67, 56, 202] }
+      );
     }
+
+    const numBoxes = scoreBoxes.length;
+    const scoreBoxW = (pageWidth - 28) / numBoxes;
+    scoreBoxes.forEach((box, idx) => {
+      const bx = 14 + idx * scoreBoxW;
+      doc.setFillColor(box.bg[0], box.bg[1], box.bg[2]);
+      doc.roundedRect(bx, y, scoreBoxW - 3, 16, 2, 2, 'F');
+      
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(box.text[0], box.text[1], box.text[2]);
+      doc.text(box.label, bx + 3, y + 4);
+      
+      doc.setFontSize(10);
+      doc.text(box.val, bx + 3, y + 11);
+    });
 
     y += 24;
 
@@ -796,19 +789,15 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
     }
 
     // Process test points (Supports 5 Item steps matching the result test flow diagram)
-    const historyPoints = (data.testHistory && data.testHistory.length > 1)
+    const historyPoints = (data.testHistory && data.testHistory.length > 0)
       ? data.testHistory.map((hp: any, idx: number) => ({
-          test_label: `Item ${idx + 1}`,
+          test_label: `Test ${hp.test_number || idx + 1}`,
           bcs_score: hp.bcs_score || data.bcsScore || 3.5,
           cleanliness_score: hp.cleanliness_score || 80,
           udder_score: hp.udder_score || data.udderScore || 3.5,
         }))
       : [
-          { test_label: 'Item 1', bcs_score: Math.max(1.0, (data.bcsScore || 3.5) - 0.8), cleanliness_score: 56, udder_score: 2.2 },
-          { test_label: 'Item 2', bcs_score: Math.max(1.0, (data.bcsScore || 3.5) - 0.4), cleanliness_score: 68, udder_score: 2.8 },
-          { test_label: 'Item 3', bcs_score: Math.max(1.0, (data.bcsScore || 3.5) - 0.1), cleanliness_score: 78, udder_score: 3.4 },
-          { test_label: 'Item 4', bcs_score: Math.min(5.0, (data.bcsScore || 3.5) + 0.3), cleanliness_score: 86, udder_score: 4.1 },
-          { test_label: 'Item 5', bcs_score: data.bcsScore || 3.5, cleanliness_score: 85, udder_score: data.udderScore || 4.0 },
+          { test_label: 'Test 1', bcs_score: data.bcsScore || 3.5, cleanliness_score: data.cleanlinessScore || 85, udder_score: data.udderScore || 4.0 },
         ];
 
     const numPts = historyPoints.length;

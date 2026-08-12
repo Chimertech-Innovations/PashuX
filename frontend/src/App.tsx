@@ -19,6 +19,7 @@ import ContactUs from '@/pages/ContactUs';
 import FarmManagement from '@/pages/FarmManagement';
 import MuzzleCheck from '@/pages/MuzzleCheck';
 import CattleDetail from '@/pages/CattleDetail';
+import AnalysisHistory from '@/pages/AnalysisHistory';
 
 export default function App() {
   return (
@@ -38,7 +39,7 @@ export default function App() {
               <Route path="/live"           element={<Navigate to="/farm" replace />} />
               <Route path="/bcs"            element={<Navigate to="/farm" replace />} />
               <Route path="/disease"        element={<Navigate to="/farm" replace />} />
-              <Route path="/history"        element={<Navigate to="/farm" replace />} />
+              <Route path="/history"        element={<AnalysisHistory />} />
               <Route path="/products"       element={<Products />} />
               <Route path="/contact"        element={<ContactUs />} />
               <Route path="/profile"         element={<Profile />} />

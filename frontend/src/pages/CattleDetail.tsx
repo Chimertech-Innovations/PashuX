@@ -531,13 +531,13 @@ function TestResultFlowChart({ testHistory, currentBcs, currentCleanliness, curr
   const clean = (currentCleanliness || 85) / 2;
   const udder = (currentUdder || 4.0) * 10;
 
-  if (testHistory && testHistory.length > 1) {
+  if (testHistory && testHistory.length > 0) {
     chartData = testHistory.map((t, idx) => {
       const bcsVal = t.bcs_score ? Number(t.bcs_score) * 10 : 35;
       const cleanVal = t.cleanliness_score ? Number(t.cleanliness_score) / 2 : 40;
       const udderVal = t.udder_score ? Number(t.udder_score) * 10 : 30;
       return {
-        label: `Item ${idx + 1}`,
+        label: `Test ${t.test_number || idx + 1}`,
         bcs: Number(bcsVal.toFixed(1)),
         cleanliness: Number(cleanVal.toFixed(1)),
         udder: Number(udderVal.toFixed(1)),
@@ -545,11 +545,7 @@ function TestResultFlowChart({ testHistory, currentBcs, currentCleanliness, curr
     });
   } else {
     chartData = [
-      { label: 'Item 1', bcs: Math.max(10, Math.round(bcs - 8)), cleanliness: Math.max(10, Math.round(clean - 12)), udder: Math.max(0, Math.round(udder - 15)) },
-      { label: 'Item 2', bcs: Math.max(10, Math.round(bcs - 4)), cleanliness: Math.max(10, Math.round(clean - 6)), udder: Math.max(0, Math.round(udder - 8)) },
-      { label: 'Item 3', bcs: Math.max(10, Math.round(bcs - 1)), cleanliness: Math.max(10, Math.round(clean - 2)), udder: Math.max(0, Math.round(udder - 2)) },
-      { label: 'Item 4', bcs: Math.min(50, Math.round(bcs + 3)), cleanliness: Math.min(50, Math.round(clean + 4)), udder: Math.min(50, Math.round(udder + 3)) },
-      { label: 'Item 5', bcs: Number(bcs.toFixed(1)), cleanliness: Number(clean.toFixed(1)), udder: Number(udder.toFixed(1)) },
+      { label: 'Test 1', bcs: Number(bcs.toFixed(1)), cleanliness: Number(clean.toFixed(1)), udder: Number(udder.toFixed(1)) }
     ];
   }
 
@@ -1162,6 +1158,37 @@ export default function CattleDetail() {
 
   const handleDownloadPDF = () => {
     if (!cattle) return;
+
+    const currentBcs = activeTest ? (activeTest.bcs_score ?? 0) : avgBcsScore;
+    const currentHealth = activeTest ? activeTest.health_status : (cattle.disease_status || cattle.disease || 'Healthy');
+    const currentCleanliness = activeTest ? (activeTest.cleanliness_score ?? avgCleanlinessScore) : avgCleanlinessScore;
+    const currentManure = activeTest ? (activeTest.manure_score ?? (cattle.manure_score ?? 0)) : (cattle.manure_score ?? 0);
+
+    let hasManurePhoto = false;
+    if (activeTest) {
+      hasManurePhoto = !!(activeTest.retest_photos?.manure || activeTest.retest_photos?.manure_img);
+    } else if (cattle.retest_photos?.manure || cattle.retest_photos?.manure_img) {
+      hasManurePhoto = true;
+    } else if (cattle.test_history && cattle.test_history.length > 0) {
+      const latest = cattle.test_history[cattle.test_history.length - 1];
+      hasManurePhoto = !!(latest.retest_photos?.manure || latest.retest_photos?.manure_img);
+    }
+
+    let pashuScore = activeTest?.pashu_score ?? cattle.pashu_score;
+    let breakdown = activeTest?.pashu_score_breakdown ?? cattle.pashu_score_breakdown;
+
+    if (currentManure > 0) {
+      hasManurePhoto = true;
+    }
+
+    if (!hasManurePhoto && breakdown && breakdown.manure > 0) {
+      const calc = getPashuScoreBreakdown(currentBcs, currentHealth, currentCleanliness, 0);
+      pashuScore = calc.total;
+    } else {
+      const calc = getPashuScoreBreakdown(currentBcs, currentHealth, currentCleanliness, currentManure);
+      pashuScore = calc.total;
+    }
+
     generateCattleProfilePDF({
       cattleId: cattle.id,
       cattleName: cattle.name,
@@ -1179,6 +1206,9 @@ export default function CattleDetail() {
       healthStatus: healthStatus,
       udderScore: udderScore,
       teatScore: teatScore,
+      cleanlinessScore: currentCleanliness,
+      manureScore: currentManure,
+      pashuScore: pashuScore,
       testHistory: testHistory.length > 0 ? testHistory : cattle?.test_history,
       bodyConditionDetail: activeTest?.observations?.join('. ') || cattle.body_condition_detail,
       displayImage: cattle.display_image,

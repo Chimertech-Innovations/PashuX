@@ -21,25 +21,70 @@ export const LiveVideoRecorderModal: React.FC<LiveVideoRecorderModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     async function startCamera() {
-      try {
-        const s = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      const constraintCandidates: MediaStreamConstraints[] = [
+        {
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: false,
-        });
+        },
+        {
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false,
+        },
+        {
+          video: { facingMode: 'environment' },
+          audio: false,
+        },
+        {
+          video: true,
+          audio: false,
+        },
+      ];
+
+      let s: MediaStream | null = null;
+      let lastErr: any = null;
+
+      for (const constraints of constraintCandidates) {
+        try {
+          s = await navigator.mediaDevices.getUserMedia(constraints);
+          if (s) break;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+
+      if (!isMounted) {
+        if (s) s.getTracks().forEach((t) => t.stop());
+        return;
+      }
+
+      if (s) {
         streamRef.current = s;
         setStream(s);
         if (videoRef.current) {
-          videoRef.current.srcObject = s;
+          const video = videoRef.current;
+          video.setAttribute('playsinline', 'true');
+          video.setAttribute('webkit-playsinline', 'true');
+          video.setAttribute('autoplay', 'true');
+          video.setAttribute('muted', 'true');
+          video.muted = true;
+          video.playsInline = true;
+          video.srcObject = s;
+          video.play().catch((err) => console.warn('Video play interrupted:', err));
+          video.onloadedmetadata = () => {
+            video.play().catch((e) => console.warn('Playback error on loadedmetadata:', e));
+          };
         }
-      } catch (err) {
-        console.error('Error accessing video camera:', err);
-        setError('Could not access camera. Please verify permissions or upload a video file directly.');
+      } else {
+        console.error('Error accessing video camera:', lastErr);
+        setError('Could not access camera. Please verify camera permissions or upload a video file directly.');
       }
     }
     startCamera();
 
     return () => {
+      isMounted = false;
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }

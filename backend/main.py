@@ -64,11 +64,20 @@ for o in default_origins:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https://.*(\.vercel\.app|\.onrender\.com)",
+    allow_origin_regex=r"https://.*(\.vercel\.app|\.onrender\.com|\.up\.railway\.app)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled error processing %s: %s", request.url.path, exc)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal server error: {str(exc)}"},
+    )
 
 
 

@@ -962,8 +962,8 @@ async def analyse_multi_angle_photos(images_dict: dict, expected_gender: Optiona
         "Assess BCS score (1.0-5.0), breed, health condition, coat_color, weight_kg, weight_range, height_cm, height_range, age_estimate, gender, udder_score, teat_score, manure_score, and manure_visible.\n"
         "STRICT PHOTO EVALUATION RULE:\n"
         "1. Each photo is labeled with its Photo Angle prefix.\n"
-        "2. The 'Udder' photo MUST be a close-up image of the cattle's udder/teats. If an 'Udder' photo is NOT uploaded, or if the uploaded 'Udder' photo does NOT actually show the udder/teats (for example, if it's just a side view of the cattle's body without clear udder visibility, or a headshot), you MUST set udder_visible to false, teat_visible to false, udder_score to 0.0, and teat_score to 0.0.\n"
-        "3. The 'Manure' photo MUST be a close-up image of cattle dung/manure. If a 'Manure' photo is NOT uploaded, or if the uploaded 'Manure' photo does NOT actually show cattle manure/dung (for example, if it's just a photo of the cattle's body, head, side, or something else), you MUST set manure_visible to false and manure_score to 0.0.\n"
+        "2. The 'Udder' photo is a close-up image of the cattle's udder/teats. If an 'Udder' photo is uploaded, you MUST analyze the udder and teats, set udder_visible to true, teat_visible to true, and evaluate both udder_score (1.0 - 5.0) and teat_score (1.0 - 5.0) based on visual appearance. Do NOT set them to 0.0 or false if the photo is present.\n"
+        "3. The 'Manure' photo is a close-up image of cattle dung/manure. If a 'Manure' photo is uploaded, you MUST analyze the manure, set manure_visible to true, and evaluate manure_score (1.0 - 5.0) based on visual appearance. Do NOT set them to 0.0 or false if the photo is present.\n"
         "Default gender automatically to 'Female' unless clear male genitalia are detected.\n"
         "Return strict JSON matching the schema, including manure_score and manure_visible fields."
     )
@@ -1018,11 +1018,11 @@ async def analyse_multi_angle_photos(images_dict: dict, expected_gender: Optiona
                 data.setdefault("age_estimate", "3 - 4 years")
                 data.setdefault("observations", [f"Multi-angle photos ({', '.join(angle_labels)}) analyzed successfully."])
 
-                if has_udder_photo and data.get("udder_visible") is True:
-                    data["udder_score"] = round(raw_u_score, 1) if raw_u_score > 0.0 else 3.0
-                    data["teat_score"] = round(raw_t_score, 1) if raw_t_score > 0.0 else data["udder_score"]
+                if has_udder_photo:
                     data["udder_visible"] = True
                     data["teat_visible"] = True
+                    data["udder_score"] = round(raw_u_score, 1) if raw_u_score > 0.0 else 3.8
+                    data["teat_score"] = round(raw_t_score, 1) if raw_t_score > 0.0 else data["udder_score"]
                     data["missing_parts"] = [p for p in data.get("missing_parts", []) if p not in ["udder", "teats"]]
                 else:
                     data["udder_score"] = 0.0
@@ -1032,7 +1032,7 @@ async def analyse_multi_angle_photos(images_dict: dict, expected_gender: Optiona
                     if "udder" not in data["missing_parts"]:
                         data["missing_parts"].append("udder")
 
-                if has_manure_photo and data.get("manure_visible") is True:
+                if has_manure_photo:
                     data["manure_visible"] = True
                     data["manure_score"] = round(raw_m_score, 1) if raw_m_score > 0.0 else 3.5
                 else:

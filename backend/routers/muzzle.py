@@ -6,6 +6,8 @@ import logging
 import uuid
 import re
 import numpy as np
+import cv2
+import base64
 
 # In the future, we'll import the real model from a new services/muzzle_processor.py
 # from services.muzzle_processor import extract_muzzle_features
@@ -100,9 +102,6 @@ def extract_muzzle_features(image_bytes: bytes) -> list[float]:
         vector_512 = vector_512 / norm
         
     return vector_512.tolist()
-
-import cv2
-import base64
 
 def auto_enhance_image_bytes(image_bytes: bytes) -> bytes:
     """

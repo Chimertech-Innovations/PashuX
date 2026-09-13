@@ -94,24 +94,29 @@ def _smart_fallback_bcs(frame_paths: List[str]) -> BCSResult:
         obs_detail = "Ribs clearly visible with prominent bone structure, deep flank pelvic cavity, and thin fat cover."
         rec_detail = "Increase energy-dense concentrate, high-quality leguminous green fodder, and bypass fat supplementation."
     elif avg_edge > 0.10 or avg_shadow > 0.10:
-        score = 2.75
-        cond_label = "Slightly Thin Condition (BCS 2.75/5.0)"
-        obs_detail = "Short ribs and hip bones moderately visible with light subcutaneous fat cover."
+        score = 2.50
+        cond_label = "Slightly Thin Condition (BCS 2.50/5.0) - Active Milking Conformation"
+        obs_detail = "Short ribs visibly corrugated along flank, angular hooks and pins with V-shaped pelvic contour."
         rec_detail = "Add high-energy mineral mixture and maintain good quality forage ratio."
+    elif avg_edge > 0.08 or avg_shadow > 0.08:
+        score = 2.75
+        cond_label = "Moderate Lean Condition (BCS 2.75/5.0)"
+        obs_detail = "Short ribs and hip bones moderately visible with light subcutaneous fat cover."
+        rec_detail = "Maintain balanced green forage, dry fodder, and concentrate feeding."
     elif avg_std > 32.0:
-        score = 3.25
-        cond_label = "Ideal Condition (BCS 3.25/5.0)"
-        obs_detail = "Spinous processes and transverse processes covered with smooth, uniform fat cover."
+        score = 3.00
+        cond_label = "Ideal Condition (BCS 3.00/5.0)"
+        obs_detail = "Spinous processes and transverse processes covered with smooth, uniform fat cover, U-shaped thurl."
         rec_detail = "Maintain current balanced green forage, dry fodder, and concentrate feeding."
     elif avg_edge < 0.05 and avg_shadow < 0.05:
-        score = 4.75
-        cond_label = "Heavy / Obese Condition (BCS 4.75/5.0)"
+        score = 4.50
+        cond_label = "Heavy / Obese Condition (BCS 4.50/5.0)"
         obs_detail = "Tailhead area surrounded by thick, prominent patches of subcutaneous fat cover."
         rec_detail = "Ensure regular exercise and adequate dry fodder for proper digestion."
     else:
-        score = 3.25
-        cond_label = "Ideal Condition (BCS 3.25/5.0)"
-        obs_detail = "Body condition is moderate with uniform subcutaneous fat cover."
+        score = 2.50
+        cond_label = "Moderate Condition (BCS 2.50/5.0) - Active Dairy / Zebu Conformation"
+        obs_detail = "Body condition shows visible rib contour and angular skeletal landmarks."
         rec_detail = "Maintain balanced feeding and clean drinking water."
 
     condition = f"{cond_label} - {subject_type}"
@@ -163,23 +168,37 @@ def _smart_fallback_disease(frame_paths: List[str]) -> DiseaseResult:
 
 BCS_PROMPT = """\
 You are an expert livestock nutritionist and veterinarian specializing in cattle and buffalo Body Condition Scoring (BCS).
-Analyse the provided image(s) or video frames carefully using standard 1.0 to 5.0 veterinary scales.
+Analyse the provided image(s) or video frames carefully using standard 1.00 to 5.00 veterinary scales (0.25 resolution).
 
-VETERINARY BCS SCALING STANDARDS (1.0 - 5.0):
+VETERINARY DIAGNOSTIC DECISION TREE & CALIBRATION:
+1. Pelvic Thurl Cavity (between Hook and Pin bone):
+   - Distinct "V" SHAPE cavity -> BCS MUST BE <= 2.75 (typically 2.25 - 2.50).
+   - Smooth, open "U" SHAPE cavity -> BCS is 3.00 - 3.25.
+   - Flat or rounded fat pad over rump -> BCS is >= 3.50.
+2. Short Ribs & Flank:
+   - Corrugated, visible, or individually distinguishable short ribs under skin -> BCS MUST BE BETWEEN 2.00 AND 2.75 (most commonly 2.25 - 2.50).
+   - DO NOT OVERESTIMATE: Active dairy cows (HF, Jersey, Sahiwal, Gir) and indigenous cattle naturally have lean frames. You are strictly forbidden from assigning 3.0+ or 3.5 if ribs or spine corrugations are visible!
 
-CATTLE 5-POINT SCALE:
-- 1.0 (Emaciated): Deep cavity around tailhead, sharp spinous processes, severe muscle wasting, prominent hooks and pins with deep V-shaped depression.
-- 2.0 (Thin): Shallow cavity around tailhead, individual spinous processes visible as sharp ridge, hooks and pins sharp.
-- 3.0 (Ideal / Moderate): Tailhead area smooth with light fat cover, spinous processes rounded, hooks and pins rounded with U-shaped depression.
-- 4.0 (Overconditioned / Fat): Tailhead surrounded by patches of fat, spinous processes flat/felt only with firm pressure, heavy fat pads on pins, ribs smooth and covered.
-- 5.0 (Obese / Heavy): Tailhead buried in thick fat folds, spinous processes undetectable, hooks and pins completely covered by thick fat rolls, heavy brisket fill.
+VETERINARY BCS SCALING STANDARDS (1.00 - 5.00):
+
+CATTLE 5-POINT SCALE (Ferguson / Edmonson / Elanco / ICAR):
+- 1.00 (Emaciated): Deep cavity around tailhead, sharp spinous processes like saw teeth, severe muscle wasting, deep V-shaped pelvic depression.
+- 2.00 (Thin): Spine continuous sharp ridge, individual short ribs visible halfway, hooks and pins sharp with prominent V depression.
+- 2.25 (Thin-to-Moderate): Spine ridge prominent, ends of short ribs visible individually, hooks/pins angular, clear V cavity.
+- 2.50 (Slightly Thin / Active Dairy & Indigenous Conformation): Ribs and short ribs visible (corrugated flank appearance), hooks and pins angular and prominent, clear "V" cavity between hook and pin, shallow tailhead hollow.
+- 2.75 (Moderate Lean): Short ribs slightly smoothed, hooks/pins visible with slight smoothing, shallow V-to-U cavity.
+- 3.00 (Ideal / Moderate): Smooth uniform fat cover over ribs (no individual ribs seen), rounded hooks and pins, smooth "U" cavity, well-filled flank.
+- 3.25 (Ideal Condition): Ribs smooth and covered, hooks/pins rounded, shallow U cavity.
+- 3.50 - 4.00 (Overconditioned / Fat): Ribs completely covered by thick subcutaneous fat, rounded fat mounds over hooks and pins, thurl flat, palpable fat patches flanking tailhead.
+- 4.50 - 5.00 (Obese / Heavy): Tailhead buried in thick fat folds, spinous processes undetectable, heavy fat rolls over hips and ribs.
 
 WATER BUFFALO 5-POINT SCALE (ICAR Standards):
-- 1.0 (Emaciated / Very Poor): Deep hollows between hooks and pins, visible ribs, sharp rump bones, severe pelvic hollow.
-- 2.0 (Thin / Poor): Ribs and spine clearly visible, thin skin over hip bones, shallow flank fill.
-- 3.0 (Ideal / Good): Smooth contour over rump, moderate fat cover on pin bones and ribs, well-filled flank.
-- 4.0 (Fat / Heavy): Thick fat layer over ribs and rump, heavy brisket fill, smooth rounded hips.
-- 5.0 (Obese / Very Heavy): Heavy fat folds at tailhead, rump, and brisket, deep fat rolls around hips.
+- 1.00 (Emaciated / Very Poor): Deep hollows between hooks and pins, visible ribs, sharp rump bones, severe pelvic hollow.
+- 2.00 (Thin / Poor): Ribs and spine clearly visible, thin skin over hip bones, shallow flank fill.
+- 2.50 (Slightly Thin / Active Lactation): Rib ridges visible, angular hip bones, V-shaped thurl depression.
+- 3.00 (Ideal / Good): Smooth contour over rump, moderate fat cover on pin bones and ribs, well-filled flank, U-shaped thurl.
+- 4.00 (Fat / Heavy): Thick fat layer over ribs and rump, heavy brisket fill, smooth rounded hips.
+- 5.00 (Obese / Very Heavy): Heavy fat folds at tailhead, rump, and brisket, deep fat rolls around hips.
 
 CRITICAL ASSESSMENT RULES:
 
@@ -198,15 +217,16 @@ CRITICAL ASSESSMENT RULES:
 
 3. MULTIPLE ANIMALS IN ONE FRAME:
    - If 2 or more cattle/buffaloes are visible in a single frame:
-     - Distinctly identify each animal by coat color and position (e.g., "Animal 1 (Left, Black & White Holstein): BCS 3.25 - Ideal condition", "Animal 2 (Right, Brown Cow): BCS 2.75 - Slightly thin").
+     - Distinctly identify each animal by coat color and position (e.g., "Animal 1 (Left, Black & White Holstein): BCS 2.50 - Active milking condition", "Animal 2 (Right, Brown Cow): BCS 2.75 - Slightly thin").
      - Set the primary `bcs_score` to the main/center animal in the frame, and describe all animals in `observations`.
 
 4. ANATOMICAL VIEW & ACCURATE FULL-RANGE BCS SCORING (1.0 - 5.0):
-   - Evaluate fat cover across the entire 1.0 to 5.0 scale without defaulting to 2.0 or 3.0:
-     * BCS 1.0 - 2.0 (Thin): Ribs & spine clearly visible as sharp ridges, deep pelvic hollow, sharp pin/hook bones.
+   - Evaluate fat cover across the entire 1.0 to 5.0 scale without defaulting to 3.0 or 3.5:
+     * BCS 1.00 - 2.00 (Thin): Ribs & spine clearly visible as sharp ridges, deep pelvic hollow, sharp pin/hook bones.
+     * BCS 2.25 - 2.50 (Calibrated Lean): Ribs and short ribs corrugated, angular hooks/pins, distinct "V" pelvic cavity.
      * BCS 2.75 - 3.25 (Ideal): Smooth fat cover, rounded hooks & pins, U-shaped depression at tailhead.
-     * BCS 3.75 - 4.25 (Overconditioned / Fat): Ribs completely covered & smooth, thick fat patches around tailhead, heavy fat pads on pin bones.
-     * BCS 4.5 - 5.0 (Obese / Heavy): Tailhead buried in thick fat folds, spinous processes undetectable, heavy fat rolls over hips and ribs.
+     * BCS 3.50 - 4.25 (Overconditioned / Fat): Ribs completely covered & smooth, thick fat patches around tailhead, heavy fat pads on pin bones.
+     * BCS 4.50 - 5.00 (Obese / Heavy): Tailhead buried in thick fat folds, spinous processes undetectable, heavy fat rolls over hips and ribs.
    - If view is inadequate (e.g., face close-up, ear tag only, hoof only):
      - "bcs_score": 0.0
      - "condition": "Inadequate View for BCS"
@@ -216,18 +236,18 @@ CRITICAL ASSESSMENT RULES:
 
 Return ONLY valid JSON matching this exact structure:
 {
-  "bcs_score": 3.25,
+  "bcs_score": 2.5,
   "bcs_scale": "1-5",
-  "condition": "Ideal Condition - Female Water Buffalo (Black)",
+  "condition": "Calibrated Condition - Dairy Cattle / Buffalo",
   "confidence": 0.92,
   "observations": [
-    "Subject Identified: Female Water Buffalo (Solid Black coat).",
-    "Anatomical assessment: Smooth fat cover over hooks and pin bones with rounded U-shaped contour.",
-    "Spine and short ribs are rounded with no sharp bone prominence."
+    "Subject Identified: Cattle / Buffalo.",
+    "Anatomical assessment: Short ribs visible along flank, angular hook and pin bones with distinct V-shaped pelvic contour.",
+    "Body condition score calibrated at 2.5 / 5.0 based on clinical ICAR standards."
   ],
   "recommendations": [
-    "Maintain current forage and concentrate feeding regime.",
-    "Ensure regular fresh water and mineral supplementation."
+    "Maintain balanced green forage, dry fodder, and concentrate feeding.",
+    "Provide clean drinking water and essential mineral mixture supplementation."
   ]
 }
 """

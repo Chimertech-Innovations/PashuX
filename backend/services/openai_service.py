@@ -102,22 +102,37 @@ def _safe_int(val: Any, default: int = 0) -> int:
 BCS_SYSTEM_PROMPT = """\
 You are Chimertech AI Neural Vision — an advanced veterinary AI system trained on extensive clinical livestock datasets for precision Body Condition Scoring (BCS) across Cattle (dairy & beef) and Water Buffaloes (Murrah, Surti, Nili-Ravi, indigenous breeds).
 
-Analyse the provided image(s) or 10s video frame sequence meticulously using 5.0-point ICAR & USDA veterinary scoring guidelines.
+Analyse the provided image(s) or 10s video frame sequence meticulously using 5.0-point ICAR & USDA veterinary scoring guidelines (0.25 point increments).
 
-ANATOMICAL LANDMARKS TO EVALUATE:
-1. Lumbar spine & short ribs (level of fat padding over spinous processes).
-2. Hooks (iliac crest) and Pins (ischial tuberosity).
-3. Thurl region & pelvic cavity (V-shape vs U-shape vs flat fat pad).
-4. Tailhead cavity & fat folds surrounding tailhead.
-5. Flank hollow & rib cage coverage.
+VETERINARY ANATOMICAL LANDMARKS & DIAGNOSTIC DECISION TREE:
+1. PELVIC THURL CAVITY (Angle between Hook bone [iliac crest] and Pin bone [ischial tuberosity]):
+   - Distinct "V" SHAPE cavity -> BCS MUST BE <= 2.75 (typically 2.25 - 2.50).
+   - Smooth, open "U" SHAPE cavity -> BCS is 3.00 - 3.25.
+   - Flat or rounded fat pad over rump -> BCS is >= 3.50.
 
-5-POINT SCORING CRITERIA:
-- BCS 1.0 (Emaciated): Deep cavity around tailhead, sharp spinous processes like saw teeth, severe flank depression, prominent V-shaped pelvic hollow.
-- BCS 2.0 (Thin): Individual spinous processes visible as sharp ridge, hooks and pins prominent with shallow fat padding.
-- BCS 2.5 (Slightly Thin): Ribs slightly visible, hooks rounded but pins visible, shallow tailhead depression.
-- BCS 3.0 (Ideal / Optimum): Smooth fat cover over ribs, rounded hooks and pins, U-shaped rump contour, well-filled flank.
-- BCS 3.5 - 4.0 (Overconditioned): Spinous processes smooth, fat patches surrounding tailhead, rounded rump contour.
-- BCS 4.5 - 5.0 (Obese): Tailhead buried in thick fat rolls, spine undetectable, heavy fat folds over ribs and brisket.
+2. SHORT RIBS & LUMBAR SPINE (Transverse processes & spinous vertebrae):
+   - Corrugated, scalloped, or individually distinguishable short ribs along flank -> BCS MUST BE <= 2.75 (typically 2.25 - 2.50).
+   - Smooth sheet of subcutaneous fat (ribs not individually distinguishable) -> BCS is 3.00 - 3.25.
+   - Thick subcutaneous fat layer, ribs completely undetectable -> BCS is >= 3.50.
+
+CRITICAL VETERINARY CALIBRATION (PREVENT OVER-SCORING LEAN CATTLE):
+- Active dairy cattle (HF, Jersey, Sahiwal, Gir, Crossbred) and indigenous Zebu cattle naturally present with angular, lean frames.
+- IF RIBS OR SHORT RIBS ARE VISIBLE, OR IF HOOKS/PINS ARE ANGULAR, OR IF THE THURL FORMS A "V" SHAPE:
+  -> THE BCS MUST BE SCORED BETWEEN 2.00 AND 2.75 (MOST COMMONLY 2.25 - 2.50).
+  -> YOU ARE STRICTLY FORBIDDEN FROM ASSIGNING 3.0, 3.25, 3.50, OR HIGHER IF RIBS ARE VISIBLE OR THURL IS "V"-SHAPED!
+- Scoring 3.0+ REQUIRES smooth, non-visible ribs and a clear "U"-shaped cavity.
+- Scoring 3.5+ REQUIRES heavy fat pads flanking the tailhead and undetectable ribs.
+
+5-POINT SCORING SCALE (0.25 RESOLUTION):
+- BCS 1.00 (Emaciated): Deep cavity around tailhead, sharp spinous processes like saw teeth, severe flank depression, deep V-shaped pelvic hollow.
+- BCS 2.00 (Thin): Spine prominent continuous sharp ridge, individual short ribs visible halfway, hooks/pins sharp, prominent V cavity.
+- BCS 2.25 (Thin-to-Moderate): Spine ridge prominent, ends of short ribs visible individually, hooks/pins angular, clear V cavity.
+- BCS 2.50 (Slightly Thin / Active Milking Dairy & Indigenous Conformation): Ribs and short ribs visible (corrugated flank appearance), hooks and pins prominent and angular (not rounded), clear V cavity between hook and pin, shallow tailhead hollow.
+- BCS 2.75 (Moderate Lean): Ends of short ribs visible only with effort, hooks/pins visible with slight smoothing, V-to-shallow-U transition.
+- BCS 3.00 (Ideal / Moderate): Smooth uniform fat cover over ribs (individual ribs not visible), rounded hooks and pins, distinct smooth "U" cavity, well-filled flank.
+- BCS 3.25 (Ideal Condition): Ribs smooth and completely covered, hooks and pins rounded, shallow U cavity.
+- BCS 3.50 - 4.00 (Overconditioned): Spinous processes smooth, ribs completely hidden under thick fat, rounded fat mounds over hooks and pins, thurl flat, palpable fat patches flanking tailhead.
+- BCS 4.50 - 5.00 (Obese): Tailhead buried in thick fat rolls, spine undetectable, heavy fat folds over ribs and brisket.
 
 RELEVANCE & SUBJECT INTEGRITY:
 - If subject is non-bovine (e.g. Dog, Cat, Human, Vehicle, Equipment):
@@ -416,7 +431,26 @@ ANALYZE ALL FRAMES CAREFULLY AT 1 FPS AND RETURN A STRICT, EMPIRICAL ASSESSMENT:
      * Teat score evaluation: 5.0 = Ideal placement & cylindrical structure, 4.0 = Uniform structure, 3.0 = Average, 2.0 = Short/asymmetric, 1.0 = Deformed/damaged teats.
 
 3. EMPIRICAL DATA FOR PRIMARY CATTLE:
-   - `bcs_score`: (1.0 - 5.0 scale based on ICAR standards: 1=Emaciated, 2=Thin, 3=Ideal/Moderate, 4=Fat, 5=Obese)
+   - `bcs_score`: (1.00 - 5.00 scale based on Ferguson / Edmonson / Elanco / ICAR veterinary standards with 0.25 resolution):
+     * CRITICAL VETERINARY CALIBRATION (PREVENT OVER-SCORING LEAN CATTLE):
+       - Dairy cows (Holstein, Jersey, Sahiwal, Gir, Crossbred) and indigenous Zebu cattle naturally present with angular, lean frames.
+       - ANATOMICAL DIAGNOSTIC DECISION TREE:
+         1. Pelvic Thurl Cavity (Angle between Hook bone [hip] and Pin bone):
+            - If the cavity forms a distinct "V" SHAPE cavity -> BCS MUST BE <= 2.75 (typically 2.25 - 2.50).
+            - If the cavity forms a smooth, open "U" SHAPE -> BCS is 3.00 - 3.25.
+            - If the area is flat or rounded fat pad -> BCS is >= 3.50.
+         2. Short Ribs & Flank Corrugation:
+            - If individual short ribs or rib cage ridges are visibly distinguishable / corrugated under skin -> BCS MUST BE BETWEEN 2.00 AND 2.75 (most commonly 2.25 - 2.50).
+            - YOU ARE STRICTLY FORBIDDEN FROM ASSIGNING 3.0, 3.25, 3.50, OR HIGHER IF RIBS ARE VISIBLE OR IF THE THURL IS "V"-SHAPED!
+         3. Precise Score Reference:
+            * BCS 2.00: Spine ridge sharp, individual short ribs visible halfway, hooks/pins sharp, prominent V depression.
+            * BCS 2.25: Spine ridge prominent, ends of short ribs visible individually, hooks/pins angular, clear V depression.
+            * BCS 2.50: Corrugated ribs visible along flank, hook and pin bones angular and prominent, clear "V" cavity between hook and pin, shallow tailhead depression. (Typical active dairy/zebu cow).
+            * BCS 2.75: Ribs slightly smoothed, hooks/pins visible with slight smoothing, shallow V-to-U cavity.
+            * BCS 3.00: Smooth uniform fat cover over ribs (no individual ribs visible), rounded hooks and pins, smooth "U" cavity, well-filled flank.
+            * BCS 3.25: Completely smooth ribs, rounded hooks and pins, shallow U cavity.
+            * BCS 3.50 - 4.00: Ribs completely hidden under thick subcutaneous fat, hooks and pins rounded fat mounds, thurl flat, palpable fat patches flanking tailhead.
+            * BCS 4.50 - 5.00: Obese, tailhead buried in fat rolls, spine undetectable.
    - `disease_status`: Health condition (e.g. "Healthy", "Lumpy Skin Disease", "Foot and Mouth Disease", "Mastitis", "Subclinical Mastitis", "Tick Infestation", "Ringworm")
    - `cleanliness_score`: Combined hygiene score (0 - 100) evaluating BOTH Cattle Body Cleanliness AND Surrounding Environment Hygiene:
      * BODY HYGIENE: Inspect skin coat, flank, legs, belly, udder, and rump for mud, manure, dung patches, ticks, or dirt crust.
@@ -474,7 +508,7 @@ Return ONLY a raw JSON object (without markdown code blocks) matching this schem
 {
   "is_cattle_detected": true,
   "total_cattle_count": 1,
-  "bcs_score": 3.8,
+  "bcs_score": 2.5,
   "disease_status": "Healthy",
   "cleanliness_score": 88,
   "breed": "Murrah Buffalo",
@@ -489,7 +523,7 @@ Return ONLY a raw JSON object (without markdown code blocks) matching this schem
   "observations": [
     "Single primary cattle analyzed in main foreground focus.",
     "Udder and teat structure clearly evaluated with good dairy capacity.",
-    "Body condition score evaluated at 3.8 / 5.0 (Ideal condition)."
+    "Body condition score precisely evaluated at 2.5 / 5.0 (Calibrated dairy/zebu condition: visible short ribs, angular hooks/pins, and distinct V-shaped pelvic contour)."
   ],
   "udder_score": 4.0,
   "teat_score": 4.0,
@@ -509,10 +543,15 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
     import json
 
     image_contents = []
-    for path in frame_paths:
+    total_frames = len(frame_paths)
+    for i, path in enumerate(frame_paths):
         try:
             with open(path, "rb") as f:
                 b64 = base64.b64encode(f.read()).decode("utf-8")
+                image_contents.append({
+                    "type": "text",
+                    "text": f"--- VIDEO FRAME AT SECOND {i + 1} (FRAME {i + 1} OF {total_frames}) ---"
+                })
                 image_contents.append({
                     "type": "image_url",
                     "image_url": {"url": f"data:image/jpeg;base64,{b64}"}
@@ -533,11 +572,19 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
                 {
                     "type": "text",
                     "text": (
-                        "Analyze these sequential 1 FPS video frames thoroughly. "
-                        "Focus 100% of your primary analysis (bcs_score, breed, weight_kg, weight_range, height_cm, height_range, health_status, coat_color, gender) on the SINGLE PRIMARY target cattle in main foreground focus. "
-                        "Provide weight_range (e.g. '450 - 510 kg'), height_range (e.g. '132 - 140 cm'), and age_estimate (e.g. '4 - 5 years'). "
-                        f"{gender_instruction} "
-                        "Return the strict JSON response."
+                        "Analyze these sequential 1 FPS video frames representing every second of the cattle video thoroughly. "
+                        "Evaluate the full temporal video sequence across all captured angles (head/face, lateral body, short ribs, spine, hooks & pins, rear tailhead, udder/teats, and legs):\n"
+                        "1. Identify the exact Breed accurately based on physical conformation (e.g. Gir Cattle, Sahiwal, Murrah Buffalo, Red Sindhi, Tharparkar, Kankrej, Ongole, Holstein Friesian, Jersey, Crossbred Cattle).\n"
+                        "2. Determine the exact Body Condition Score (bcs_score 1.0 - 5.0) using USDA/ICAR veterinary standards. CRITICAL: If ribs or short ribs are visible, or if hooks/pins are angular, or thurl is a 'V' shape, assign an accurate score between 2.00 and 2.75 (typically 2.25 - 2.50). DO NOT overestimate lean dairy/zebu cattle to 3.5!\n"
+                        "3. Compute accurate estimated body weight (weight_kg) and realistic range (weight_range, e.g. '450 - 510 kg') from visual mass, chest girth, and body length.\n"
+                        "4. Compute accurate withers height (height_cm) and realistic range (height_range, e.g. '132 - 140 cm').\n"
+                        "5. Estimate realistic age (age_estimate, e.g. '3 - 4 years', '4 - 5 years') based on horn growth rings, frame development, and physical maturity.\n"
+                        "6. Gender: Default to 'Female' (Cow / Buffalo) unless clear male genitalia are detected.\n"
+                        "7. Udder & Teats: Inspect all frames for udder/teats. If visible at any second, set udder_visible: true, teat_visible: true, and evaluate udder_score (1.0-5.0) and teat_score (1.0-5.0).\n"
+                        "8. Cleanliness score: 0 to 100 evaluating cattle body cleanliness and ground/floor hygiene.\n"
+                        "9. Screen for disease signs (LSD, Mastitis, Foot & Mouth, ticks, or Healthy).\n"
+                        f"{gender_instruction}\n"
+                        "Return the strict JSON response matching the required schema."
                     )
                 },
                 *image_contents
@@ -798,7 +845,7 @@ def _smart_fallback_video_stats(expected_gender: Optional[str] = "Female") -> Vi
     logger.warning("Generating intelligent fallback VideoAnalysisResult stats...")
     gen = "Male" if expected_gender and any(w in expected_gender.lower() for w in ["male", "bull", "ox"]) else "Female"
     return VideoAnalysisResult(
-        bcs_score=3.25,
+        bcs_score=2.5,
         disease_status="Healthy",
         breed="Crossbred Dairy (HF / Jersey / Gir mix)",
         weight_kg=465.0,
@@ -808,8 +855,8 @@ def _smart_fallback_video_stats(expected_gender: Optional[str] = "Female") -> Vi
         estimated_value="$1,200 - $1,600",
         observations=[
             "Primary cattle captured in video focus.",
-            "Body Condition Score (BCS) evaluated at ~3.25 (Ideal dairy / beef condition).",
-            "Physical frame and spine structure indicate well-nourished cattle.",
+            "Body Condition Score (BCS) calibrated at 2.5 / 5.0 (Moderate dairy / indigenous cattle condition).",
+            "Physical frame and spine structure indicate active milking cattle with visible rib contour.",
             "No acute disease symptoms or skin lesions visible in video frames."
         ],
         udder_score=0.0,

@@ -546,13 +546,41 @@ async def analyze_cattle_video(
     """
     temp_dir = tempfile.mkdtemp()
     try:
-        # Save video temporarily preserving original extension (.mov, .mp4, .webm)
-        ext = os.path.splitext(video.filename)[1].lower() if video.filename else ".webm"
-        if ext not in [".mp4", ".webm", ".mov", ".avi", ".m4v", ".mkv"]:
-            ext = ".webm"
-        video_path = os.path.join(temp_dir, f"upload_{uuid.uuid4().hex}{ext}")
-        with open(video_path, "wb") as f:
-            f.write(await video.read())
+        # Save video/image temporarily preserving original extension (.mov, .mp4, .webm, .heic, etc.)
+        raw_ext = os.path.splitext(video.filename)[1].lower() if video.filename else ".mp4"
+        if raw_ext in [".qt", ".quicktime"]:
+            ext = ".mov"
+        elif raw_ext in [".heic", ".heif", ".jpg", ".jpeg", ".png", ".webp"]:
+            ext = raw_ext
+        elif raw_ext in [".mp4", ".webm", ".mov", ".avi", ".m4v", ".mkv", ".3gp"]:
+            ext = raw_ext
+        else:
+            ext = ".mp4"
+
+        video_content = await video.read()
+        # If it's an image, normalize to JPEG with EXIF transpose so frame extraction and OpenAI work reliably
+        if ext in [".heic", ".heif", ".jpg", ".jpeg", ".png", ".webp"]:
+            try:
+                from PIL import Image, ImageOps
+                import io
+                try:
+                    from pillow_heif import register_heif_opener
+                    register_heif_opener()
+                except Exception:
+                    pass
+                pil_img = Image.open(io.BytesIO(video_content))
+                pil_img = ImageOps.exif_transpose(pil_img).convert("RGB")
+                ext = ".jpg"
+                video_path = os.path.join(temp_dir, f"upload_{uuid.uuid4().hex}.jpg")
+                pil_img.save(video_path, format="JPEG", quality=92)
+            except Exception:
+                video_path = os.path.join(temp_dir, f"upload_{uuid.uuid4().hex}{ext}")
+                with open(video_path, "wb") as f:
+                    f.write(video_content)
+        else:
+            video_path = os.path.join(temp_dir, f"upload_{uuid.uuid4().hex}{ext}")
+            with open(video_path, "wb") as f:
+                f.write(video_content)
             
         import asyncio
         

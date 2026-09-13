@@ -86,7 +86,8 @@ export default function FarmManagement() {
   // Video state
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRefCamera = useRef<HTMLInputElement>(null);
+  const videoInputRefGallery = useRef<HTMLInputElement>(null);
   const udderPhotoRef = useRef<HTMLInputElement>(null);
 
   // 5-Angle Retest Photos Modal State
@@ -159,8 +160,11 @@ export default function FarmManagement() {
     setLoading(true);
     setMessage({ type: 'success', text: 'Analyzing close-up udder photo with AI Vision...' });
 
+    // Client-side compress / normalize HEIC for iOS Safari
+    const processedFile = await compressImage(file);
+
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', processedFile);
 
     try {
       const res = await fetch(`${BASE_URL}/api/muzzle/${currentCattleId}/udder-analysis`, {
@@ -603,8 +607,8 @@ export default function FarmManagement() {
                               Upload
                             </button>
                           </div>
-                          <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefGallery1} />
-                          <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefCamera1} />
+                          <input type="file" accept="image/*,.heic,.heif" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefGallery1} />
+                          <input type="file" accept="image/*,.heic,.heif" capture="environment" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefCamera1} />
                         </div>
                       )}
                     </div>
@@ -658,8 +662,8 @@ export default function FarmManagement() {
                               Upload
                             </button>
                           </div>
-                          <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefGallery2} />
-                          <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefCamera2} />
+                          <input type="file" accept="image/*,.heic,.heif" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefGallery2} />
+                          <input type="file" accept="image/*,.heic,.heif" capture="environment" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefCamera2} />
                         </div>
                       )}
                     </div>
@@ -713,8 +717,8 @@ export default function FarmManagement() {
                               Upload
                             </button>
                           </div>
-                          <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefGallery3} />
-                          <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefCamera3} />
+                          <input type="file" accept="image/*,.heic,.heif" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefGallery3} />
+                          <input type="file" accept="image/*,.heic,.heif" capture="environment" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefCamera3} />
                         </div>
                       )}
                     </div>
@@ -767,7 +771,7 @@ export default function FarmManagement() {
                     <div className={`relative border-2 ${videoPreview ? 'border-emerald-500 bg-emerald-50/30 border-solid' : 'border-slate-300 bg-slate-50 border-dashed'} rounded-xl p-8 text-center transition-all min-h-[250px] flex flex-col justify-center items-center`}>
                         {videoPreview ? (
                             <div className="flex flex-col items-center w-full">
-                                <video src={videoPreview} controls className="max-h-48 w-full object-contain rounded-lg shadow-sm mb-4" />
+                                <video src={videoPreview} controls playsInline {...{ "webkit-playsinline": "true" }} className="max-h-48 w-full object-contain rounded-lg shadow-sm mb-4" />
                                 {!loading && <button type="button" onClick={() => { setVideoFile(null); setVideoPreview(null); }} className="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase bg-rose-50 px-4 py-2 rounded-lg">Change Video</button>}
                             </div>
                         ) : (
@@ -780,21 +784,30 @@ export default function FarmManagement() {
                                     <button
                                       type="button"
                                       onClick={() => setIsVideoRecorderOpen(true)}
-                                      className="btn-primary py-3 px-6 text-sm flex items-center justify-center gap-2"
+                                      className="btn-primary py-3 px-5 text-xs sm:text-sm flex items-center justify-center gap-2"
                                     >
                                         <svg className="w-4 h-4 text-rose-400 animate-pulse" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /></svg>
-                                        Record Live Video (15s)
+                                        Record Live (15s)
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => videoInputRef.current?.click()}
-                                      className="btn-secondary py-3 px-6 text-sm flex items-center justify-center gap-2"
+                                      onClick={() => videoInputRefCamera.current?.click()}
+                                      className="py-3 px-5 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
+                                        Phone Camera
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => videoInputRefGallery.current?.click()}
+                                      className="btn-secondary py-3 px-5 text-xs sm:text-sm flex items-center justify-center gap-2"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                                        Upload Video File
+                                        Upload Video
                                     </button>
                                 </div>
-                                <input type="file" accept="video/*" capture="environment" onChange={handleVideoChange} className="hidden" ref={videoInputRef} />
+                                <input type="file" accept="video/*,video/mp4,video/quicktime,video/webm" capture="environment" onChange={handleVideoChange} className="hidden" ref={videoInputRefCamera} />
+                                <input type="file" accept="video/*,video/mp4,video/quicktime,video/webm" onChange={handleVideoChange} className="hidden" ref={videoInputRefGallery} />
                             </div>
                         )}
                     </div>
@@ -931,7 +944,7 @@ export default function FarmManagement() {
                     </div>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,.heic,.heif"
                       onChange={handleUdderPhotoUpload}
                       className="hidden"
                       ref={udderPhotoRef}
@@ -1280,8 +1293,16 @@ export default function FarmManagement() {
                           <span>📁 Choose File</span>
                           <input
                             type="file"
-                            accept="image/*"
-                            onChange={(e) => slot.setFile(e.target.files?.[0] || null)}
+                            accept="image/*,.heic,.heif"
+                            onChange={async (e) => {
+                              const f = e.target.files?.[0];
+                              if (f) {
+                                const comp = await compressImage(f);
+                                slot.setFile(comp);
+                              } else {
+                                slot.setFile(null);
+                              }
+                            }}
                             className="hidden"
                           />
                         </label>

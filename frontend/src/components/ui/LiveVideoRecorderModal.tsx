@@ -129,6 +129,19 @@ export const LiveVideoRecorderModal: React.FC<LiveVideoRecorderModalProps> = ({
     }
   }, [onVideoRecorded, onClose]);
 
+  const nativeVideoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleNativeVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+      onVideoRecorded(file);
+      onClose();
+    }
+  };
+
   const startRecording = useCallback(() => {
     if (!streamRef.current) return;
 
@@ -138,22 +151,34 @@ export const LiveVideoRecorderModal: React.FC<LiveVideoRecorderModalProps> = ({
     setError(null);
 
     try {
-      const options = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-        ? { mimeType: 'video/webm;codecs=vp9' }
-        : MediaRecorder.isTypeSupported('video/webm')
-        ? { mimeType: 'video/webm' }
-        : MediaRecorder.isTypeSupported('video/mp4')
-        ? { mimeType: 'video/mp4' }
-        : undefined;
+      let options: MediaRecorderOptions | undefined = undefined;
+      if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+        const preferredMimes = [
+          'video/mp4;codecs=avc1',
+          'video/mp4',
+          'video/webm;codecs=vp9',
+          'video/webm;codecs=vp8',
+          'video/webm',
+        ];
+        for (const mime of preferredMimes) {
+          if (MediaRecorder.isTypeSupported(mime)) {
+            options = { mimeType: mime };
+            break;
+          }
+        }
+      }
 
-      const mediaRecorder = new MediaRecorder(streamRef.current, options);
+      const mediaRecorder = options
+        ? new MediaRecorder(streamRef.current, options)
+        : new MediaRecorder(streamRef.current);
+
       mediaRecorderRef.current = mediaRecorder;
       mediaRecorder.ondataavailable = handleDataAvailable;
       mediaRecorder.onstop = handleStopRecording;
       mediaRecorder.start(200); // 200ms slice
     } catch (err: any) {
       console.error('MediaRecorder error:', err);
-      setError('MediaRecorder failed on this browser. Please use file upload.');
+      setError('Live browser recording encountered an issue. Tap below to record directly with your iPhone camera.');
       setIsRecording(false);
       return;
     }
@@ -176,6 +201,16 @@ export const LiveVideoRecorderModal: React.FC<LiveVideoRecorderModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[100] flex flex-col items-center justify-between p-4">
+      {/* Hidden native camera video input */}
+      <input
+        ref={nativeVideoInputRef}
+        type="file"
+        accept="video/*,video/mp4,video/quicktime,video/webm"
+        capture="environment"
+        className="hidden"
+        onChange={handleNativeVideoSelect}
+      />
+
       {/* Header */}
       <div className="w-full max-w-xl flex items-center justify-between py-2 text-white">
         <div>
@@ -222,7 +257,7 @@ export const LiveVideoRecorderModal: React.FC<LiveVideoRecorderModalProps> = ({
         )}
 
         {/* Target Outline Overlay */}
-        {!isRecording && (
+        {!isRecording && !error && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-6 text-center">
             <div className="border-2 border-emerald-400/60 border-dashed rounded-3xl w-full h-full flex items-center justify-center">
               <span className="text-xs font-black text-emerald-300 bg-slate-900/80 px-4 py-2 rounded-full border border-emerald-500/40">
@@ -233,22 +268,41 @@ export const LiveVideoRecorderModal: React.FC<LiveVideoRecorderModalProps> = ({
         )}
 
         {error && (
-          <div className="absolute inset-x-4 bottom-4 bg-rose-950/90 text-rose-200 p-4 rounded-2xl border border-rose-800 text-xs text-center font-bold">
-            {error}
+          <div className="absolute inset-x-4 bottom-4 bg-slate-950/95 text-white p-5 rounded-2xl border border-rose-600/50 flex flex-col items-center text-center gap-3">
+            <p className="text-xs text-slate-300 font-medium">{error}</p>
+            <button
+              type="button"
+              onClick={() => nativeVideoInputRef.current?.click()}
+              className="py-2.5 px-5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center gap-2 active:scale-95 transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <span>Record with iPhone Camera</span>
+            </button>
           </div>
         )}
       </div>
 
       {/* Control Buttons */}
-      <div className="w-full max-w-xl flex items-center justify-center py-4 gap-4">
+      <div className="w-full max-w-xl flex flex-col items-center justify-center py-4 gap-2">
         {!isRecording ? (
-          <button
-            onClick={startRecording}
-            className="px-8 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-sm shadow-xl shadow-emerald-500/20 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
-          >
-            <div className="w-4 h-4 rounded-full bg-rose-600 animate-pulse" />
-            Start 15s Video Recording
-          </button>
+          <>
+            <button
+              onClick={startRecording}
+              className="px-8 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-sm shadow-xl shadow-emerald-500/20 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+            >
+              <div className="w-4 h-4 rounded-full bg-rose-600 animate-pulse" />
+              Start 15s Video Recording
+            </button>
+            <button
+              type="button"
+              onClick={() => nativeVideoInputRef.current?.click()}
+              className="text-[11px] text-slate-400 hover:text-emerald-400 underline decoration-slate-600 font-medium transition-colors pt-1"
+            >
+              Tap here to record with your native iPhone camera
+            </button>
+          </>
         ) : (
           <button
             onClick={finishRecording}
@@ -262,5 +316,6 @@ export const LiveVideoRecorderModal: React.FC<LiveVideoRecorderModalProps> = ({
     </div>
   );
 };
+
 
 export default LiveVideoRecorderModal;

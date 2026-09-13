@@ -195,7 +195,7 @@ export const AngleCameraModal: React.FC<AngleCameraModalProps> = ({ angleName, a
       <input
         ref={nativeInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif"
         capture="environment"
         className="hidden"
         onChange={handleNativeFileSelected}
@@ -203,7 +203,7 @@ export const AngleCameraModal: React.FC<AngleCameraModalProps> = ({ angleName, a
       <input
         ref={galleryInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif"
         className="hidden"
         onChange={handleNativeFileSelected}
       />

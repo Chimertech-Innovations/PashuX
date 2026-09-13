@@ -15,13 +15,40 @@ from typing import List, Tuple
 import cv2
 import numpy as np
 import imagehash
-from PIL import Image
+from PIL import Image, ImageOps
+from typing import Optional
+
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except Exception:
+    pass
 
 logger = logging.getLogger(__name__)
 
 BLUR_THRESHOLD: float = float(os.getenv("BLUR_THRESHOLD", "100.0"))
 HASH_SIMILARITY_THRESHOLD: int = int(os.getenv("HASH_SIMILARITY_THRESHOLD", "10"))
 TOP_FRAMES_COUNT: int = int(os.getenv("TOP_FRAMES_COUNT", "10"))
+
+
+def load_image_array(image_path: str) -> Optional[np.ndarray]:
+    """
+    Universal image loader that handles standard JPEG/PNG/WEBP,
+    Apple iPhone HEIC/HEIF, and portrait photos with EXIF orientation.
+    Returns OpenCV BGR image array.
+    """
+    try:
+        pil_img = Image.open(image_path)
+        pil_img = ImageOps.exif_transpose(pil_img).convert("RGB")
+        max_dim = 1600
+        if max(pil_img.size) > max_dim:
+            pil_img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+        return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+    except Exception:
+        try:
+            return cv2.imread(image_path)
+        except Exception:
+            return None
 
 
 def compute_blur_score(frame: np.ndarray) -> float:
@@ -69,7 +96,7 @@ def extract_frames(video_path: str, output_dir: str) -> List[Tuple[str, float]]:
     Supports WebM clips from browser MediaRecorder with unknown/negative frame count metadata.
     """
     # 1. Image fallback check: if this is a photo/snapshot image file
-    img = cv2.imread(video_path)
+    img = load_image_array(video_path)
     if img is not None and img.size > 0:
         blur = compute_blur_score(img)
         frame_path = os.path.join(output_dir, "frame_0000.jpg")
@@ -85,7 +112,7 @@ def extract_frames(video_path: str, output_dir: str) -> List[Tuple[str, float]]:
     if fps <= 0 or fps > 120 or np.isnan(fps):
         fps = 30.0
 
-    sample_interval = max(1, int(fps))
+    sample_interval = max(1, int(round(fps)))
     frames: List[Tuple[str, float]] = []
     frame_idx = 0
     second = 0
@@ -96,11 +123,14 @@ def extract_frames(video_path: str, output_dir: str) -> List[Tuple[str, float]]:
             break
 
         if frame_idx % sample_interval == 0:
-            # Downscale high-resolution frames (e.g. 4K MOV/MP4 videos) to max 720px width to prevent OOM
+            # Downscale high-resolution frames (e.g. 4K MOV/MP4 videos) to max 720px width/height to prevent OOM
             h, w = frame.shape[:2]
-            if w > 720:
-                new_h = int(h * (720 / w))
-                frame = cv2.resize(frame, (720, new_h), interpolation=cv2.INTER_AREA)
+            max_dim = 720
+            if max(h, w) > max_dim:
+                scale = max_dim / max(h, w)
+                new_w = max(1, int(w * scale))
+                new_h = max(1, int(h * scale))
+                frame = cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_AREA)
 
             blur = compute_blur_score(frame)
             frame_path = os.path.join(output_dir, f"frame_{second:04d}.jpg")
@@ -109,11 +139,12 @@ def extract_frames(video_path: str, output_dir: str) -> List[Tuple[str, float]]:
             second += 1
 
         frame_idx += 1
-        if second >= 15: # 1 frame per second for up to 15 seconds (15 frames max)
+        # Extract 1 frame per second across full video (up to 30 seconds)
+        if second >= 30:
             break
 
     cap.release()
-    logger.info(f"Extracted {len(frames)} frames sequentially in fast single-pass mode")
+    logger.info(f"Extracted {len(frames)} frames sequentially across full video (1 frame per second)")
     return frames
 
 
@@ -236,50 +267,46 @@ def convert_to_mp4(input_path: str, output_path: str) -> str:
 
 def process_video(video_path: str, work_dir: str) -> dict:
     """
-    Full fast pipeline:
-      1. Extract 1 frame/sec in a single fast pass (supports .mov, .mp4, .webm)
-      2. Remove blurry frames
-      3. Remove near-duplicates
-      4. Return top clean frames for AI analysis
+    Full sequential 1-FPS video analysis pipeline:
+      1. Extract 1 frame per second sequentially across the full video duration (supports .mov, .mp4, .webm).
+      2. Filter out pitch-black or corrupted frames while preserving the full timeline of the video.
+      3. Maintain the chronological sequence so the AI evaluates every second from head to tail.
+      4. Sample up to 20 evenly distributed frames if video exceeds 20 seconds.
     """
     frames_dir = os.path.join(work_dir, "frames")
     os.makedirs(frames_dir, exist_ok=True)
 
-    # Fast single-pass extraction (no slow transcoding pre-pass)
+    # 1. Fast sequential 1-FPS frame extraction
     all_frames = extract_frames(video_path, frames_dir)
     if not all_frames:
         raise ValueError("Could not extract frames from the video. Please check the video file.")
 
-    # Step 2 – Blur filter
-    sharp_frames = remove_blurry_frames(all_frames)
+    # 2. Filter out corrupted or completely black frames (mean pixel brightness >= 5)
+    usable_frames: List[Tuple[str, float]] = []
+    for path, blur in all_frames:
+        if not os.path.exists(path) or os.path.getsize(path) < 1000:
+            continue
+        try:
+            img = cv2.imread(path)
+            if img is not None and img.size > 0:
+                if np.mean(img) >= 5: # not pitch black
+                    usable_frames.append((path, blur))
+        except Exception:
+            continue
 
-    # Step 3 – Sort sharp frames by clarity DESCENDING before deduplication
-    # This guarantees we keep the absolute sharpest image for each unique angle/pose
-    sharp_frames_sorted = sorted(sharp_frames, key=lambda x: x[1], reverse=True)
-    unique_frames = remove_duplicate_frames(sharp_frames_sorted)
+    if not usable_frames:
+        usable_frames = all_frames[:1]
 
-    # Fallback: If deduplication emptied the list, keep the single sharpest frame
-    if not unique_frames:
-        unique_frames = [sharp_frames_sorted[0]]
+    # 3. If video duration > 20 seconds, sample up to 20 frames uniformly across the full timeline
+    max_frames_to_send = 20
+    if len(usable_frames) > max_frames_to_send:
+        step = len(usable_frames) / float(max_frames_to_send)
+        selected_indices = [int(i * step) for i in range(max_frames_to_send)]
+        top_frames = [usable_frames[idx] for idx in selected_indices if idx < len(usable_frames)]
+    else:
+        top_frames = usable_frames
 
-    # Step 4 – Select best clean frames (minimum 3 frames if video has 3+ frames, maximum 10 frames)
-    top_frames = select_top_frames(unique_frames, top_n=TOP_FRAMES_COUNT)
-
-    # Ensure minimum 3 frames if total extracted frames >= 3
-    if len(top_frames) < 3 and len(all_frames) >= 3:
-        seen_paths = {p for p, _ in top_frames}
-        sorted_all = sorted(all_frames, key=lambda x: x[1], reverse=True)
-        for p, s in sorted_all:
-            if p not in seen_paths:
-                top_frames.append((p, s))
-                seen_paths.add(p)
-                if len(top_frames) >= 3:
-                    break
-
-    # Cap at maximum 15 frames for 15-second 1 FPS full video coverage
-    top_frames = top_frames[:15]
-
-    # Step 5 – Erase/delete all unselected, blurry, and duplicate frame files from disk
+    # Clean up unselected frames from disk
     selected_paths = {p for p, _ in top_frames}
     for path, _ in all_frames:
         if path not in selected_paths and os.path.exists(path):
@@ -288,10 +315,11 @@ def process_video(video_path: str, work_dir: str) -> dict:
             except Exception as exc:
                 logger.warning(f"Could not remove unselected frame {path}: {exc}")
 
+    logger.info(f"Video processing complete: {len(top_frames)} sequential 1-FPS frames selected across full video")
     return {
         "frames_extracted": len(all_frames),
-        "frames_after_blur_filter": len(sharp_frames),
-        "frames_after_dedup": len(unique_frames),
+        "frames_after_blur_filter": len(usable_frames),
+        "frames_after_dedup": len(usable_frames),
         "top_frames_selected": len(top_frames),
         "frame_data": [
             {"path": p, "clarity_score": round(s, 2), "frame_number": i + 1}
@@ -312,7 +340,7 @@ def process_image(image_path: str, work_dir: str) -> dict:
     frames_dir = os.path.join(work_dir, "frames")
     os.makedirs(frames_dir, exist_ok=True)
 
-    img = cv2.imread(image_path)
+    img = load_image_array(image_path)
     if img is None:
         raise ValueError(f"Could not read image file: {image_path}")
 

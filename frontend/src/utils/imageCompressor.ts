@@ -9,8 +9,18 @@ export async function compressImage(
   maxDimension = 1600,
   quality = 0.85
 ): Promise<File> {
-  // Return immediately if not an image or already under 400KB
-  if (!file.type.startsWith('image/') || file.size < 400 * 1024) {
+  const fileName = (file.name || '').toLowerCase();
+  const isImageMime = file.type.startsWith('image/');
+  const isImageExt = /\.(jpe?g|png|webp|heic|heif|bmp|gif)$/i.test(fileName);
+
+  // Return immediately if not an image
+  if (!isImageMime && !isImageExt) {
+    return file;
+  }
+
+  const isHeic = file.type.includes('heic') || file.type.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif');
+  // If already under 400KB and already standard JPEG/PNG/WebP, keep it
+  if (!isHeic && file.size < 400 * 1024 && (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp')) {
     return file;
   }
 

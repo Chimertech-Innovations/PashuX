@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { DiseaseResult } from '@/types';
 import AIDisclaimerFooter from '@/components/ui/AIDisclaimerFooter';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Props {
   result: DiseaseResult;
@@ -47,6 +48,7 @@ const URGENCY_CONFIG: Record<string, { icon: ReactNode; color: string; bg: strin
 };
 
 export default function DiseaseResultCard({ result }: Props) {
+  const { t, translateOutput } = useLanguage();
   const severity = SEVERITY_CONFIG[result.severity] || SEVERITY_CONFIG.Mild;
   const urgencyKey = Object.keys(URGENCY_CONFIG).find(k =>
     result.urgency.toLowerCase().includes(k.toLowerCase())
@@ -57,20 +59,20 @@ export default function DiseaseResultCard({ result }: Props) {
     <div className="space-y-5 animate-fade-up">
       {/* Main result card */}
       <div className="glass-card p-8 bg-white border border-slate-300 shadow-md rounded-3xl">
-        <p className="section-label mb-2 text-slate-900 font-black">DISEASE SCREENING RESULT</p>
-        <h2 className="text-2xl font-black text-slate-900 mb-3">{result.possible_condition}</h2>
+        <p className="section-label mb-2 text-slate-900 font-black">{t('disease_screening_result', 'DISEASE SCREENING RESULT')}</p>
+        <h2 className="text-2xl font-black text-slate-900 mb-3">{translateOutput(result.possible_condition)}</h2>
 
         <div className="flex flex-wrap gap-2 mb-5">
-          <span className={severity.badge}>{result.severity} Severity</span>
+          <span className={severity.badge}>{translateOutput(result.severity)}</span>
           {result.affected_area !== 'N/A' && (
-            <span className="badge-grey text-slate-900 font-black">{result.affected_area}</span>
+            <span className="badge-grey text-slate-900 font-black">{translateOutput(result.affected_area)}</span>
           )}
         </div>
 
         {/* Confidence metric */}
         <div>
           <div className="flex items-center justify-between text-xs mb-1.5 font-black text-slate-900">
-            <span>Vision System Confidence</span>
+            <span>{t('disease.confidence', 'Vision System Confidence')}</span>
             <span className="text-emerald-700 font-black">{Math.round(result.confidence * 100)}%</span>
           </div>
           <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden border border-slate-300 p-0.5">
@@ -89,23 +91,23 @@ export default function DiseaseResultCard({ result }: Props) {
             {urgency.icon}
           </div>
           <div>
-            <p className="text-xs text-slate-900 font-black uppercase tracking-wider mb-0.5">Recommended Action</p>
-            <p className={`text-sm font-black ${urgency.color}`}>{result.urgency}</p>
+            <p className="text-xs text-slate-900 font-black uppercase tracking-wider mb-0.5">{t('disease_recommended_action', 'Recommended Action')}</p>
+            <p className={`text-sm font-black ${urgency.color}`}>{translateOutput(result.urgency)}</p>
           </div>
         </div>
       </div>
 
-      {/* iHerd Mobile App Banner with Pristine White Background */}
+      {/* iHerd Mobile App Banner */}
       <div className="p-6 rounded-3xl bg-white border-2 border-emerald-300 text-slate-900 shadow-md flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
         <div className="flex items-center gap-4 z-10">
           <img src="/iherd_logo.png" alt="iHerd Logo" className="w-14 h-14 rounded-2xl object-contain bg-slate-50 p-1 border border-slate-200 shadow-sm flex-shrink-0" />
           <div className="space-y-1 text-left">
             <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300">
-              HERD HEALTH RECORDING
+              {t('bcs_iherd_badge', 'OFFICIAL HERD MANAGEMENT APP')}
             </span>
-            <h3 className="text-lg font-black tracking-tight text-slate-900 mt-1">Track Veterinary Treatments on iHerd App</h3>
+            <h3 className="text-lg font-black tracking-tight text-slate-900 mt-1">{t('bcs_iherd_title', 'Track Cattle Health on iHerd App')}</h3>
             <p className="text-xs font-bold text-slate-900 max-w-md">
-              Save disease screening records, schedule booster doses, and monitor individual cattle health history directly on your mobile device.
+              {t('bcs_iherd_desc', 'Save disease screening records, schedule booster doses, and monitor individual cattle health history directly on your mobile device.')}
             </p>
           </div>
         </div>
@@ -125,7 +127,7 @@ export default function DiseaseResultCard({ result }: Props) {
         <div className="glass-card p-6 bg-white border border-slate-300 shadow-sm rounded-3xl">
           <h3 className="text-xs font-black uppercase tracking-widest text-emerald-800 mb-4 flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
-            Visible Signs & Clinical Indicators
+            {t('disease_clinical_findings', 'Visible Signs & Clinical Indicators')}
           </h3>
           <ul className="space-y-3">
             {result.visible_signs.map((sign, i) => (
@@ -133,7 +135,7 @@ export default function DiseaseResultCard({ result }: Props) {
                 <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center flex-shrink-0 mt-0.5 font-black text-xs">
                   ✓
                 </div>
-                <span className="text-sm text-slate-900 leading-relaxed font-bold">{sign}</span>
+                <span className="text-sm text-slate-900 leading-relaxed font-bold">{translateOutput(sign)}</span>
               </li>
             ))}
           </ul>
@@ -144,7 +146,7 @@ export default function DiseaseResultCard({ result }: Props) {
       <div className="glass-card p-6 bg-white border border-slate-300 shadow-sm rounded-3xl">
         <h3 className="text-xs font-black uppercase tracking-widest text-emerald-800 mb-4 flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
-          Recommended Veterinary Steps
+          {t('disease_next_steps', 'Recommended Veterinary Steps')}
         </h3>
         <ol className="space-y-3">
           {result.next_steps.map((step, i) => (
@@ -152,7 +154,7 @@ export default function DiseaseResultCard({ result }: Props) {
               <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-black">
                 {i + 1}
               </span>
-              <span className="text-sm text-slate-900 leading-relaxed font-bold">{step}</span>
+              <span className="text-sm text-slate-900 leading-relaxed font-bold">{translateOutput(step)}</span>
             </li>
           ))}
         </ol>

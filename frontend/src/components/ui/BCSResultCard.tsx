@@ -1,5 +1,6 @@
 import type { BCSResult } from '@/types';
 import { getBCSProductRecommendations } from '@/utils/bcsProducts';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Props {
   result: BCSResult;
@@ -26,12 +27,13 @@ function scoreConditionBadge(score: number, isInvalid: boolean) {
 }
 
 export default function BCSResultCard({ result }: Props) {
+  const { t, translateOutput } = useLanguage();
   const isInvalid = result.confidence === 0 || result.bcs_score <= 0 || result.condition.toLowerCase().includes('invalid') || result.condition.toLowerCase().includes('inadequate');
-  const color  = scoreColor(result.bcs_score, isInvalid);
+  const color = scoreColor(result.bcs_score, isInvalid);
   const radius = 42;
-  const circ   = 2 * Math.PI * radius;
-  const pct    = isInvalid || result.bcs_score <= 0 ? 0 : ((result.bcs_score - 1) / 4);
-  const dash   = circ * Math.max(0, Math.min(1, pct));
+  const circ = 2 * Math.PI * radius;
+  const pct = isInvalid || result.bcs_score <= 0 ? 0 : ((result.bcs_score - 1) / 4);
+  const dash = circ * Math.max(0, Math.min(1, pct));
 
   const recData = getBCSProductRecommendations(result.bcs_score, []);
 
@@ -58,21 +60,21 @@ export default function BCSResultCard({ result }: Props) {
                 {isInvalid || result.bcs_score <= 0 ? 'N/A' : result.bcs_score.toFixed(1)}
               </span>
               <span className="text-[10px] text-slate-900 font-black tracking-wider uppercase mt-0.5">
-                {isInvalid ? 'Invalid' : 'OF 5.0 SCALE'}
+                {isInvalid ? 'Invalid' : t('bcs_of_scale', 'OF 5.0 SCALE')}
               </span>
             </div>
           </div>
 
           {/* Info */}
           <div className="flex-1 text-center sm:text-left">
-            <p className="section-label mb-1.5 text-slate-900 font-black">BCS DIAGNOSTIC RESULT</p>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">{result.condition}</h2>
-            <span className={scoreConditionBadge(result.bcs_score, isInvalid)}>{result.condition}</span>
+            <p className="section-label mb-1.5 text-slate-900 font-black">{t('bcs_diagnostic_result', 'BCS DIAGNOSTIC RESULT')}</p>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">{translateOutput(result.condition)}</h2>
+            <span className={scoreConditionBadge(result.bcs_score, isInvalid)}>{translateOutput(result.condition)}</span>
 
             {/* Confidence metric bar */}
             <div className="mt-5 max-w-sm">
               <div className="flex items-center justify-between text-xs mb-1.5 font-black text-slate-900">
-                <span>AI System Confidence</span>
+                <span>{t('bcs_confidence', 'AI System Confidence')}</span>
                 <span className="text-emerald-700 font-black">{Math.round(result.confidence * 100)}%</span>
               </div>
               <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden p-0.5 border border-slate-300">
@@ -95,23 +97,23 @@ export default function BCSResultCard({ result }: Props) {
             </svg>
           </div>
           <div>
-            <h4 className="text-xs font-black text-emerald-950 uppercase tracking-widest mb-1">TARGETED CLINICAL PROTOCOL</h4>
-            <p className="text-sm font-black text-slate-900 leading-relaxed">{recData.guidance}</p>
+            <h4 className="text-xs font-black text-emerald-950 uppercase tracking-widest mb-1">{t('bcs_protocol', 'TARGETED CLINICAL PROTOCOL')}</h4>
+            <p className="text-sm font-black text-slate-900 leading-relaxed">{translateOutput(recData.guidance)}</p>
           </div>
         </div>
       )}
 
-      {/* iHerd Mobile App Callout Banner with Pristine White Background */}
+      {/* iHerd Mobile App Callout Banner */}
       <div className="p-6 rounded-3xl bg-white border-2 border-emerald-300 text-slate-900 shadow-md flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
         <div className="flex items-center gap-4 z-10">
           <img src="/iherd_logo.png" alt="iHerd Logo" className="w-14 h-14 rounded-2xl object-contain bg-slate-50 p-1 border border-slate-200 shadow-sm flex-shrink-0" />
           <div className="space-y-1 text-left">
             <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300">
-              OFFICIAL HERD MANAGEMENT APP
+              {t('bcs_iherd_badge', 'OFFICIAL HERD MANAGEMENT APP')}
             </span>
-            <h3 className="text-lg font-black tracking-tight text-slate-900 mt-1">Track Cattle Health on iHerd App</h3>
+            <h3 className="text-lg font-black tracking-tight text-slate-900 mt-1">{t('bcs_iherd_title', 'Track Cattle Health on iHerd App')}</h3>
             <p className="text-xs font-bold text-slate-900 max-w-md">
-              Record daily body condition scores, milk yields, vaccination logs, and health records directly on your phone.
+              {t('bcs_iherd_desc', 'Record daily body condition scores, milk yields, vaccination logs, and health records directly on your phone.')}
             </p>
           </div>
         </div>
@@ -130,7 +132,7 @@ export default function BCSResultCard({ result }: Props) {
       <div className="glass-card p-6 border border-slate-300 bg-white shadow-sm rounded-3xl">
         <h3 className="text-xs font-black uppercase tracking-widest text-emerald-800 mb-4 flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
-          Key Visual Observations
+          {t('bcs_observations', 'Key Visual Observations')}
         </h3>
         <ul className="space-y-3">
           {result.observations.map((obs, i) => (
@@ -138,7 +140,7 @@ export default function BCSResultCard({ result }: Props) {
               <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center flex-shrink-0 mt-0.5 font-black text-xs">
                 ✓
               </div>
-              <span className="text-sm text-slate-900 leading-relaxed font-bold">{obs}</span>
+              <span className="text-sm text-slate-900 leading-relaxed font-bold">{translateOutput(obs)}</span>
             </li>
           ))}
         </ul>
@@ -148,13 +150,13 @@ export default function BCSResultCard({ result }: Props) {
       <div className="glass-card p-6 border border-slate-300 bg-white shadow-sm rounded-3xl">
         <h3 className="text-xs font-black uppercase tracking-widest text-emerald-800 mb-4 flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
-          Nutritional & Management Guidance
+          {t('bcs_guidance', 'Nutritional & Management Guidance')}
         </h3>
         <ul className="space-y-3">
           {result.recommendations.map((rec, i) => (
             <li key={i} className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200">
               <span className="text-emerald-800 font-black text-sm flex-shrink-0 mt-0.5">•</span>
-              <span className="text-sm text-slate-900 leading-relaxed font-bold">{rec}</span>
+              <span className="text-sm text-slate-900 leading-relaxed font-bold">{translateOutput(rec)}</span>
             </li>
           ))}
         </ul>

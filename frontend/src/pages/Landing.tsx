@@ -1,92 +1,94 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const IHERD_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.chimertech.iherd&hl=en_IN';
 
-const ACCORDION_ITEMS = [
-  {
-    id: 'bcs',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-emerald-600">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
-      </svg>
-    ),
-    title: 'Real-time Cattle BCS Data',
-    desc: 'Extract high-precision Body Condition Scores (BCS 1.0 to 5.0 scale) and key visual observations from 10-second camera video streams.',
-  },
-  {
-    id: 'disease',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-blue-600">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-      </svg>
-    ),
-    title: 'Early Disease Risk Screening',
-    desc: 'Screen for early visual signs of mastitis, skin lesions, locomotion issues, and udder inflammation to prevent yield loss.',
-  },
-  {
-    id: 'products',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-amber-600">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-      </svg>
-    ),
-    title: 'Chimertech Veterinary Product Recommendations',
-    desc: 'Automated clinical protocols pairing NutraKine Gain, Liver Tonic, Phos+, Milk Booster, and Calcdex with BCS score diagnoses.',
-  },
-  {
-    id: 'openai',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-indigo-600">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-      </svg>
-    ),
-    title: 'OpenAI Vision Powered & PDF Export',
-    desc: 'Powered by GPT-4 Vision frame extraction. Generate and download instant professional English PDF reports for herd records.',
-  },
-];
-
-const ANALYSIS_MODULES = [
-  {
-    title: 'Biometric Muzzle Detection',
-    desc: 'Scan cattle muzzle nose print with AI neural vision to generate unique biometric identification and instant passport.',
-    to: '/muzzle-check',
-    image: '/muzzle_detection_card.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-emerald-700">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5" />
-      </svg>
-    ),
-    tag: 'Biometric Muzzle ID',
-  },
-  {
-    title: 'Farm & Herd Management',
-    desc: 'Manage your entire cattle herd dashboard, track weight trends, health status, and complete digital health passports.',
-    to: '/farm',
-    image: '/farm_management_card.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-blue-700">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1.5-3m1.5 3l1.5-3m-4.5-3l1.5-3m-1.5 3l-1.5-3" />
-      </svg>
-    ),
-    tag: 'Farm Management',
-  },
-  {
-    title: 'Cattle Health Scoring & Disease Detection',
-    desc: 'Register new cattle in seconds with muzzle scan, track 10s video vitals, BCS scores, and receive Chimertech recommendations.',
-    to: '/farm',
-    image: '/add_cattle_monitoring_card.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-purple-700">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    tag: 'Live AI Monitoring',
-  },
-];
-
 export default function Landing() {
+  const { t } = useLanguage();
   const [activeAccordion, setActiveAccordion] = useState<string>('bcs');
+
+  const ACCORDION_ITEMS = [
+    {
+      id: 'bcs',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-emerald-600">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+        </svg>
+      ),
+      title: t('accordion_bcs_title', 'Real-time Cattle BCS Data'),
+      desc: t('accordion_bcs_desc', 'Extract high-precision Body Condition Scores (BCS 1.0 to 5.0 scale) and key visual observations from 10-second camera video streams.'),
+    },
+    {
+      id: 'disease',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-blue-600">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+        </svg>
+      ),
+      title: t('accordion_disease_title', 'Early Disease Risk Screening'),
+      desc: t('accordion_disease_desc', 'Screen for early visual signs of mastitis, skin lesions, locomotion issues, and udder inflammation to prevent yield loss.'),
+    },
+    {
+      id: 'products',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-amber-600">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+        </svg>
+      ),
+      title: t('accordion_products_title', 'Chimertech Veterinary Product Recommendations'),
+      desc: t('accordion_products_desc', 'Automated clinical protocols pairing NutraKine Gain, Liver Tonic, Phos+, Milk Booster, and Calcdex with BCS score diagnoses.'),
+    },
+    {
+      id: 'openai',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-indigo-600">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+        </svg>
+      ),
+      title: t('accordion_openai_title', 'OpenAI Vision Powered & PDF Export'),
+      desc: t('accordion_openai_desc', 'Powered by GPT-4 Vision frame extraction. Generate and download instant professional English PDF reports for herd records.'),
+    },
+  ];
+
+  const ANALYSIS_MODULES = [
+    {
+      title: t('module_muzzle_title', 'Biometric Muzzle Detection'),
+      desc: t('module_muzzle_desc', 'Scan cattle muzzle nose print with AI neural vision to generate unique biometric identification and instant passport.'),
+      to: '/muzzle-check',
+      image: '/muzzle_detection_card.png',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-emerald-700">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5" />
+        </svg>
+      ),
+      tag: t('module_muzzle_tag', 'Biometric Muzzle ID'),
+    },
+    {
+      title: t('module_farm_title', 'Farm & Herd Management'),
+      desc: t('module_farm_desc', 'Manage your entire cattle herd dashboard, track weight trends, health status, and complete digital health passports.'),
+      to: '/farm',
+      image: '/farm_management_card.png',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-blue-700">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1.5-3m1.5 3l1.5-3m-4.5-3l1.5-3m-1.5 3l-1.5-3" />
+        </svg>
+      ),
+      tag: t('module_farm_tag', 'Farm Management'),
+    },
+    {
+      title: t('module_health_title', 'Cattle Health Scoring & Disease Detection'),
+      desc: t('module_health_desc', 'Register new cattle in seconds with muzzle scan, track 10s video vitals, BCS scores, and receive Chimertech recommendations.'),
+      to: '/farm',
+      image: '/add_cattle_monitoring_card.png',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-purple-700">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      tag: t('module_health_tag', 'Live AI Monitoring'),
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans overflow-x-hidden">
@@ -101,15 +103,17 @@ export default function Landing() {
           <div className="lg:col-span-6 space-y-5 sm:space-y-6 text-left">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 border border-emerald-300 animate-fade-in shadow-sm">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
-              <span className="text-[11px] sm:text-xs font-black text-slate-900 tracking-wide uppercase">PashuX AI</span>
+              <span className="text-[11px] sm:text-xs font-black text-slate-900 tracking-wide uppercase">
+                {t('announcement_badge', 'PashuX AI')}
+              </span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.12] tracking-tight">
-              Biometric Cattle Muzzle ID & Farm Health Monitoring
+              {t('hero_title_prefix', 'Biometric Cattle Muzzle ID &')} <span className="text-emerald-600">{t('hero_title_highlight', 'Farm Health Monitoring')}</span>
             </h1>
 
             <p className="text-sm sm:text-lg text-slate-700 font-bold leading-relaxed max-w-xl">
-              Register cattle instantly with biometric muzzle recognition, track Body Condition Scores (BCS 1-5), and manage complete herd vitals with Chimertech AI intelligence.
+              {t('hero_subtitle', 'Register cattle instantly with biometric muzzle recognition, track Body Condition Scores (BCS 1-5), and manage complete herd vitals with Chimertech AI intelligence.')}
             </p>
 
             {/* CTAs */}
@@ -121,14 +125,14 @@ export default function Landing() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                <span>Add Your Cattle via Muzzle Scan</span>
+                <span>{t('hero_cta_scan', 'Add Your Cattle via Muzzle Scan')}</span>
               </Link>
 
               <Link
                 to="/farm"
                 className="w-full sm:w-auto text-center px-6 py-3.5 sm:py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs sm:text-sm shadow-md hover:scale-105 transition-all flex items-center justify-center gap-2"
               >
-                <span>Open Farm Management</span>
+                <span>{t('hero_cta_farm', 'Open Farm Management')}</span>
               </Link>
 
               <a
@@ -138,7 +142,7 @@ export default function Landing() {
                 className="w-full sm:w-auto text-center px-5 py-3.5 sm:py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-900 border-2 border-slate-300 font-black text-xs sm:text-sm shadow-md hover:scale-105 transition-all flex items-center justify-center gap-2.5"
               >
                 <img src="/iherd_logo.png" alt="iHerd Logo" className="w-5 h-5 rounded-md object-contain" />
-                <span>Get iHerd App</span>
+                <span>{t('nav_download_app', 'Get iHerd App')}</span>
               </a>
             </div>
           </div>
@@ -205,9 +209,11 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left Column: Accordion Features */}
           <div className="lg:col-span-6 space-y-4 text-left">
-            <p className="text-xs font-black uppercase tracking-widest text-emerald-700 mb-1">PLATFORM CAPABILITIES</p>
+            <p className="text-xs font-black uppercase tracking-widest text-emerald-700 mb-1">
+              {t('announcement_badge', 'PLATFORM CAPABILITIES')}
+            </p>
             <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight mb-6 sm:mb-8">
-              Everything you need to monitor cattle health in real-time
+              {t('hero_title_highlight', 'Everything you need to monitor cattle health in real-time')}
             </h2>
 
             <div className="space-y-3">
@@ -287,13 +293,13 @@ export default function Landing() {
       <section className="py-20 px-6 max-w-7xl mx-auto border-b border-slate-200">
         <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
           <span className="px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black tracking-wider uppercase border border-emerald-300">
-            HERD MANAGEMENT & AI BIOMETRICS
+            {t('module_farm_tag', 'HERD MANAGEMENT & AI BIOMETRICS')}
           </span>
           <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
-            Add Your Cattle & Monitor Vitals in Real-Time
+            {t('module_health_title', 'Add Your Cattle & Monitor Vitals in Real-Time')}
           </h2>
           <p className="text-sm sm:text-base font-bold text-slate-600">
-            Register your livestock with biometric muzzle recognition, track Body Condition Scores (BCS), and access live health analytics from your phone or desktop.
+            {t('module_health_desc', 'Register your livestock with biometric muzzle recognition, track Body Condition Scores (BCS), and access live health analytics from your phone or desktop.')}
           </p>
         </div>
 
@@ -328,7 +334,7 @@ export default function Landing() {
                 </div>
 
                 <div className="pt-2 flex items-center gap-2 text-xs font-black text-emerald-700 group-hover:text-emerald-800">
-                  <span>Get started now</span>
+                  <span>{t('cattle_view_details', 'Get started now')}</span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4 group-hover:translate-x-1 transition-transform">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>

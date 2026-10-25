@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useChat } from '@/hooks/useChat';
+import { useLanguage } from '@/contexts/LanguageContext';
 import type { AnalysisType } from '@/types';
 
 interface Props {
@@ -10,15 +11,8 @@ interface Props {
   defaultOpen?: boolean;
 }
 
-const SUGGESTIONS = [
-  'What does this BCS score mean?',
-  'How can I improve my cattle\'s body condition?',
-  'When should I contact a veterinarian?',
-  'What products can help with mastitis?',
-  'How do I perform a CMT test?',
-];
-
 export default function ChatBot({ requestId, userId, analysisType, analysisContext, defaultOpen = false }: Props) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(defaultOpen);
   const [input, setInput] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
@@ -26,6 +20,12 @@ export default function ChatBot({ requestId, userId, analysisType, analysisConte
   const { messages, loading, send } = useChat({
     requestId, userId, analysisType, analysisContext
   });
+
+  const SUGGESTIONS = [
+    t('chatbot.q1', 'What does this BCS score mean?'),
+    t('chatbot.q2', "How can I improve my cattle's body condition?"),
+    t('chatbot.q3', 'When should I contact a veterinarian?'),
+  ];
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -74,8 +74,8 @@ export default function ChatBot({ requestId, userId, analysisType, analysisConte
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-white">Cattle Health Assistant</p>
-                <p className="text-[10px] text-grey-500">Powered by Chimertech AI</p>
+                <p className="text-sm font-semibold text-white">{t('chatbot_title', 'Cattle Health Assistant')}</p>
+                <p className="text-[10px] text-grey-500">{t('chatbot_subtitle', 'Powered by Chimertech AI')}</p>
               </div>
             </div>
             <button onClick={() => setOpen(false)} className="btn-ghost p-1.5 text-grey-500">
@@ -91,15 +91,17 @@ export default function ChatBot({ requestId, userId, analysisType, analysisConte
             {messages.length === 0 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="chat-bubble-assistant">
-                  <p>Hello! I'm your Chimertech cattle health assistant. I can help you understand your analysis results, recommend products, and answer questions about cattle health.</p>
+                  <p>{t('chatbot_welcome', "Hello! I'm your Chimertech cattle health assistant. I can help you understand your analysis results, recommend products, and answer questions about cattle health.")}</p>
                   {Boolean(analysisContext) && (
-                    <p className="mt-2 text-grey-400">I have your {analysisType === 'bcs' ? 'BCS' : 'disease screening'} results loaded as context.</p>
+                    <p className="mt-2 text-grey-400">
+                      {analysisType === 'bcs' ? t('chatbot_context_bcs', 'I have your BCS analysis results loaded as context.') : t('chatbot_context_disease', 'I have your disease screening results loaded as context.')}
+                    </p>
                   )}
 
                 </div>
                 {/* Quick suggestions */}
                 <div className="space-y-1.5">
-                  <p className="text-[10px] text-grey-600 pl-1">Suggested questions</p>
+                  <p className="text-[10px] text-grey-600 pl-1">{t('chatbot_suggested', 'Suggested questions')}</p>
                   {SUGGESTIONS.slice(0, 3).map(s => (
                     <button
                       key={s}
@@ -145,7 +147,7 @@ export default function ChatBot({ requestId, userId, analysisType, analysisConte
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                placeholder="Ask about cattle health…"
+                placeholder={t('chatbot_placeholder', 'Ask about cattle health…')}
                 className="flex-1 input-field py-2 text-xs"
                 disabled={loading}
               />

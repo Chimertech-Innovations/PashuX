@@ -7,6 +7,7 @@ import CattleQRCodeCard from '@/components/cattle/CattleQRCodeCard';
 import AIDisclaimerFooter from '@/components/ui/AIDisclaimerFooter';
 import AngleCameraModal from '@/components/ui/AngleCameraModal';
 import { generateCattleProfilePDF } from '@/utils/pdfGenerator';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 /* ── Types ───────────────────────────────────────────────────────────────────── */
 interface CattleData {
@@ -613,6 +614,7 @@ export default function CattleDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, translateOutput } = useLanguage();
   const [cattle, setCattle] = useState<CattleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
@@ -627,6 +629,7 @@ export default function CattleDetail() {
   const [retakeLoading, setRetakeLoading] = useState(false);
   const [isCalculatingScore, setIsCalculatingScore] = useState(false);
   const [retakeMessage, setRetakeMessage] = useState<{ type: 'success' | 'warning' | 'error'; text: string } | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const detailUdderPhotoRef = useRef<HTMLInputElement>(null);
 
   const handleUploadUdderPhotoInDetail = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1017,64 +1020,75 @@ export default function CattleDetail() {
     }
   };
 
-  const handleDownloadPDF = () => {
-    if (!cattle) return;
+  const handleDownloadPDF = async () => {
+    if (!cattle || isGeneratingPdf) return;
+    setIsGeneratingPdf(true);
 
-    const currentBcs = activeTest ? (activeTest.bcs_score ?? 0) : avgBcsScore;
-    const currentHealth = activeTest ? activeTest.health_status : (cattle.disease_status || cattle.disease || 'Healthy');
-    const currentCleanliness = activeTest ? (activeTest.cleanliness_score ?? avgCleanlinessScore) : avgCleanlinessScore;
-    const currentManure = activeTest ? (activeTest.manure_score ?? (cattle.manure_score ?? 0)) : (cattle.manure_score ?? 0);
+    try {
+      // Yield to the event loop so the UI updates with the spinner immediately without freezing
+      await new Promise((resolve) => setTimeout(resolve, 40));
 
-    let hasManurePhoto = false;
-    if (activeTest) {
-      hasManurePhoto = !!(activeTest.retest_photos?.manure || activeTest.retest_photos?.manure_img);
-    } else if (cattle.retest_photos?.manure || cattle.retest_photos?.manure_img) {
-      hasManurePhoto = true;
-    } else if (cattle.test_history && cattle.test_history.length > 0) {
-      const latest = cattle.test_history[cattle.test_history.length - 1];
-      hasManurePhoto = !!(latest.retest_photos?.manure || latest.retest_photos?.manure_img);
+      const currentBcs = activeTest ? (activeTest.bcs_score ?? 0) : avgBcsScore;
+      const currentHealth = activeTest ? activeTest.health_status : (cattle.disease_status || cattle.disease || 'Healthy');
+      const currentCleanliness = activeTest ? (activeTest.cleanliness_score ?? avgCleanlinessScore) : avgCleanlinessScore;
+      const currentManure = activeTest ? (activeTest.manure_score ?? (cattle.manure_score ?? 0)) : (cattle.manure_score ?? 0);
+
+      let hasManurePhoto = false;
+      if (activeTest) {
+        hasManurePhoto = !!(activeTest.retest_photos?.manure || activeTest.retest_photos?.manure_img);
+      } else if (cattle.retest_photos?.manure || cattle.retest_photos?.manure_img) {
+        hasManurePhoto = true;
+      } else if (cattle.test_history && cattle.test_history.length > 0) {
+        const latest = cattle.test_history[cattle.test_history.length - 1];
+        hasManurePhoto = !!(latest.retest_photos?.manure || latest.retest_photos?.manure_img);
+      }
+
+      let pashuScore = activeTest?.pashu_score ?? cattle.pashu_score;
+      let breakdown = activeTest?.pashu_score_breakdown ?? cattle.pashu_score_breakdown;
+
+      if (currentManure > 0) {
+        hasManurePhoto = true;
+      }
+
+      if (!hasManurePhoto && breakdown && breakdown.manure > 0) {
+        const calc = getPashuScoreBreakdown(currentBcs, currentHealth, currentCleanliness, 0);
+        pashuScore = calc.total;
+      } else {
+        const calc = getPashuScoreBreakdown(currentBcs, currentHealth, currentCleanliness, currentManure);
+        pashuScore = calc.total;
+      }
+
+      await generateCattleProfilePDF({
+        cattleId: cattle.id,
+        cattleName: cattle.name,
+        muzzleId: muzzleID,
+        userId: userShort,
+        registeredDate: registeredDate,
+        breed: breed,
+        gender: displayGender,
+        ageEstimate: ageEstimate,
+        weightKg: weightKg,
+        heightCm: heightCm,
+        coatColor: coatColor,
+        estimatedValue: cattle.estimated_value,
+        bcsScore: bcsScore,
+        healthStatus: healthStatus,
+        udderScore: udderScore,
+        teatScore: teatScore,
+        cleanlinessScore: currentCleanliness,
+        manureScore: currentManure,
+        pashuScore: pashuScore,
+        testHistory: testHistory.length > 0 ? testHistory : cattle?.test_history,
+        bodyConditionDetail: activeTest?.observations?.join('. ') || cattle.body_condition_detail,
+        displayImage: cattle.display_image,
+        imageElementId: 'cattle-display-img',
+        qrCanvasId: `cattle-qr-${cattle.id}`,
+      });
+    } catch (err) {
+      console.error('Failed to generate PDF report:', err);
+    } finally {
+      setIsGeneratingPdf(false);
     }
-
-    let pashuScore = activeTest?.pashu_score ?? cattle.pashu_score;
-    let breakdown = activeTest?.pashu_score_breakdown ?? cattle.pashu_score_breakdown;
-
-    if (currentManure > 0) {
-      hasManurePhoto = true;
-    }
-
-    if (!hasManurePhoto && breakdown && breakdown.manure > 0) {
-      const calc = getPashuScoreBreakdown(currentBcs, currentHealth, currentCleanliness, 0);
-      pashuScore = calc.total;
-    } else {
-      const calc = getPashuScoreBreakdown(currentBcs, currentHealth, currentCleanliness, currentManure);
-      pashuScore = calc.total;
-    }
-
-    generateCattleProfilePDF({
-      cattleId: cattle.id,
-      cattleName: cattle.name,
-      muzzleId: muzzleID,
-      userId: userShort,
-      registeredDate: registeredDate,
-      breed: breed,
-      gender: displayGender,
-      ageEstimate: ageEstimate,
-      weightKg: weightKg,
-      heightCm: heightCm,
-      coatColor: coatColor,
-      estimatedValue: cattle.estimated_value,
-      bcsScore: bcsScore,
-      healthStatus: healthStatus,
-      udderScore: udderScore,
-      teatScore: teatScore,
-      cleanlinessScore: currentCleanliness,
-      manureScore: currentManure,
-      pashuScore: pashuScore,
-      testHistory: testHistory.length > 0 ? testHistory : cattle?.test_history,
-      bodyConditionDetail: activeTest?.observations?.join('. ') || cattle.body_condition_detail,
-      displayImage: cattle.display_image,
-      qrCanvasId: `cattle-qr-${cattle.id}`,
-    });
   };
 
   const handleDeleteInDetail = async () => {
@@ -1143,7 +1157,7 @@ export default function CattleDetail() {
             <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
             </svg>
-            Back to Farm Management
+            {t('cattle_back_to_farm', 'Back to Farm Management')}
           </button>
 
           {isOwner ? (
@@ -1151,7 +1165,7 @@ export default function CattleDetail() {
               onClick={handleDeleteInDetail}
               className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 border border-rose-200 transition-all shadow-sm"
             >
-              <span></span> Delete Cattle Profile
+              <span></span> {t('cattle_delete_profile', 'Delete Cattle Profile')}
             </button>
           ) : (
             <span className="bg-emerald-100 text-emerald-800 text-xs font-black px-3.5 py-1.5 rounded-full border border-emerald-300 shadow-sm flex items-center gap-1.5">
@@ -1159,7 +1173,7 @@ export default function CattleDetail() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
-              Verified Public Passport (Read-Only)
+              {t('cattle_verified_passport', 'Verified Public Passport (Read-Only)')}
             </span>
           )}
         </div>
@@ -1174,9 +1188,9 @@ export default function CattleDetail() {
                 </svg>
               </div>
               <div>
-                <h4 className="text-amber-950 font-black text-base">Muzzle Registered — Video Scan Pending</h4>
+                <h4 className="text-amber-950 font-black text-base">{t('cattle_video_pending_title', 'Muzzle Registered — Video Scan Pending')}</h4>
                 <p className="text-amber-800 text-xs font-medium mt-0.5">
-                  You have registered the cattle muzzle scan. Record or upload a 15-second cattle video to calculate real Body Condition Score (BCS), weight, height, breed, and health stats.
+                  {t('cattle_video_pending_desc', 'You have registered the cattle muzzle scan. Record or upload a 15-second cattle video to calculate real Body Condition Score (BCS), weight, height, breed, and health stats.')}
                 </p>
               </div>
             </div>
@@ -1188,7 +1202,7 @@ export default function CattleDetail() {
                 }}
                 className="btn-primary bg-amber-600 hover:bg-amber-700 text-white font-black text-xs py-3 px-5 rounded-xl shadow-md flex-shrink-0 transition-all"
               >
-                Record / Upload Video Now
+                {t('cattle_record_video_now', 'Record / Upload Video Now')}
               </button>
             )}
           </div>
@@ -1202,7 +1216,7 @@ export default function CattleDetail() {
             {/* Muzzle image */}
             <div className="w-full sm:w-52 h-52 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0 relative shadow-md">
               {cattle.display_image ? (
-                <img src={cattle.display_image} alt={cattle.name} className="w-full h-full object-cover" />
+                <img id="cattle-display-img" crossOrigin="anonymous" src={cattle.display_image} alt={cattle.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-5xl">🐄</div>
               )}
@@ -1216,7 +1230,7 @@ export default function CattleDetail() {
                     className="w-3 h-3 rounded-full border border-white shadow-sm flex-shrink-0"
                     style={{ background: isSwatch ? 'conic-gradient(#1e293b, #f8fafc)' : swatchBg }}
                   />
-                  <span className="text-[9px] font-black text-slate-700 uppercase tracking-wider">{coatColor.split(' ').slice(0, 2).join(' ')}</span>
+                  <span className="text-[9px] font-black text-slate-700 uppercase tracking-wider">{translateOutput(coatColor.split(' ').slice(0, 2).join(' '))}</span>
                 </div>
               )}
             </div>
@@ -1227,9 +1241,9 @@ export default function CattleDetail() {
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <span className="badge-green">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Registered
+                  {t('cattle_registered', 'Registered')}
                 </span>
-                {cattle.breed && <span className="badge-grey">{cattle.breed}</span>}
+                {cattle.breed && <span className="badge-grey">{translateOutput(cattle.breed)}</span>}
                 {/* Health badge — green if healthy, red if not */}
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border ${
                   isHealthy
@@ -1237,9 +1251,9 @@ export default function CattleDetail() {
                     : 'bg-rose-100 border-rose-300 text-rose-800'
                 }`}>
                   <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: HEALTH_COLOR(healthStatus) }} />
-                  {healthStatus}
+                  {translateOutput(healthStatus)}
                 </span>
-                <span className="text-[10px] text-slate-400 font-bold ml-auto sm:ml-0">Registered: {registeredDate}</span>
+                <span className="text-[10px] text-slate-400 font-bold ml-auto sm:ml-0">{t('cattle_registered', 'Registered')}: {registeredDate}</span>
               </div>
 
               {/* Name */}
@@ -1467,18 +1481,18 @@ export default function CattleDetail() {
 
               {!isMale && !isUnknownGender ? (
                 <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Udder Score</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t('cattle_udder_score', 'Udder Score')}</p>
                   <p className="text-xs font-black text-indigo-700 mt-0.5">{udderScore ? `${udderScore.toFixed(1)} / 5` : 'Not Visible'}</p>
                 </div>
               ) : isUnknownGender ? null : (
                 <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Udder & Teats</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t('cattle_udder_score', 'Udder & Teats')}</p>
                   <p className="text-xs font-black text-slate-400 mt-0.5">N/A (Male)</p>
                 </div>
               )}
 
               <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Manure Score</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t('cattle_manure_score', 'Manure Score')}</p>
                 <p className="text-xs font-black text-amber-700 mt-0.5">{manureScore ? `${manureScore.toFixed(1)} / 5` : 'Pending'}</p>
               </div>
             </div>
@@ -1486,7 +1500,7 @@ export default function CattleDetail() {
             {/* Test Specific AI Observations */}
             {activeTest?.observations && activeTest.observations.length > 0 && (
               <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 space-y-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">AI Clinical Observations for this Test</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t('cattle_observations', 'AI Clinical Observations')}</p>
                 <div className="space-y-1">
                   {activeTest.observations
                     .filter(obs => {
@@ -1499,7 +1513,7 @@ export default function CattleDetail() {
                     .map((obs, idx) => (
                     <div key={idx} className="flex items-start gap-2 text-xs text-slate-700">
                       <span className="text-emerald-500 font-bold">•</span>
-                      <span>{obs}</span>
+                      <span>{translateOutput(obs)}</span>
                     </div>
                   ))}
                 </div>
@@ -2221,14 +2235,30 @@ export default function CattleDetail() {
 
         {/* ── Actions ─────────────────────────────────────────────────────── */}
         <div className="flex flex-wrap gap-3 mt-2">
-          <button onClick={() => navigate('/farm')} className="btn-secondary">← Back to Farm</button>
-          <button onClick={handleDownloadPDF} className="bg-slate-900 hover:bg-slate-800 text-white font-black text-sm py-3 px-5 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5">
-            <svg className="w-4 h-4 text-emerald-400 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            <span>Download Official PDF Report</span>
+          <button onClick={() => navigate('/farm')} className="btn-secondary">← {t('cattle_back_to_farm', 'Back to Farm')}</button>
+          <button
+            onClick={handleDownloadPDF}
+            disabled={isGeneratingPdf}
+            className="bg-slate-900 hover:bg-slate-800 disabled:opacity-75 disabled:cursor-not-allowed text-white font-black text-sm py-3 px-5 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
+          >
+            {isGeneratingPdf ? (
+              <>
+                <svg className="w-4 h-4 text-emerald-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>Generating PDF...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 text-emerald-400 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>{t('cattle_download_passport', 'Download Official PDF Report')}</span>
+              </>
+            )}
           </button>
-          <button onClick={() => navigate('/muzzle-check')} className="btn-primary">Run Muzzle Check</button>
+          <button onClick={() => navigate('/muzzle-check')} className="btn-primary">{t('muzzle_check_title', 'Run Muzzle Check')}</button>
         </div>
 
         {/* ── Retest Modal (6-Angle Camera & File Upload) ───────────────── */}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVideoAnalysis } from '@/hooks/useVideoAnalysis';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { getProducts } from '@/lib/api';
 import VideoUploader from '@/components/ui/VideoUploader';
 import ProcessingProgress from '@/components/ui/ProcessingProgress';
@@ -16,6 +17,7 @@ import { getBCSProductRecommendations } from '@/utils/bcsProducts';
 
 export default function BCSDetection() {
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { state, run, startAnalysis, reset } = useVideoAnalysis('bcs');
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -56,11 +58,11 @@ export default function BCSDetection() {
           <div className="flex-1 space-y-2.5">
             <div className="inline-flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="section-label text-emerald-700 font-extrabold tracking-widest uppercase text-[11px]">Cattle Analysis</p>
+              <p className="section-label text-emerald-700 font-extrabold tracking-widest uppercase text-[11px]">{t('bcs_header_label', 'Cattle Analysis')}</p>
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-tight tracking-tight">BCS Score Detection</h1>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-tight tracking-tight">{t('bcs_header_title', 'BCS Score Detection')}</h1>
             <p className="text-slate-600 text-xs sm:text-sm max-w-xl leading-relaxed font-semibold">
-              Upload cattle photo or video (up to 60s). Instant end-to-end frame extraction, AI vision assessment, and PDF report generation.
+              {t('bcs_header_desc', 'Upload cattle photo or video (up to 60s). Instant end-to-end frame extraction, AI vision assessment, and PDF report generation.')}
             </p>
           </div>
           <div className="w-full md:w-64 lg:w-72 h-44 sm:h-48 rounded-2xl overflow-hidden border-2 border-emerald-300/80 shadow-lg shadow-emerald-500/10 flex-shrink-0 relative group">
@@ -104,11 +106,11 @@ export default function BCSDetection() {
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                       </svg>
-                      Retry AI Analysis
+                      {t('bcs_retry', 'Retry AI Analysis')}
                     </button>
                   )}
                   <button onClick={reset} className="btn-secondary text-xs py-2 px-4 text-slate-900 font-black">
-                    Upload New Media
+                    {t('bcs_upload_new', 'Upload New Media')}
                   </button>
                 </div>
               </div>
@@ -119,8 +121,8 @@ export default function BCSDetection() {
               <>
                 <div className="flex justify-between items-center bg-emerald-50 border border-emerald-300 p-4 rounded-3xl shadow-sm">
                   <div>
-                    <h3 className="text-sm font-black text-emerald-950">BCS Analysis Complete</h3>
-                    <p className="text-xs text-slate-900 font-bold">Health report is ready to save and print.</p>
+                    <h3 className="text-sm font-black text-emerald-950">{t('bcs_analysis_complete', 'BCS Analysis Complete')}</h3>
+                    <p className="text-xs text-slate-900 font-bold">{t('bcs_report_ready', 'Health report is ready to save and print.')}</p>
                   </div>
                   <button
                     onClick={() => {
@@ -145,7 +147,7 @@ export default function BCSDetection() {
                     }}
                     className="btn-primary py-2.5 px-5 text-xs font-black flex items-center gap-2 shadow-md shadow-emerald-500/20"
                   >
-                    <span>📄</span> Download PDF Report
+                    <span>📄</span> {t('bcs_download_pdf', 'Download PDF Report')}
                   </button>
                 </div>
 

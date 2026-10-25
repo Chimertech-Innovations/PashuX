@@ -236,14 +236,14 @@ CRITICAL ASSESSMENT RULES:
 
 Return ONLY valid JSON matching this exact structure:
 {
-  "bcs_score": 2.5,
+  "bcs_score": 3.25,
   "bcs_scale": "1-5",
-  "condition": "Calibrated Condition - Dairy Cattle / Buffalo",
-  "confidence": 0.92,
+  "condition": "Ideal Condition - Dairy Cattle / Buffalo",
+  "confidence": 0.95,
   "observations": [
     "Subject Identified: Cattle / Buffalo.",
-    "Anatomical assessment: Short ribs visible along flank, angular hook and pin bones with distinct V-shaped pelvic contour.",
-    "Body condition score calibrated at 2.5 / 5.0 based on clinical ICAR standards."
+    "Anatomical assessment: Smooth fat cover over ribs, rounded hook and pin bones, open U-shaped pelvic contour.",
+    "Body condition score objectively evaluated at 3.25 / 5.0 based on clinical ICAR standards."
   ],
   "recommendations": [
     "Maintain balanced green forage, dry fodder, and concentrate feeding.",
@@ -307,12 +307,23 @@ async def chat(
     history: List[ChatMessage],
     analysis_context: Optional[Any] = None,
     analysis_type: Optional[str] = None,
+    language: Optional[str] = "en",
 ) -> str:
-    """Cattle health AI chat assistant powered by OpenAI Chat models."""
+    """Cattle health AI chat assistant powered by OpenAI Chat models with multilingual support."""
     try:
-        return await openai_service.chat(message, history, analysis_context, analysis_type)
+        return await openai_service.chat(message, history, analysis_context, analysis_type, language=language)
     except Exception as exc:
         logger.warning(f"OpenAI Chat service error: [{type(exc).__name__}] {exc}")
+        if language in ["hi", "hindi"]:
+            return (
+                "मैं आपके पशु के स्वास्थ्य और पोषण में सहायता के लिए यहाँ हूँ! "
+                "विश्लेषण के आधार पर, आवश्यक खनिजों के साथ संतुलित आहार, स्वच्छ पानी और नियमित पशु चिकित्सा जांच सुनिश्चित करें।"
+            )
+        elif language in ["ta", "tamil"]:
+            return (
+                "உங்கள் கால்நடைகளின் ஆரோக்கியம் மற்றும் ஊட்டச்சத்தில் உதவ நான் தயாராக உள்ளேன்! "
+                "பகுப்பாய்வின்படி, தாது உப்புகளுடன் கூடிய சமச்சீர் தீவனம், சுத்தமான குடிநீர் மற்றும் வழக்கமான மருத்துவ பரிசோதனையை உறுதி செய்யவும்."
+            )
         return (
             "I'm here to assist with your cattle's health and nutrition! "
             "Based on the analysis, ensure balanced feeding with essential minerals, fresh water, "

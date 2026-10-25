@@ -7,6 +7,7 @@ import AIDisclaimerFooter from '@/components/ui/AIDisclaimerFooter';
 import AngleCameraModal from '@/components/ui/AngleCameraModal';
 import LiveVideoRecorderModal from '@/components/ui/LiveVideoRecorderModal';
 import { compressImage } from '@/utils/imageCompressor';
+import { useLanguage } from '@/contexts/LanguageContext';
 import muzzleWireframeBanner from '@/assets/muzzle_wireframe_banner.png';
 import muzzleStraightGuide from '@/assets/muzzle_straight_guide.png';
 import muzzleLeftGuide from '@/assets/muzzle_left_guide.png';
@@ -15,6 +16,7 @@ import muzzleScanDiagram from '@/assets/muzzle_scan_diagram.png';
 
 export default function FarmManagement() {
   const { user, loading: authLoading } = useAuth();
+  const { t, translateOutput } = useLanguage();
   const navigate = useNavigate();
   
   const [name, setName] = useState('');
@@ -480,14 +482,14 @@ export default function FarmManagement() {
         {/* Premium Header Banner Card */}
         <div className="glass-card p-6 sm:p-8 mb-8 relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 bg-gradient-to-r from-white to-slate-50/50">
           <div className="relative z-10 space-y-3 max-w-lg">
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Register new cattle</h1>
-            <p className="text-slate-500 font-medium text-sm">Create a biometric profile using AI muzzle scanning and video analysis.</p>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">{t('farm_register_title', 'Register new cattle')}</h1>
+            <p className="text-slate-500 font-medium text-sm">{t('farm_register_subtitle', 'Create a biometric profile using AI muzzle scanning and video analysis.')}</p>
             {user && (
               <div className="inline-flex items-center gap-2 bg-slate-100 border border-slate-200/85 rounded-xl px-3 py-1.5 shadow-sm">
                 <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">User ID:</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('farm_user_id', 'User ID')}:</span>
                 <span className="font-mono font-black text-xs text-emerald-600">USR-{user.id.replace(/-/g,'').substring(0,8).toUpperCase()}</span>
               </div>
             )}
@@ -505,17 +507,17 @@ export default function FarmManagement() {
         <div className="flex items-center justify-center gap-4 mb-8">
             <div className={`flex items-center gap-2 ${step >= 1 ? 'text-emerald-600' : 'text-slate-400'}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold border-2 ${step >= 1 ? 'border-emerald-600 bg-emerald-50' : 'border-slate-300'}`}>1</div>
-                <span className="font-bold text-sm">Muzzle Scan</span>
+                <span className="font-bold text-sm">{t('farm_step_muzzle', 'Muzzle Scan')}</span>
             </div>
             <div className={`w-16 h-1 rounded-full ${step >= 2 ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
             <div className={`flex items-center gap-2 ${step >= 2 ? 'text-emerald-600' : 'text-slate-400'}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold border-2 ${step >= 2 ? 'border-emerald-600 bg-emerald-50' : 'border-slate-300'}`}>2</div>
-                <span className="font-bold text-sm">Video Analysis</span>
+                <span className="font-bold text-sm">{t('farm_step_video', 'Video Analysis')}</span>
             </div>
             <div className={`w-16 h-1 rounded-full ${step >= 3 ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
             <div className={`flex items-center gap-2 ${step >= 3 ? 'text-emerald-600' : 'text-slate-400'}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold border-2 ${step >= 3 ? 'border-emerald-600 bg-emerald-50' : 'border-slate-300'}`}>3</div>
-                <span className="font-bold text-sm">Results</span>
+                <span className="font-bold text-sm">{t('farm_step_results', 'Results')}</span>
             </div>
         </div>
 
@@ -532,7 +534,7 @@ export default function FarmManagement() {
                     <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span>Cattle Name / Tag</span>
+                    <span>{t('farm_cattle_name_tag', 'Cattle Name / Tag')}</span>
                   </label>
                   <input 
                     type="text" 
@@ -540,7 +542,7 @@ export default function FarmManagement() {
                     onChange={(e) => setName(e.target.value)}
                     required
                     className="w-full border border-slate-200 rounded-xl px-5 py-4 text-sm text-slate-900 bg-white placeholder:text-slate-400 outline-none transition-all duration-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-bold shadow-inner" 
-                    placeholder="e.g. Bessie or Tag #102"
+                    placeholder={t('farm_cattle_name_placeholder', 'e.g. Bessie or Tag #102')}
                     disabled={loading}
                   />
                 </div>
@@ -552,9 +554,9 @@ export default function FarmManagement() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
-                      <span>Multi-Angle Muzzle Scan (3 Images Required)</span>
+                      <span>{t('reg_multi_angle_label', 'Multi-Angle Muzzle Scan (3 Images Required)')}</span>
                     </label>
-                    <p className="text-xs text-slate-400 font-bold mt-1.5 leading-relaxed">Upload three clear photos to generate a robust 3D biometric profile.</p>
+                    <p className="text-xs text-slate-400 font-bold mt-1.5 leading-relaxed">{t('reg_multi_angle_desc', 'Upload three clear photos to generate a robust 3D biometric profile.')}</p>
                   </div>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -567,13 +569,13 @@ export default function FarmManagement() {
                           <div className="relative w-full h-44 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden shadow-md">
                             <img src={preview1} alt="Preview 1" className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`} />
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 flex items-end justify-center">
-                              <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">1. Straight-on Muzzle</span>
+                               <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">{t('reg_slot1_overlay', '1. Straight-on Muzzle')}</span>
                             </div>
                           </div>
                           {!loading && (
                             <button type="button" onClick={() => removeFile(1)} className="text-[10px] mt-4 font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest flex items-center gap-1.5 transition-colors">
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> 
-                              <span>Remove</span>
+                              <span>{t('reg_remove_btn', 'Remove')}</span>
                             </button>
                           )}
                         </div>
@@ -586,7 +588,7 @@ export default function FarmManagement() {
                           
                           <div className="space-y-2 relative z-10 w-full">
                             <div className="flex items-center justify-between w-full">
-                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-black text-[9px] px-2 py-0.5 rounded-md tracking-wider uppercase">Straight-on</span>
+                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-black text-[9px] px-2 py-0.5 rounded-md tracking-wider uppercase">{t('reg_slot_straight', 'Straight-on')}</span>
                               <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center font-mono text-[10px] font-black text-slate-400">1</span>
                             </div>
                             <div className="h-28 flex items-center justify-center w-full relative">
@@ -601,10 +603,10 @@ export default function FarmManagement() {
 
                           <div className="grid grid-cols-2 gap-2 mt-4 relative z-10 w-full">
                             <button type="button" onClick={() => setActiveCameraSlot({ name: 'straight', label: 'Straight-on Muzzle', slot: 1 })} className="py-2 px-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] rounded-xl transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95">
-                              Camera
+                              {t('reg_camera_btn', 'Camera')}
                             </button>
                             <button type="button" onClick={() => fileInputRefGallery1.current?.click()} className="py-2 px-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-extrabold text-[11px] rounded-xl transition-all active:scale-95 shadow-sm">
-                              Upload
+                              {t('reg_upload_btn', 'Upload')}
                             </button>
                           </div>
                           <input type="file" accept="image/*,.heic,.heif" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefGallery1} />
@@ -622,13 +624,13 @@ export default function FarmManagement() {
                           <div className="relative w-full h-44 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden shadow-md">
                             <img src={preview2} alt="Preview 2" className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`} />
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 flex items-end justify-center">
-                              <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">2. Slight Left Muzzle</span>
+                               <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">{t('reg_slot2_overlay', '2. Slight Left Muzzle')}</span>
                             </div>
                           </div>
                           {!loading && (
                             <button type="button" onClick={() => removeFile(2)} className="text-[10px] mt-4 font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest flex items-center gap-1.5 transition-colors">
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> 
-                              <span>Remove</span>
+                              <span>{t('reg_remove_btn', 'Remove')}</span>
                             </button>
                           )}
                         </div>
@@ -641,7 +643,7 @@ export default function FarmManagement() {
                           
                           <div className="space-y-2 relative z-10 w-full">
                             <div className="flex items-center justify-between w-full">
-                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-black text-[9px] px-2 py-0.5 rounded-md tracking-wider uppercase">Slight Left</span>
+                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-black text-[9px] px-2 py-0.5 rounded-md tracking-wider uppercase">{t('reg_slot_left', 'Slight Left')}</span>
                               <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center font-mono text-[10px] font-black text-slate-400">2</span>
                             </div>
                             <div className="h-28 flex items-center justify-center w-full relative">
@@ -656,10 +658,10 @@ export default function FarmManagement() {
 
                           <div className="grid grid-cols-2 gap-2 mt-4 relative z-10 w-full">
                             <button type="button" onClick={() => setActiveCameraSlot({ name: 'left', label: 'Slight Left Muzzle', slot: 2 })} className="py-2 px-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] rounded-xl transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95">
-                              Camera
+                              {t('reg_camera_btn', 'Camera')}
                             </button>
                             <button type="button" onClick={() => fileInputRefGallery2.current?.click()} className="py-2 px-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-extrabold text-[11px] rounded-xl transition-all active:scale-95 shadow-sm">
-                              Upload
+                              {t('reg_upload_btn', 'Upload')}
                             </button>
                           </div>
                           <input type="file" accept="image/*,.heic,.heif" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefGallery2} />
@@ -677,13 +679,13 @@ export default function FarmManagement() {
                           <div className="relative w-full h-44 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden shadow-md">
                             <img src={preview3} alt="Preview 3" className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`} />
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 flex items-end justify-center">
-                              <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">3. Slight Right Muzzle</span>
+                               <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">{t('reg_slot3_overlay', '3. Slight Right Muzzle')}</span>
                             </div>
                           </div>
                           {!loading && (
                             <button type="button" onClick={() => removeFile(3)} className="text-[10px] mt-4 font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest flex items-center gap-1.5 transition-colors">
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> 
-                              <span>Remove</span>
+                              <span>{t('reg_remove_btn', 'Remove')}</span>
                             </button>
                           )}
                         </div>
@@ -696,7 +698,7 @@ export default function FarmManagement() {
                           
                           <div className="space-y-2 relative z-10 w-full">
                             <div className="flex items-center justify-between w-full">
-                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-black text-[9px] px-2 py-0.5 rounded-md tracking-wider uppercase">Slight Right</span>
+                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-black text-[9px] px-2 py-0.5 rounded-md tracking-wider uppercase">{t('reg_slot_right', 'Slight Right')}</span>
                               <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center font-mono text-[10px] font-black text-slate-400">3</span>
                             </div>
                             <div className="h-28 flex items-center justify-center w-full relative">
@@ -711,10 +713,10 @@ export default function FarmManagement() {
 
                           <div className="grid grid-cols-2 gap-2 mt-4 relative z-10 w-full">
                             <button type="button" onClick={() => setActiveCameraSlot({ name: 'right', label: 'Slight Right Muzzle', slot: 3 })} className="py-2 px-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] rounded-xl transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95">
-                              Camera
+                              {t('reg_camera_btn', 'Camera')}
                             </button>
                             <button type="button" onClick={() => fileInputRefGallery3.current?.click()} className="py-2 px-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-extrabold text-[11px] rounded-xl transition-all active:scale-95 shadow-sm">
-                              Upload
+                              {t('reg_upload_btn', 'Upload')}
                             </button>
                           </div>
                           <input type="file" accept="image/*,.heic,.heif" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefGallery3} />
@@ -746,12 +748,12 @@ export default function FarmManagement() {
                   {loading ? (
                     <>
                       <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                      <span>Validating & Fusing AI Profile...</span>
+                      <span>{t('reg_validating', 'Validating & Fusing AI Profile...')}</span>
                     </>
                   ) : (
                     <>
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      <span>Register Cattle</span>
+                      <span>{t('reg_register_cattle', 'Register Cattle')}</span>
                     </>
                   )}
                 </button>
@@ -764,22 +766,22 @@ export default function FarmManagement() {
               <form onSubmit={handleVideoSubmit} className="space-y-8">
                 <div className="space-y-4">
                     <div>
-                      <label className="text-xs font-black text-slate-700 uppercase tracking-wider">Upload 15-Second Video</label>
-                      <p className="text-sm text-slate-500 mt-1">Capture a short video of the cattle. Our AI will analyze frames to estimate BCS, weight, breed, and health status.</p>
+                      <label className="text-xs font-black text-slate-700 uppercase tracking-wider">{t('video_upload_label', 'Upload 15-Second Video')}</label>
+                      <p className="text-sm text-slate-500 mt-1">{t('video_upload_desc', 'Capture a short video of the cattle. Our AI will analyze frames to estimate BCS, weight, breed, and health status.')}</p>
                     </div>
                     
                     <div className={`relative border-2 ${videoPreview ? 'border-emerald-500 bg-emerald-50/30 border-solid' : 'border-slate-300 bg-slate-50 border-dashed'} rounded-xl p-8 text-center transition-all min-h-[250px] flex flex-col justify-center items-center`}>
                         {videoPreview ? (
                             <div className="flex flex-col items-center w-full">
                                 <video src={videoPreview} controls playsInline {...{ "webkit-playsinline": "true" }} className="max-h-48 w-full object-contain rounded-lg shadow-sm mb-4" />
-                                {!loading && <button type="button" onClick={() => { setVideoFile(null); setVideoPreview(null); }} className="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase bg-rose-50 px-4 py-2 rounded-lg">Change Video</button>}
+                                {!loading && <button type="button" onClick={() => { setVideoFile(null); setVideoPreview(null); }} className="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase bg-rose-50 px-4 py-2 rounded-lg">{t('video_change', 'Change Video')}</button>}
                             </div>
                         ) : (
                             <div className="space-y-4 w-full flex flex-col items-center">
                                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm text-emerald-500 mb-2">
                                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                                 </div>
-                                <p className="text-sm font-bold text-slate-700">Record Live Camera Video or Upload File</p>
+                                 <p className="text-sm font-bold text-slate-700">{t('video_record_prompt', 'Record Live Camera Video or Upload File')}</p>
                                 <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full justify-center">
                                     <button
                                       type="button"
@@ -787,7 +789,7 @@ export default function FarmManagement() {
                                       className="btn-primary py-3 px-5 text-xs sm:text-sm flex items-center justify-center gap-2"
                                     >
                                         <svg className="w-4 h-4 text-rose-400 animate-pulse" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /></svg>
-                                        Record Live (15s)
+                                         {t('video_record_live', 'Record Live (15s)')}
                                     </button>
                                     <button
                                       type="button"
@@ -795,7 +797,7 @@ export default function FarmManagement() {
                                       className="py-3 px-5 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
-                                        Phone Camera
+                                         {t('video_phone_camera', 'Phone Camera')}
                                     </button>
                                     <button
                                       type="button"
@@ -803,7 +805,7 @@ export default function FarmManagement() {
                                       className="btn-secondary py-3 px-5 text-xs sm:text-sm flex items-center justify-center gap-2"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                                        Upload Video
+                                         {t('video_upload_btn', 'Upload Video')}
                                     </button>
                                 </div>
                                 <input type="file" accept="video/*,video/mp4,video/quicktime,video/webm" capture="environment" onChange={handleVideoChange} className="hidden" ref={videoInputRefCamera} />
@@ -834,12 +836,12 @@ export default function FarmManagement() {
                   {loading ? (
                     <>
                       <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                      <span>Analyzing Video Frames...</span>
+                      <span>{t('video_analyzing', 'Analyzing Video Frames...')}</span>
                     </>
                   ) : (
                     <>
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      <span>Complete Registration</span>
+                      <span>{t('video_complete_reg', 'Complete Registration')}</span>
                     </>
                   )}
                 </button>
@@ -894,67 +896,9 @@ export default function FarmManagement() {
                   </div>
                 )}
 
-                {/* Retake Banner — shown when parts are missing */}
-                {videoStats?.is_cattle_detected !== false && videoStats?.missing_parts?.length > 0 && (
-                  <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-5">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h4 className="text-amber-900 font-black text-base">Retake Required — Body Parts Not Captured</h4>
-                        <p className="text-amber-800 text-sm mt-0.5">
-                          The AI could not clearly see the following in your video:
-                        </p>
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          {videoStats.missing_parts.map((part: string) => (
-                            <span key={part} className="text-xs font-black bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full capitalize border border-amber-300">
-                              {part.replace('_', ' ')}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-amber-100 rounded-xl p-3 mb-3 border border-amber-200">
-                      <p className="text-amber-800 text-xs font-medium">
-                        <strong>Quick Fix:</strong> Upload a clear close-up photo of the udder/teat area for instant AI visual scoring, or re-record the video.
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <button
-                        onClick={() => udderPhotoRef.current?.click()}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        </svg>
-                        Upload Udder Photo Only (AI Score)
-                      </button>
-                      <button
-                        onClick={retakeVideo}
-                        className="bg-amber-600 hover:bg-amber-700 text-white font-black text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-600/20"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        Re-record Video (Keep Muzzle Scan)
-                      </button>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*,.heic,.heif"
-                      onChange={handleUdderPhotoUpload}
-                      className="hidden"
-                      ref={udderPhotoRef}
-                    />
-                  </div>
-                )}
-
                 {/* AI Analysis Stats Grid */}
                 {videoStats && (() => {
-                  const bcsLabel = videoStats.bcs_score >= 4.5 ? 'Obese' : videoStats.bcs_score >= 3.5 ? 'Overconditioned' : videoStats.bcs_score >= 2.5 ? 'Ideal' : videoStats.bcs_score >= 1.5 ? 'Thin' : videoStats.bcs_score > 0 ? 'Emaciated' : 'N/A';
+                  const bcsLabel = videoStats.bcs_score >= 4.5 ? 'Obese' : videoStats.bcs_score >= 3.75 ? 'Fat' : videoStats.bcs_score >= 3.0 ? 'Ideal' : videoStats.bcs_score >= 2.5 ? 'Moderate' : videoStats.bcs_score >= 1.75 ? 'Thin' : videoStats.bcs_score > 0 ? 'Emaciated' : 'N/A';
                   const udderLabel = videoStats.udder_score >= 4.5 ? 'Excellent' : videoStats.udder_score >= 3.5 ? 'Good' : videoStats.udder_score >= 2.5 ? 'Average' : videoStats.udder_score >= 1.5 ? 'Below Average' : videoStats.udder_score > 0 ? 'Poor' : 'Not Visible';
                   const teatLabel = videoStats.teat_score >= 4.5 ? 'Ideal' : videoStats.teat_score >= 3.5 ? 'Good' : videoStats.teat_score >= 2.5 ? 'Average' : videoStats.teat_score >= 1.5 ? 'Short' : videoStats.teat_score > 0 ? 'Deformed' : 'Not Visible';
                   const isHealthy = !videoStats.disease_status || videoStats.disease_status.toLowerCase() === 'healthy';
@@ -1002,19 +946,19 @@ export default function FarmManagement() {
                         <>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Breed</p>
-                          <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.breed || 'Unknown'}</p>
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">{t('cattle_breed', 'Breed')}</p>
+                          <p className="text-slate-900 font-black text-sm mt-0.5">{translateOutput(videoStats.breed || 'Unknown')}</p>
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Age Estimate</p>
-                          <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.age_estimate || 'N/A'}</p>
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">{t('cattle_age_estimate', 'Age Estimate')}</p>
+                          <p className="text-slate-900 font-black text-sm mt-0.5">{translateOutput(videoStats.age_estimate || 'N/A')}</p>
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Coat Color</p>
-                          <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.coat_color || 'Unknown'}</p>
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">{t('cattle_color', 'Coat Color')}</p>
+                          <p className="text-slate-900 font-black text-sm mt-0.5">{translateOutput(videoStats.coat_color || 'Unknown')}</p>
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Weight Range</p>
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">{t('cattle_est_weight', 'Est. Weight Range')}</p>
                           <p className="text-slate-900 font-black text-sm mt-0.5">
                             {(() => {
                               const str = String(videoStats.weight_range || '');
@@ -1027,7 +971,7 @@ export default function FarmManagement() {
                           </p>
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Height Range</p>
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">{t('cattle_est_height', 'Est. Height Range')}</p>
                           <p className="text-slate-900 font-black text-sm mt-0.5">
                             {(() => {
                               const str = String(videoStats.height_range || '');
@@ -1040,11 +984,11 @@ export default function FarmManagement() {
                           </p>
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Est. Value</p>
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">{t('cattle_est_value', 'Est. Value')}</p>
                           <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.estimated_value || 'N/A'}</p>
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Cleanliness Score</p>
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">{t('cattle_cleanliness_score', 'Cleanliness Score')}</p>
                           <p className="text-emerald-700 font-black text-sm mt-0.5">{videoStats.cleanliness_score || 85}<span className="text-xs font-bold text-emerald-400">/100</span></p>
                         </div>
                       </div>
@@ -1058,17 +1002,17 @@ export default function FarmManagement() {
                             <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">BCS Score</p>
                             <span className="text-emerald-700 font-black text-lg leading-none">{videoStats.bcs_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-emerald-500">/5</span></span>
                           </div>
-                          <p className="text-emerald-800 font-bold text-xs">{bcsLabel}</p>
+                          <p className="text-emerald-800 font-bold text-xs">{translateOutput(bcsLabel)}</p>
                           <ScoreDots score={videoStats.bcs_score || 0} color="#10b981" />
                         </div>
 
                         {/* Health Status */}
                         <div className={`bg-white rounded-xl p-4 border shadow-sm ${isHealthy ? 'border-emerald-200' : 'border-rose-200'}`}>
-                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1">Health Status</p>
+                          <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1">{t('cattle_disease_status', 'Health Status')}</p>
                           <div className="flex items-center gap-1.5">
                             <span className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-emerald-500' : 'bg-rose-500'} animate-pulse`} />
                             <p className={`font-black text-sm ${isHealthy ? 'text-emerald-700' : 'text-rose-700'}`}>
-                              {videoStats.disease_status || 'Healthy'}
+                              {translateOutput(videoStats.disease_status || 'Healthy')}
                             </p>
                           </div>
                         </div>
@@ -1078,18 +1022,15 @@ export default function FarmManagement() {
                             {/* Udder Score */}
                             <div className={`bg-white rounded-xl p-4 border shadow-sm ${videoStats.udder_visible ? 'border-purple-200' : 'border-slate-200 opacity-75'}`}>
                               <div className="flex items-start justify-between mb-1">
-                                <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Udder Score</p>
+                                <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">{t('cattle_udder_score', 'Udder Score')}</p>
                                 {videoStats.udder_visible ? (
                                   <span className="text-purple-700 font-black text-lg leading-none">{videoStats.udder_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-purple-400">/5</span></span>
                                 ) : (
                                   <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Not Captured</span>
                                 )}
                               </div>
-                              <p className={`font-bold text-xs ${videoStats.udder_visible ? 'text-purple-700' : 'text-slate-400'}`}>{udderLabel}</p>
+                              <p className={`font-bold text-xs ${videoStats.udder_visible ? 'text-purple-700' : 'text-slate-400'}`}>{translateOutput(udderLabel)}</p>
                               {videoStats.udder_visible && <ScoreDots score={videoStats.udder_score || 0} color="#9333ea" />}
-                              {!videoStats.udder_visible && (
-                                <p className="text-[10px] text-slate-400 mt-1">Re-record video showing udder area</p>
-                              )}
                             </div>
 
                             {/* Teat Score */}
@@ -1104,9 +1045,6 @@ export default function FarmManagement() {
                               </div>
                               <p className={`font-bold text-xs ${videoStats.teat_visible ? 'text-blue-700' : 'text-slate-400'}`}>{teatLabel}</p>
                               {videoStats.teat_visible && <ScoreDots score={videoStats.teat_score || 0} color="#2563eb" />}
-                              {!videoStats.teat_visible && (
-                                <p className="text-[10px] text-slate-400 mt-1">Re-record video showing teat area</p>
-                              )}
                             </div>
                           </>
                         )}
@@ -1388,7 +1326,7 @@ export default function FarmManagement() {
             : cattleList;
           return (
             <>
-              <h2 className="text-xl font-black text-slate-900 mb-6">Registered Cattle ({displayedCattleList.length})</h2>
+              <h2 className="text-xl font-black text-slate-900 mb-6">{t('farm_registered_cattle', 'Registered Cattle')} ({displayedCattleList.length})</h2>
               
               {displayedCattleList.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -1428,7 +1366,7 @@ export default function FarmManagement() {
                           }}
                           className="flex-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-slate-200"
                         >
-                          QR Code
+                          {t('farm_qr_code', 'QR Code')}
                         </button>
                         <button
                           onClick={(e) => {
@@ -1437,7 +1375,7 @@ export default function FarmManagement() {
                           }}
                           className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-amber-200"
                         >
-                          Edit
+                          {t('farm_edit', 'Edit')}
                         </button>
                         <button
                           onClick={(e) => {
@@ -1447,7 +1385,7 @@ export default function FarmManagement() {
                           className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-rose-200"
                           title="Delete Cattle Profile"
                         >
-                           Delete
+                           {t('farm_delete', 'Delete')}
                         </button>
                         <button
                           onClick={(e) => {
@@ -1456,7 +1394,7 @@ export default function FarmManagement() {
                           }}
                           className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors shadow-sm mt-1"
                         >
-                          View Details →
+                          {t('farm_view_details', 'View Details →')}
                         </button>
                       </div>
                     </div>
@@ -1464,7 +1402,7 @@ export default function FarmManagement() {
                 </div>
               ) : (
                 <div className="bg-white rounded-2xl p-8 text-center border-2 border-dashed border-slate-200 text-slate-500">
-                  You haven't registered any cattle yet. Upload a muzzle scan above to get started!
+                  {t('farm_no_cattle', "You haven't registered any cattle yet. Upload a muzzle scan above to get started!")}
                 </div>
               )}
             </>

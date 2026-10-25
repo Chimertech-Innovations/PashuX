@@ -141,6 +141,7 @@ interface ChatPayload {
   analysis_type?: AnalysisType;
   analysis_context?: unknown;
   history?: { role: string; message: string }[];
+  language?: string;
 }
 
 export async function sendChatMessage(

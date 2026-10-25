@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { getHistory, BASE_URL } from '@/lib/api';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import { generateHealthReportPDF } from '@/utils/pdfGenerator';
@@ -15,6 +16,7 @@ function formatDate(iso: string) {
 
 export default function AnalysisHistory() {
   const { user } = useAuth();
+  const { t, translateOutput } = useLanguage();
   const navigate = useNavigate();
   const [history, setHistory] = useState<any[]>([]);
   const [cattleList, setCattleList] = useState<any[]>([]);
@@ -148,12 +150,12 @@ export default function AnalysisHistory() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Sign in to view history</h2>
+          <h2 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">{t('history_sign_in_prompt', 'Sign in to view history')}</h2>
           <p className="text-slate-700 text-sm font-bold mb-8 leading-relaxed">
-            Your analysis history and cattle profiles are stored securely.
+            {t('history_sign_in_desc', 'Your analysis history and cattle profiles are stored securely.')}
           </p>
           <Link to="/auth" className="btn-primary px-8 py-3.5 text-sm font-extrabold shadow-md">
-            Sign in
+            {t('nav_signin', 'Sign in')}
           </Link>
         </div>
       </div>
@@ -165,8 +167,8 @@ export default function AnalysisHistory() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-10 animate-fade-up">
           <p className="section-label mb-2">Your Data</p>
-          <h1 className="text-display font-black text-slate-900 mb-2">Analysis History & Cattle Profiles</h1>
-          <p className="text-slate-700 text-sm font-bold">View all your registered cattle profile cards and past diagnostic reports.</p>
+          <h1 className="text-display font-black text-slate-900 mb-2">{t('history_title', 'Analysis History & Cattle Profiles')}</h1>
+          <p className="text-slate-700 text-sm font-bold">{t('history_subtitle', 'View all your registered cattle profile cards and past diagnostic reports.')}</p>
         </div>
 
         {message && (
@@ -179,14 +181,14 @@ export default function AnalysisHistory() {
 
         {/* CATTLE PROFILE CARDS SECTION */}
         <div className="mb-14">
-          <h2 className="text-xl font-black text-slate-900 mb-6">Registered Cattle Profiles ({cattleList.length})</h2>
+          <h2 className="text-xl font-black text-slate-900 mb-6">{t('farm_registered_cattle', 'Registered Cattle Profiles')} ({cattleList.length})</h2>
           {cattleLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {[1, 2, 3].map(i => <SkeletonCard key={i} lines={2} />)}
             </div>
           ) : cattleList.length === 0 ? (
             <div className="bg-white rounded-2xl p-8 text-center border-2 border-dashed border-slate-200 text-slate-500">
-              No registered cattle profiles found. Go to <Link to="/farm" className="text-emerald-600 underline font-bold">Farm Management</Link> to scan & register your cattle.
+              {t('history_empty', 'No registered cattle profiles found. Go to Farm Management to scan & register your cattle.')}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -223,7 +225,7 @@ export default function AnalysisHistory() {
                         }}
                         className="flex-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-slate-200"
                       >
-                        QR Code
+                        {t('farm_qr_code', 'QR Code')}
                       </button>
                       <button
                         onClick={(e) => {
@@ -232,7 +234,7 @@ export default function AnalysisHistory() {
                         }}
                         className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-amber-200"
                       >
-                        Edit
+                        {t('farm_edit', 'Edit')}
                       </button>
                       <button
                         onClick={(e) => {
@@ -242,7 +244,7 @@ export default function AnalysisHistory() {
                         className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors border border-rose-200"
                         title="Delete Cattle Profile"
                       >
-                        Delete
+                         {t('farm_delete', 'Delete')}
                       </button>
                       <button
                         onClick={(e) => {
@@ -251,7 +253,7 @@ export default function AnalysisHistory() {
                         }}
                         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-1.5 px-2 rounded-xl flex items-center justify-center gap-1 transition-colors shadow-sm mt-1"
                       >
-                        View Details →
+                        {t('farm_view_details', 'View Details →')}
                       </button>
                     </div>
                   </div>
@@ -263,7 +265,7 @@ export default function AnalysisHistory() {
 
         {/* SCAN HISTORY SECTION */}
         <div>
-          <h2 className="text-xl font-black text-slate-900 mb-6">Diagnostic Scan History</h2>
+          <h2 className="text-xl font-black text-slate-900 mb-6">{t('history_diagnostic_scans', 'Diagnostic Scan History')}</h2>
           {loading ? (
             <div className="space-y-4">
               {[1, 2, 3].map(i => <SkeletonCard key={i} lines={2} />)}
@@ -275,8 +277,8 @@ export default function AnalysisHistory() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-extrabold text-slate-900 mb-2">No diagnostic reports yet</h3>
-              <p className="text-slate-700 text-sm font-bold">Use BCS or disease screening modules to generate health reports.</p>
+              <h3 className="text-xl font-extrabold text-slate-900 mb-2">{t('history_no_scans', 'No diagnostic reports yet')}</h3>
+              <p className="text-slate-700 text-sm font-bold">{t('history_no_scans_desc', 'Use BCS or disease screening modules to generate health reports.')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -300,7 +302,7 @@ export default function AnalysisHistory() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`text-xs font-black ${isBCS ? 'text-emerald-700' : 'text-amber-800'}`}>
-                          {isBCS ? 'BCS Detection' : 'Disease Detection'}
+                          {isBCS ? t('nav_bcs_detection', 'BCS Detection') : t('nav_disease_detection', 'Disease Detection')}
                         </span>
                         <span className={`
                           text-[10px] px-2 py-0.5 rounded-full font-bold uppercase
@@ -313,8 +315,8 @@ export default function AnalysisHistory() {
                       {result && (
                         <p className="text-sm font-extrabold text-slate-900 truncate">
                           {isBCS
-                            ? `BCS ${result.bcs_score?.toFixed(1)} — ${result.result_json?.condition || 'Evaluated'}`
-                            : result.result_json?.possible_condition}
+                            ? `BCS ${result.bcs_score?.toFixed(1)} — ${translateOutput(result.result_json?.condition || 'Evaluated')}`
+                            : translateOutput(result.result_json?.possible_condition)}
                         </p>
                       )}
                       <p className="text-xs font-bold text-slate-500 mt-1">{formatDate(item.created_at)}</p>
@@ -384,15 +386,15 @@ export default function AnalysisHistory() {
               </button>
 
               <div className="mb-6">
-                <h3 className="text-xl font-black text-slate-900">Edit Cattle Profile</h3>
+                <h3 className="text-xl font-black text-slate-900">{t('history_edit_title', 'Edit Cattle Profile')}</h3>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  Update profile information stored in database.
+                  {t('history_edit_desc', 'Update profile information stored in database.')}
                 </p>
               </div>
 
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Cattle Name</label>
+                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{t('reg_cattle_name', 'Cattle Name')}</label>
                   <input
                     type="text"
                     value={editForm.name}
@@ -402,7 +404,7 @@ export default function AnalysisHistory() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Breed</label>
+                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{t('farm_breed', 'Breed')}</label>
                   <input
                     type="text"
                     value={editForm.breed}
@@ -411,18 +413,18 @@ export default function AnalysisHistory() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Gender / Sex</label>
+                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{t('reg_gender', 'Gender / Sex')}</label>
                   <select
                     value={editForm.gender}
                     onChange={(e) => setEditForm(prev => ({ ...prev, gender: e.target.value }))}
                     className="input-field mt-1"
                   >
-                    <option value="Female">Female (Cow)</option>
-                    <option value="Male">Male (Bull)</option>
+                    <option value="Female">{t('reg_female_cow', 'Female (Cow)')}</option>
+                    <option value="Male">{t('reg_male_bull', 'Male (Bull)')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Coat Color</label>
+                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{t('reg_coat_color', 'Coat Color')}</label>
                   <input
                     type="text"
                     value={editForm.color}
@@ -432,7 +434,7 @@ export default function AnalysisHistory() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Weight (kg)</label>
+                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{t('farm_weight', 'Weight (kg)')}</label>
                     <input
                       type="number"
                       value={editForm.weight_kg}
@@ -441,7 +443,7 @@ export default function AnalysisHistory() {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Height (cm)</label>
+                    <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{t('farm_height', 'Height (cm)')}</label>
                     <input
                       type="number"
                       value={editForm.height_cm}
@@ -451,7 +453,7 @@ export default function AnalysisHistory() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Estimated Value</label>
+                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{t('reg_estimated_value', 'Estimated Value')}</label>
                   <input
                     type="text"
                     value={editForm.estimated_value}
@@ -460,7 +462,7 @@ export default function AnalysisHistory() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">Disease Status</label>
+                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{t('reg_disease_status', 'Disease Status')}</label>
                   <input
                     type="text"
                     value={editForm.disease}
@@ -475,14 +477,14 @@ export default function AnalysisHistory() {
                     onClick={() => setEditingCattle(null)}
                     className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl"
                   >
-                    Cancel
+                    {t('history_cancel', 'Cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={actionLoading}
                     className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-black text-xs rounded-xl shadow-md"
                   >
-                    {actionLoading ? 'Saving...' : 'Save Changes'}
+                    {actionLoading ? t('history_saving', 'Saving...') : t('history_save_changes', 'Save Changes')}
                   </button>
                 </div>
               </form>

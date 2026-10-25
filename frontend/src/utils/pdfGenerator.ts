@@ -34,6 +34,7 @@ export function generateHealthReportPDF(data: ReportPDFData) {
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
+      compress: true,
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -59,7 +60,7 @@ export function generateHealthReportPDF(data: ReportPDFData) {
     doc.rect(0, 0, pageWidth, 28, 'F');
 
     try {
-      doc.addImage(PASHUX_LOGO_BASE64, 'PNG', 14, 5, 42, 18);
+      doc.addImage(PASHUX_LOGO_BASE64, 'PNG', 14, 5, 42, 18, undefined, 'FAST');
     } catch (e) {
       console.warn('Could not embed logo image in PDF:', e);
     }
@@ -301,7 +302,7 @@ export function generateHealthReportPDF(data: ReportPDFData) {
 
     // Embed iHerd Cow Logo Image
     try {
-      doc.addImage(IHERD_LOGO_BASE64, 'PNG', 18, y + 4, 18, 18);
+      doc.addImage(IHERD_LOGO_BASE64, 'PNG', 18, y + 4, 18, 18, undefined, 'FAST');
     } catch (e) {
       console.warn('Could not embed iHerd logo in PDF:', e);
     }
@@ -318,7 +319,7 @@ export function generateHealthReportPDF(data: ReportPDFData) {
 
     // Embed Google Play Badge Image
     try {
-      doc.addImage(GOOGLE_PLAY_BASE64, 'PNG', 40, y + 16, 28, 8);
+      doc.addImage(GOOGLE_PLAY_BASE64, 'PNG', 40, y + 16, 28, 8, undefined, 'FAST');
     } catch (e) {
       console.warn('Could not embed Google Play badge in PDF:', e);
     }
@@ -475,43 +476,121 @@ export interface CattleProfilePDFData {
   observations?: string[];
   bodyConditionDetail?: string;
   displayImage?: string;
+  imageElementId?: string;
   qrCanvasId?: string;
 }
 
-async function urlToBase64(url: string): Promise<string | null> {
-  if (!url) return null;
-  if (url.startsWith('data:image')) return url;
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => {
-      console.warn('urlToBase64 timed out for:', url);
-      resolve(null);
-    }, 3000);
-
-    const img = new Image();
-    img.crossOrigin = 'Anonymous';
-    img.onload = () => {
-      clearTimeout(timer);
+async function urlToBase64(
+  url?: string,
+  elementId?: string,
+  maxWidth = 800,
+  maxHeight = 600,
+  quality = 0.72
+): Promise<string | null> {
+  // Strategy 1: Instant DOM reuse if the <img> is already mounted and decoded on screen
+  if (typeof document !== 'undefined') {
+    const el = (elementId ? document.getElementById(elementId) : null) || document.getElementById('cattle-display-img');
+    if (el instanceof HTMLImageElement && el.complete && el.naturalWidth > 0) {
       try {
+        let width = el.naturalWidth;
+        let height = el.naturalHeight;
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.max(1, Math.round(width * ratio));
+          height = Math.max(1, Math.round(height * ratio));
+        }
         const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || 400;
-        canvas.height = img.naturalHeight || 400;
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL('image/jpeg', 0.85));
-          return;
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(el, 0, 0, width, height);
+          return canvas.toDataURL('image/jpeg', quality);
         }
-      } catch (e) {
-        console.warn('Canvas conversion error:', e);
+      } catch (domErr) {
+        // Tainted canvas or DOM error, fall through to Strategy 2
       }
-      resolve(null);
-    };
-    img.onerror = () => {
-      clearTimeout(timer);
-      resolve(null);
-    };
-    img.src = url;
-  });
+    }
+  }
+
+  if (!url) return null;
+
+  // Strategy 2: Fast Blob fetch to avoid CORS disk-cache hangs
+  try {
+    let sourceUrl = url;
+    let isCreatedBlob = false;
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 750);
+        const res = await fetch(url, { signal: controller.signal, mode: 'cors' });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const blob = await res.blob();
+          sourceUrl = URL.createObjectURL(blob);
+          isCreatedBlob = true;
+        }
+      } catch {
+        // Fetch failed/timed out, will attempt direct image loading with short timeout
+      }
+    }
+
+    return await new Promise<string | null>((resolve) => {
+      const timer = setTimeout(() => {
+        if (isCreatedBlob) URL.revokeObjectURL(sourceUrl);
+        resolve(null);
+      }, 700);
+
+      const img = new Image();
+      if (!isCreatedBlob && !sourceUrl.startsWith('data:')) {
+        img.crossOrigin = 'Anonymous';
+      }
+
+      img.onload = () => {
+        clearTimeout(timer);
+        try {
+          let width = img.naturalWidth || 400;
+          let height = img.naturalHeight || 400;
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.max(1, Math.round(width * ratio));
+            height = Math.max(1, Math.round(height * ratio));
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            if (isCreatedBlob) URL.revokeObjectURL(sourceUrl);
+            resolve(dataUrl);
+            return;
+          }
+        } catch (e) {
+          console.warn('Canvas conversion error:', e);
+        }
+        if (isCreatedBlob) URL.revokeObjectURL(sourceUrl);
+        resolve(null);
+      };
+
+      img.onerror = () => {
+        clearTimeout(timer);
+        if (isCreatedBlob) URL.revokeObjectURL(sourceUrl);
+        resolve(null);
+      };
+
+      img.src = sourceUrl;
+    });
+  } catch (err) {
+    return null;
+  }
 }
 
 export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
@@ -520,6 +599,7 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
+      compress: true,
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -537,14 +617,14 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
 
     // 1. Chimertech Logo (Sits directly on the clean white background)
     try {
-      doc.addImage(CHIMERTECH_LOGO_BASE64, 'PNG', 10, 5.5, 26, 20);
+      doc.addImage(CHIMERTECH_LOGO_BASE64, 'PNG', 10, 5.5, 26, 20, undefined, 'FAST');
     } catch (e) {
       console.warn('Could not embed Chimertech logo:', e);
     }
 
     // 2. PashuX Logo (Background and border removed)
     try {
-      doc.addImage(PASHUX_LOGO_BASE64, 'PNG', 40.5, 6.5, 39, 19);
+      doc.addImage(PASHUX_LOGO_BASE64, 'PNG', 40.5, 6.5, 39, 19, undefined, 'FAST');
     } catch (e) {
       console.warn('Could not embed PashuX logo:', e);
     }
@@ -600,11 +680,11 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
     doc.setDrawColor(203, 213, 225);
     doc.roundedRect(14, y, imageBoxWidth, imageBoxHeight, 3, 3, 'S');
 
-    if (data.displayImage) {
+    if (data.displayImage || data.imageElementId) {
       try {
-        const imgData = await urlToBase64(data.displayImage);
+        const imgData = await urlToBase64(data.displayImage, data.imageElementId);
         if (imgData) {
-          doc.addImage(imgData, 'JPEG', 16, y + 2, imageBoxWidth - 4, imageBoxHeight - 10);
+          doc.addImage(imgData, 'JPEG', 16, y + 2, imageBoxWidth - 4, imageBoxHeight - 10, undefined, 'FAST');
         }
       } catch (err) {
         console.warn('Could not embed cattle image in PDF:', err);
@@ -636,7 +716,7 @@ export async function generateCattleProfilePDF(data: CattleProfilePDFData) {
     }
     if (qrDataUrl) {
       try {
-        doc.addImage(qrDataUrl, 'PNG', qrX + (qrBoxWidth - 36) / 2, y + 4, 36, 36);
+        doc.addImage(qrDataUrl, 'PNG', qrX + (qrBoxWidth - 36) / 2, y + 4, 36, 36, undefined, 'FAST');
       } catch (e) {}
     }
 

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ScrollToTop from '@/components/utils/ScrollToTop';
@@ -24,10 +25,11 @@ import AnalysisHistory from '@/pages/AnalysisHistory';
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <ConsentBanner />
-        <div className="relative noise-overlay">
+      <LanguageProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <ConsentBanner />
+          <div className="relative noise-overlay">
           <Navbar />
           <main>
             <Routes>
@@ -65,6 +67,7 @@ export default function App() {
           <Footer />
         </div>
       </BrowserRouter>
+      </LanguageProvider>
     </AuthProvider>
   );
 }

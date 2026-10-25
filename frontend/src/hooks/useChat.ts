@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { sendChatMessage } from '@/lib/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 import type { ChatMessage, AnalysisType } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -16,6 +17,7 @@ interface UseChatOptions {
 }
 
 export function useChat(options: UseChatOptions = {}) {
+  const { language } = useLanguage();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
@@ -48,6 +50,7 @@ export function useChat(options: UseChatOptions = {}) {
         analysis_type: options.analysisType,
         analysis_context: options.analysisContext,
         history,
+        language,
       });
       addMessage('assistant', res.reply);
     } catch (err: any) {
@@ -56,7 +59,7 @@ export function useChat(options: UseChatOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [messages, loading, options]);
+  }, [messages, loading, options, language]);
 
   const clear = useCallback(() => setMessages([]), []);
 

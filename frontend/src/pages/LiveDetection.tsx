@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { getProducts, analyseInstantLive } from '@/lib/api';
 import LiveCameraScanner from '@/components/ui/LiveCameraScanner';
 import BCSResultCard from '@/components/ui/BCSResultCard';
@@ -15,6 +16,7 @@ import { getDiseaseProductRecommendations } from '@/utils/diseaseProducts';
 
 export default function LiveDetection() {
   const { user } = useAuth();
+  const { t, translateOutput } = useLanguage();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [requestId, setRequestId] = useState<string | null>(null);
@@ -59,12 +61,12 @@ export default function LiveDetection() {
         <div className="glass-card p-6 sm:p-8 lg:p-10 bg-white border border-slate-200/90 rounded-3xl sm:rounded-[2.5rem] shadow-xl shadow-slate-200/50 flex flex-col md:flex-row items-center gap-6 lg:gap-8 transition-all duration-300 hover:border-slate-300">
           <div className="flex-1 space-y-3">
             <div className="flex items-center gap-2">
-              <span className="section-label text-emerald-700 font-extrabold tracking-widest uppercase text-[11px]">Real-Time Camera Scan</span>
-              <span className="badge-green text-[10px] uppercase font-bold tracking-wider animate-pulse">Live 10s Auto-Shutoff</span>
+              <span className="section-label text-emerald-700 font-extrabold tracking-widest uppercase text-[11px]">{t('live_header_badge', 'Real-Time Camera Scan')}</span>
+              <span className="badge-green text-[10px] uppercase font-bold tracking-wider animate-pulse">{t('live_header_pill', 'Live 10s Auto-Shutoff')}</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-tight tracking-tight">Live BCS & Disease Detection</h1>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-tight tracking-tight">{t('live_title', 'Live BCS & Disease Detection')}</h1>
             <p className="text-slate-600 text-xs sm:text-sm max-w-xl leading-relaxed font-semibold">
-              Turn on the camera stream to scan your cattle. Results for Body Condition Score (BCS) & Disease Screening appear directly below the live video container in real time!
+              {t('live_subtitle', 'Turn on the camera stream to scan your cattle. Results for Body Condition Score (BCS) & Disease Screening appear directly below the live video container in real time!')}
             </p>
           </div>
           <div className="w-full md:w-64 lg:w-72 h-44 sm:h-48 rounded-2xl overflow-hidden border-2 border-emerald-300/80 shadow-lg shadow-emerald-500/10 flex-shrink-0 relative group">
@@ -85,11 +87,11 @@ export default function LiveDetection() {
               <div className="flex items-center gap-3">
                 <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
                 <div>
-                  <p className="text-xs font-black text-emerald-950 uppercase tracking-wider">ANALYZING LIVE CATTLE FEED</p>
-                  <p className="text-[11px] text-slate-900 font-bold">Processing live snapshot frame through Chimertech Neural Vision models...</p>
+                  <p className="text-xs font-black text-emerald-950 uppercase tracking-wider">{t('live_analyzing_title', 'ANALYZING LIVE CATTLE FEED')}</p>
+                  <p className="text-[11px] text-slate-900 font-bold">{t('live_analyzing_desc', 'Processing live snapshot frame through Chimertech Neural Vision models...')}</p>
                 </div>
               </div>
-              <span className="text-xs font-mono font-black text-emerald-800">Please wait...</span>
+              <span className="text-xs font-mono font-black text-emerald-800">{t('live_wait', 'Please wait...')}</span>
             </div>
           )}
 
@@ -103,7 +105,7 @@ export default function LiveDetection() {
                 onClick={() => setError(null)}
                 className="btn-ghost text-xs text-rose-700 hover:text-rose-900 font-black"
               >
-                Dismiss
+                {t('live_dismiss', 'Dismiss')}
               </button>
             </div>
           )}
@@ -115,10 +117,10 @@ export default function LiveDetection() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  Live Analysis Results
-                  <span className="badge-green text-[10px] uppercase font-bold tracking-wider">Updated Live</span>
+                  {t('live_results_title', 'Live Analysis Results')}
+                  <span className="badge-green text-[10px] uppercase font-bold tracking-wider">{t('live_results_badge', 'Updated Live')}</span>
                 </h2>
-                <p className="text-xs text-slate-900 font-bold">Detailed AI assessment of your cattle / buffalo below the live video container</p>
+                <p className="text-xs text-slate-900 font-bold">{t('live_results_desc', 'Detailed AI assessment of your cattle / buffalo below the live video container')}</p>
               </div>
 
               {(bcsResult || diseaseResult) && (
@@ -131,7 +133,7 @@ export default function LiveDetection() {
                         : 'text-slate-900 hover:text-emerald-700'
                     }`}
                   >
-                    All Results
+                    {t('live_tab_all', 'All Results')}
                   </button>
                   <button
                     onClick={() => setActiveTab('bcs')}
@@ -141,7 +143,7 @@ export default function LiveDetection() {
                         : 'text-slate-900 hover:text-emerald-700'
                     }`}
                   >
-                    BCS Score
+                    {t('live_tab_bcs', 'BCS Score')}
                   </button>
                   <button
                     onClick={() => setActiveTab('disease')}
@@ -151,7 +153,7 @@ export default function LiveDetection() {
                         : 'text-slate-900 hover:text-emerald-700'
                     }`}
                   >
-                    Disease Check
+                    {t('live_tab_disease', 'Disease Check')}
                   </button>
                 </div>
               )}
@@ -160,8 +162,8 @@ export default function LiveDetection() {
             {(bcsResult || diseaseResult) && (
               <div className="flex justify-between items-center bg-emerald-50 border border-emerald-300 p-4 rounded-3xl">
                 <div>
-                  <h3 className="text-sm font-black text-emerald-950">Live Camera Health Scan Complete</h3>
-                  <p className="text-xs text-slate-900 font-bold">Combined BCS and Disease report ready to download.</p>
+                  <h3 className="text-sm font-black text-emerald-950">{t('live_complete_title', 'Live Camera Health Scan Complete')}</h3>
+                  <p className="text-xs text-slate-900 font-bold">{t('live_complete_desc', 'Combined BCS and Disease report ready to download.')}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -194,7 +196,7 @@ export default function LiveDetection() {
                   }}
                   className="btn-primary py-2.5 px-5 text-xs font-black flex items-center gap-2 shadow-md shadow-emerald-500/20"
                 >
-                  <span>📄</span> Download PDF Report
+                  <span>📄</span> {t('live_download_pdf', 'Download PDF Report')}
                 </button>
               </div>
             )}
@@ -208,7 +210,7 @@ export default function LiveDetection() {
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
-                    Live Body Condition Scoring (BCS)
+                    {t('live_bcs_header', 'Live Body Condition Scoring (BCS)')}
                   </h3>
                 </div>
                 <BCSResultCard result={bcsResult} />
@@ -220,7 +222,7 @@ export default function LiveDetection() {
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-600" />
-                    Live Disease & Health Screening
+                    {t('live_disease_header', 'Live Disease & Health Screening')}
                   </h3>
                 </div>
                 <DiseaseResultCard result={diseaseResult} />
@@ -229,7 +231,7 @@ export default function LiveDetection() {
 
             {combinedRecs.length > 0 && (
               <div>
-                <h3 className="text-sm font-black text-slate-900 mb-4">Recommended Products for Identified Live Status</h3>
+                <h3 className="text-sm font-black text-slate-900 mb-4">{t('live_recs_header', 'Recommended Products for Identified Live Status')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {combinedRecs.map(p => (
                     <ProductCard

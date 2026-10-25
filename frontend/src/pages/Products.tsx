@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getProducts } from '@/lib/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 import ProductCard from '@/components/ui/ProductCard';
 import { SkeletonProductCard } from '@/components/ui/SkeletonCard';
 import type { Product } from '@/types';
@@ -15,6 +16,7 @@ const CATEGORIES = [
 ];
 
 export default function Products() {
+  const { t, translateOutput } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [filtered, setFiltered] = useState<Product[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -47,10 +49,10 @@ export default function Products() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-10 animate-fade-up">
-          <p className="section-label mb-3 text-slate-900 font-black">Chimertech Catalogue</p>
-          <h1 className="text-4xl sm:text-5xl font-black text-slate-900 mb-3 tracking-tight">Products</h1>
+          <p className="section-label mb-3 text-slate-900 font-black">{t('products_catalogue', 'Chimertech Catalogue')}</p>
+          <h1 className="text-4xl sm:text-5xl font-black text-slate-900 mb-3 tracking-tight">{t('products_title', 'Products')}</h1>
           <p className="text-slate-900 text-sm max-w-xl leading-relaxed font-bold">
-            Browse the full range of Chimertech cattle health and nutritional products. Products are recommended automatically based on your analysis results.
+            {t('products_subtitle', 'Browse the full range of Chimertech cattle health and nutritional products. Products are recommended automatically based on your analysis results.')}
           </p>
         </div>
 
@@ -67,7 +69,7 @@ export default function Products() {
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search products by name or category…"
+              placeholder={t('products_search_placeholder', 'Search products by name or category…')}
               className="w-full pl-11 pr-4 py-3 rounded-2xl border-2 border-slate-300 bg-white text-slate-900 placeholder:text-slate-500 text-sm font-black focus:outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 shadow-sm transition-all"
             />
           </div>
@@ -83,7 +85,7 @@ export default function Products() {
                     : 'bg-white text-slate-900 hover:bg-slate-100 border border-slate-300 font-black shadow-sm'
                 }`}
               >
-                {cat}
+                {translateOutput(cat)}
               </button>
             ))}
           </div>
@@ -92,7 +94,7 @@ export default function Products() {
         {/* Count */}
         {!loading && (
           <p className="text-xs font-black text-slate-900 mb-5">
-            {filtered.length} product{filtered.length !== 1 ? 's' : ''} available
+            {filtered.length} {t('products_available', 'products available')}
           </p>
         )}
 
@@ -108,9 +110,9 @@ export default function Products() {
 
         {!loading && filtered.length === 0 && (
           <div className="text-center py-24">
-            <p className="text-slate-900 font-black text-sm">No products found matching your search.</p>
+            <p className="text-slate-900 font-black text-sm">{t('products_no_results', 'No products found matching your search.')}</p>
             <button onClick={() => { setSearch(''); setCategory('All'); }} className="btn-secondary mt-4 text-xs font-black text-slate-900">
-              Clear filters
+              {t('products_clear_filters', 'Clear filters')}
             </button>
           </div>
         )}

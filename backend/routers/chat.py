@@ -41,6 +41,7 @@ async def chat_endpoint(body: ChatRequest):
             history=body.history or [],
             analysis_context=context,
             analysis_type=body.analysis_type.value if body.analysis_type else None,
+            language=body.language or "en",
         )
     except Exception as exc:
         logger.exception("Chat failed")

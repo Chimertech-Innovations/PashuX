@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Language, LANGUAGES, TRANSLATIONS, LanguageOption } from '@/utils/translations';
+import { Language, LANGUAGES, TRANSLATIONS, LanguageOption, translateOutput as translateOutputUtil } from '@/utils/translations';
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string, fallback?: string) => string;
+  translateOutput: (val: any) => string;
   languages: LanguageOption[];
 }
 
@@ -46,12 +47,16 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     return fallback || key;
   };
 
+  const translateOutput = (val: any): string => {
+    return translateOutputUtil(val, language);
+  };
+
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, languages: LANGUAGES }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, translateOutput, languages: LANGUAGES }}>
       {children}
     </LanguageContext.Provider>
   );

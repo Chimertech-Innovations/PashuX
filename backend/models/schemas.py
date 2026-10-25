@@ -103,6 +103,7 @@ class ChatRequest(BaseModel):
     analysis_context: Optional[Any] = None
     message: str
     history: Optional[List[ChatMessage]] = []
+    language: Optional[str] = "en"
 
 
 class ChatResponse(BaseModel):

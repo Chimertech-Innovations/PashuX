@@ -95,6 +95,11 @@ export function translateOutput(val: any, lang: Language): string {
   // 3. Keyword-based matching for veterinary diagnoses & statuses
   const lower = str.toLowerCase();
 
+  // Unknown / Unidentified
+  if (lower === 'unknown' || lower === 'n/a' || lower === 'unidentified subject' || lower.includes('unknown') || lower.includes('udder view')) {
+    return dict['val_Unknown'] || 'Unknown';
+  }
+
   // Health / Disease
   if (lower === 'healthy' || lower.includes('healthy') || lower.includes('no visible')) {
     return dict['val_Healthy'] || str;

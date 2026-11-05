@@ -892,7 +892,12 @@ export default function CattleDetail() {
     ? 'Pending Video Scan'
     : (rawAge && rawAge !== 'N/A' && rawAge !== 'Unknown' ? rawAge : dynamicAgeFallback);
 
-  const breed = isNonBovine ? 'Unidentified Subject' : ((activeTest?.breed) || cattle.breed || 'Unidentified Subject');
+  const rawBreed = ((activeTest?.breed) || cattle.breed || 'Unknown');
+  const breed = isNonBovine
+    ? 'Unidentified Subject'
+    : (rawBreed.toLowerCase().includes('udder') || rawBreed.toLowerCase() === 'unidentified subject' || rawBreed.toLowerCase() === 'unknown')
+    ? 'Unknown'
+    : rawBreed;
 
   const rawGender = (activeTest?.gender) || cattle.gender || cattle.sex || 'Unknown';
   const isUnknownGender = isNonBovine || !rawGender || rawGender.toLowerCase() === 'unknown' || rawGender.toLowerCase() === 'unverified' || rawGender.includes('N/A');
@@ -1243,7 +1248,7 @@ export default function CattleDetail() {
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   {t('cattle_registered', 'Registered')}
                 </span>
-                {cattle.breed && <span className="badge-grey">{translateOutput(cattle.breed)}</span>}
+                {cattle.breed && <span className="badge-grey">{translateOutput(cattle.breed.toLowerCase().includes('udder') ? 'Unknown' : cattle.breed)}</span>}
                 {/* Health badge — green if healthy, red if not */}
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border ${
                   isHealthy
@@ -1551,7 +1556,7 @@ export default function CattleDetail() {
           {!!((cattle.weight_kg && cattle.weight_kg > 0) || (cattle.height_cm && cattle.height_cm > 0) || (cattle.body_length_cm && cattle.body_length_cm > 0)) && (
             <BodyMetricsChart weight={cattle.weight_kg} height={cattle.height_cm} bodyLength={cattle.body_length_cm} />
           )}
-          {!!cattle.breed && <BreedChart breed={cattle.breed} />}
+          {!!cattle.breed && !cattle.breed.toLowerCase().includes('udder') && cattle.breed.toLowerCase() !== 'unknown' && <BreedChart breed={cattle.breed} />}
         </div>
 
         {/* ── Coat Color section ───────────────────────────────────────────── */}
@@ -1751,6 +1756,11 @@ export default function CattleDetail() {
                         </div>
 
                         <ul className="space-y-2 text-xs text-amber-900 leading-relaxed font-bold mt-3">
+                          {(currentHealth.toLowerCase().includes('mastitis') || (cattle.disease_status || '').toLowerCase().includes('mastitis') || (cattle.disease || '').toLowerCase().includes('mastitis')) && (
+                            <li className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-950">
+                              • <strong className="text-rose-900">Mastitis Protocol:</strong> Udder inflammation detected. Perform California Mastitis Test (CMT), isolate milk, apply antiseptic teat dip, and contact your veterinarian immediately.
+                            </li>
+                          )}
                           {(breakdown.bcs ?? 0) < 22 && (
                             <li>
                               • <strong className="text-amber-950">Nutrition Boost (BCS):</strong> Supplement feed with high-energy mixtures. Consider buying a targeted veterinary supplement like <strong className="text-emerald-800">NutraKine Gain</strong> to boost weight and condition.
@@ -1980,7 +1990,7 @@ export default function CattleDetail() {
           />
           <StatCard
             label="BCS Score"
-            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (bcsScore > 0 ? `${bcsScore.toFixed(1)} / 5.0` : 'Pending Video Scan')}
+            value={isNonBovine ? 'N/A (Non-Cattle Subject)' : (bcsScore > 0 ? `${bcsScore.toFixed(1)} / 5.0` : (hasVideoAnalysis ? 'Pending Full-Body Video' : 'Pending Video Scan'))}
             color={isNonBovine ? 'slate' : (bcsScore > 0 ? 'emerald' : 'amber')}
             icon={
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

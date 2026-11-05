@@ -140,27 +140,63 @@ OUTPUT FORMAT GUARANTEE (Return raw JSON only):
 """
 
 DISEASE_SYSTEM_PROMPT = """\
-You are Chimertech AI Diagnostic Vision — an advanced veterinary AI trained on global livestock pathology datasets for early screening of cattle and buffalo diseases.
+You are Chimertech AI Diagnostic Vision — an advanced veterinary AI trained on global livestock pathology datasets for early screening of cattle and water buffalo diseases.
 
-SCREENING MATRIX & VISUAL PATHOLOGY MARKS:
+PRIORITY #1: CLINICAL UDDER & TEAT SCREENING PROTOCOL (MASTITIS DETECTION):
+Mastitis is the most prevalent and critical health disorder in dairy cattle and buffaloes.
+You MUST perform a meticulous, high-priority anatomical examination of the cattle's UDDER and ALL FOUR TEATS across all frames/photos.
+
+1. VISUAL CLINICAL PATHOLOGY OF MASTITIS:
+   - QUARTER ASYMMETRY & SWELLING:
+     * One or more quarters are visibly larger, bloated, swollen, pendulous, or dropped compared to contralateral quarters.
+     * Visible imbalance between left and right halves or front and rear quarters.
+     * Taut, shiny, stretched, or tense skin over the udder indicating inflammatory fluid accumulation and acute edema.
+   - TEAT MORPHOLOGY & INFLAMMATION:
+     * Swollen, thickened, or abnormally enlarged teat (especially at the teat barrel or teat base).
+     * Elongated, stiff, or engorged teat standing out unnaturally.
+     * Redness (erythema), purplish discoloration, or localized heat/hyperemia marks on light skin; tense, swollen, or hairless patches on dark skin.
+     * Teat canal orifice swelling, hyperkeratosis (rough callous ring), cracks, scabs, or purulent/clotted droplets.
+   - POSTURE & BEHAVIORAL PAIN SIGNS:
+     * Hind limb abduction: cow standing with rear legs placed abnormally wide apart to relieve pressure on the swollen, painful udder.
+     * Reluctance to walk or put weight on hind legs; restlessness or treading to avoid udder rubbing.
+   - CHRONIC / SUBCLINICAL MASTITIS:
+     * Asymmetric atrophy (quarter shrunken or fibrotic/hard), uneven quarter development, or persistent quarter hardness.
+
+2. MASTITIS DIAGNOSTIC ASSIGNMENT (STRICT RULE):
+   - Whenever you observe udder quarter swelling, asymmetry, inflammation, teat dilation, or teat redness:
+     * "possible_condition": Set to "Mastitis (Clinical Mastitis)" or "Subclinical Mastitis" or "Acute Mastitis - Udder Inflammation".
+     * "affected_area": Set to "Udder & Teats" (specify quarters if visible, e.g., "Right rear quarter & teat", "Udder quarters & teat base").
+     * "severity": "Moderate" (visible asymmetry or swelling) or "Severe" (acute inflammatory edema, extreme quarter enlargement) or "Mild" (early signs / subclinical).
+     * "urgency": "Veterinary Consultation Recommended" or "Urgent Immediate Isolation & Vet Attention".
+     * "visible_signs": Include clear observations such as:
+       - "Visible udder quarter asymmetry with noticeable unilateral swelling in the affected quarter"
+       - "Taut skin texture and inflammatory edema detected across the udder"
+       - "Teat swelling / abnormal enlargement with visible teat wall thickening"
+       - "Wide hind leg stance indicating pain/tenderness avoidance in the udder region"
+     * "next_steps": Provide precise clinical mastitis actions:
+       - "Perform California Mastitis Test (CMT) or Quadmastest on all 4 quarters immediately to verify somatic cell count (SCC)."
+       - "Isolate this cow during milking: always milk infected quarters last and discard contaminated milk. Do not pool with bulk tank."
+       - "Apply therapeutic antiseptic teat dip (e.g. Iogiene / MooFoam) and veterinary herbal spray (e.g. Mastoveda)."
+       - "Consult a licensed veterinarian immediately for targeted intramammary antibiotic infusion and anti-inflammatory therapy."
+
+OTHER DISEASES SCREENING MATRIX:
 1. LUMPY SKIN DISEASE (LSD): Cutaneous nodules (10-50mm), skin lesions on neck/flank/udder, ocular/nasal discharge, edema.
-2. MASTITIS (Clinical & Sub-clinical): Udder quarter swelling, asymmetry, inflammation, milk clots/discoloration, tenderness.
-3. FOOT AND MOUTH DISEASE (FMD): Vesicular lesions on tongue/muzzle/hoof cleft, lameness, excessive salivation (drooling).
-4. BLACKLEG & ANTHRAX SIGNS: Crepitant swelling over shoulder/hip, high fever posture, dark skin hemorrhage.
-5. PARASITIC TICK INFESTATION & ANAPLASMOSIS: Visible tick clusters around ears/dewlap/perineum, pale mucous membranes (anemia).
-6. RINGWORM & DERMATOPHILOSIS: Circular crusty hairless patches, scabbed skin lesions.
-7. RESPIRATORY DISEASE (BRD/Pneumonia): Extended neck, mouth breathing, nasal discharge, rib breathing effort.
+2. FOOT AND MOUTH DISEASE (FMD): Vesicular lesions on tongue/muzzle/hoof cleft, lameness, excessive salivation (drooling).
+3. BLACKLEG & ANTHRAX SIGNS: Crepitant swelling over shoulder/hip, high fever posture, dark skin hemorrhage.
+4. PARASITIC TICK INFESTATION & ANAPLASMOSIS: Visible tick clusters around ears/dewlap/perineum, pale mucous membranes (anemia).
+5. RINGWORM & DERMATOPHILOSIS: Circular crusty hairless patches, scabbed skin lesions.
+6. RESPIRATORY DISEASE (BRD/Pneumonia): Extended neck, mouth breathing, nasal discharge, rib breathing effort.
 
 RELEVANCE CHECK:
-- If image does not show cattle/buffalo: Set "possible_condition": "Invalid Image", "confidence": 0.0, "severity": "None".
+- If image does not show cattle/buffalo: Set "possible_condition": "Invalid Image - Non-Bovine Detected", "confidence": 0.0, "severity": "None", "affected_area": "N/A", "urgency": "Routine Monitoring".
 
 OUTPUT FORMAT GUARANTEE (Return raw JSON only):
 {
-  "possible_condition": "<Condition label or 'No visible health abnormalities detected'>",
+  "possible_condition": "<Condition label e.g. 'Mastitis (Clinical Mastitis)' or 'No visible health abnormalities detected'>",
   "confidence": <float 0.85-0.99>,
-  "severity": "<None|Mild|Moderate|Severe|Critical>",
+  "severity": "<None|Mild|Moderate|Severe>",
   "visible_signs": ["<Visible sign 1>", "<Visible sign 2>", "<Visible sign 3>"],
-  "affected_area": "<Body location e.g. Rear udder quarters, skin coat, muzzle>",
+  "affected_area": "<Body location e.g. 'Udder & Teats (Rear Quarters)', 'Skin coat', 'Muzzle'>",
   "urgency": "<Routine Monitoring|Veterinary Consultation Recommended|Urgent Immediate Isolation & Vet Attention>",
   "next_steps": ["<Action 1>", "<Action 2>", "<Action 3>"]
 }
@@ -262,10 +298,120 @@ async def validate_muzzle_image(image_bytes: bytes) -> dict:
             
     # Fallback to True if API is failing so we don't completely block registration
     return {"valid": True, "message": "Valid cattle muzzle photo (fallback)"}
+
+
+SAME_CATTLE_VERIFICATION_PROMPT = """\
+You are an expert cattle biometric verifier and livestock facial recognition specialist.
+Your task is to inspect 3 multi-angle cattle photos:
+- Photo 1: Straight-on muzzle / face view
+- Photo 2: Slight left angle muzzle / face view
+- Photo 3: Slight right angle muzzle / face view
+
+CRITICAL VERIFICATION RULES:
+1. Photos are taken from DIFFERENT camera angles (Straight, Left, Right) and may have DIFFERENT zoom levels, distances, or lighting.
+2. Evaluate whether all 3 photos represent the SAME individual cattle:
+   - Check muzzle pigmentation/color (e.g. pink, black, mottled/spotted).
+   - Check facial coat color and hair pattern around the muzzle and nose bridge.
+   - Check nostril shape and muzzle contour.
+   - Check breed characteristics and markings.
+3. If the 3 photos depict the same cattle (even with different zoom or angles), set "same_cattle": true.
+4. ONLY set "same_cattle": false if the photos clearly belong to DIFFERENT animals (e.g. one is a solid black buffalo and another is a brown cow, or completely contradictory muzzle colors/breeds).
+
+OUTPUT FORMAT (Return raw JSON only):
+{
+  "same_cattle": <true or false>,
+  "confidence": <float between 0.0 and 1.0>,
+  "reason": "<Brief explanation of why they match or do not match>"
+}
+"""
+
+
+async def verify_same_cattle_photos(img1_bytes: bytes, img2_bytes: bytes, img3_bytes: bytes) -> dict:
+    """
+    Use OpenAI Vision to verify if 3 multi-angle photos belong to the same cattle.
+    """
+    import base64
+    try:
+        b64_1 = base64.b64encode(normalize_image_to_jpeg_bytes(img1_bytes)).decode("utf-8")
+        b64_2 = base64.b64encode(normalize_image_to_jpeg_bytes(img2_bytes)).decode("utf-8")
+        b64_3 = base64.b64encode(normalize_image_to_jpeg_bytes(img3_bytes)).decode("utf-8")
+
+        messages = [
+            {"role": "system", "content": SAME_CATTLE_VERIFICATION_PROMPT},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Are these 3 photos of the same cattle taken from straight, left, and right angles?"},
+                    {"type": "text", "text": "Photo 1 (Straight Angle):"},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_1}"}},
+                    {"type": "text", "text": "Photo 2 (Left Angle):"},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_2}"}},
+                    {"type": "text", "text": "Photo 3 (Right Angle):"},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_3}"}},
+                ]
+            }
+        ]
+
+        client = _get_client()
+        models_to_try = get_openai_models()
+        for model in models_to_try:
+            try:
+                try:
+                    res = await client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        response_format={"type": "json_object"},
+                        max_completion_tokens=300,
+                    )
+                except Exception as pe:
+                    if "max_completion_tokens" in str(pe) or "unsupported" in str(pe).lower() or "response_format" in str(pe).lower():
+                        res = await client.chat.completions.create(
+                            model=model,
+                            messages=messages,
+                            max_tokens=300,
+                        )
+                    else:
+                        raise pe
+
+                content = res.choices[0].message.content
+                if content:
+                    data = parse_json_from_response(content)
+                    return {
+                        "same_cattle": bool(data.get("same_cattle", True)),
+                        "confidence": float(data.get("confidence", 0.9)),
+                        "reason": str(data.get("reason", "Verified same cattle"))
+                    }
+            except Exception as err:
+                logger.warning(f"Same cattle verification error with {model}: {err}")
+                continue
+    except Exception as exc:
+        logger.error(f"Error in verify_same_cattle_photos: {exc}")
+
+    # Fallback to True if API fails so we don't unfairly block valid cattle
+    return {"same_cattle": True, "confidence": 0.85, "reason": "Fallback approval (OpenAI API offline)"}
+
     
+def encode_image_base64_optimized(image_path: str, max_dim: int = 720) -> str:
+    """Resize image to max 720px and compress to JPEG for fast OpenAI Vision inference."""
+    try:
+        from PIL import Image, ImageOps
+        import io
+        with Image.open(image_path) as img:
+            img = ImageOps.exif_transpose(img).convert("RGB")
+            if max(img.width, img.height) > max_dim:
+                img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=85)
+            return base64.b64encode(buf.getvalue()).decode("utf-8")
+    except Exception:
+        with open(image_path, "rb") as f:
+            return base64.b64encode(f.read()).decode("utf-8")
+
+
 async def _generate_openai_vision(
     frame_paths: List[str],
     system_instruction: str,
+    user_prompt: Optional[str] = None,
 ) -> str:
     """Send image frames to OpenAI Vision models (gpt-5-mini, gpt-4o-mini, gpt-4o)."""
     client = _get_client()
@@ -273,22 +419,27 @@ async def _generate_openai_vision(
     image_contents = []
     for path in frame_paths or []:
         if os.path.exists(path):
-            with open(path, "rb") as f:
-                b64 = base64.b64encode(f.read()).decode("utf-8")
+            try:
+                b64 = encode_image_base64_optimized(path, max_dim=720)
                 image_contents.append({
                     "type": "image_url",
                     "image_url": {"url": f"data:image/jpeg;base64,{b64}"}
                 })
+            except Exception as e:
+                logger.warning(f"Error encoding frame {path}: {e}")
 
     if not image_contents:
         raise ValueError("No valid image frames found to process.")
+
+    default_prompt = "Please analyse these cattle images carefully and return the required JSON response."
+    prompt_text = user_prompt if user_prompt and user_prompt.strip() else default_prompt
 
     messages = [
         {"role": "system", "content": system_instruction},
         {
             "role": "user",
             "content": [
-                {"type": "text", "text": "Please analyse these cattle images carefully and return the required JSON response."},
+                {"type": "text", "text": prompt_text},
                 *image_contents
             ]
         }
@@ -303,17 +454,23 @@ async def _generate_openai_vision(
                 res = await client.chat.completions.create(
                     model=model,
                     messages=messages,
+                    response_format={"type": "json_object"},
                     max_completion_tokens=1024,
                 )
             except Exception as param_err:
-                if "max_completion_tokens" in str(param_err) or "unsupported" in str(param_err).lower():
+                try:
+                    res = await client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        response_format={"type": "json_object"},
+                        max_tokens=1024,
+                    )
+                except Exception:
                     res = await client.chat.completions.create(
                         model=model,
                         messages=messages,
                         max_tokens=1024,
                     )
-                else:
-                    raise param_err
 
             content = res.choices[0].message.content
             if content:
@@ -330,20 +487,52 @@ async def _generate_openai_vision(
 
 async def analyse_bcs(frame_paths: List[str]) -> BCSResult:
     """Send selected frames to OpenAI Vision and return a validated BCSResult."""
-    raw = await _generate_openai_vision(frame_paths, BCS_SYSTEM_PROMPT)
+    user_prompt = "Please analyse these cattle images carefully using ICAR/USDA veterinary standards and return the required JSON response."
+    raw = await _generate_openai_vision(frame_paths, BCS_SYSTEM_PROMPT, user_prompt=user_prompt)
     logger.debug(f"OpenAI BCS raw response: {raw}")
-    data = json.loads(raw)
+    data = parse_json_from_response(raw)
     data["bcs_score"] = float(data.get("bcs_score", 3.0))
     data["confidence"] = float(data.get("confidence", 0.9))
     return BCSResult(**data)
 
 
 async def analyse_disease(frame_paths: List[str]) -> DiseaseResult:
-    """Send selected frames to OpenAI Vision and return a validated DiseaseResult."""
-    raw = await _generate_openai_vision(frame_paths, DISEASE_SYSTEM_PROMPT)
+    """Send selected frames to OpenAI Vision and return a validated DiseaseResult with deep udder/teat mastitis analysis."""
+    user_prompt = (
+        "Please screen these cattle video frames/images thoroughly for disease and visible health conditions.\n"
+        "MANDATORY CLINICAL UDDER & TEAT MASTITIS EXAMINATION:\n"
+        "1. Carefully inspect the cattle udder quarters and teats in every frame.\n"
+        "2. Check for quarter asymmetry, swelling, dropped/enlarged quarters, inflammatory edema, taut shiny skin, redness (erythema), teat swelling, enlarged teat base, teat lesions, or wide hind leg pain avoidance stance.\n"
+        "3. If ANY signs of udder quarter swelling, asymmetry, inflammation, or teat abnormalities are present, YOU MUST identify the condition as 'Mastitis' (e.g. 'Mastitis (Clinical Mastitis)' or 'Subclinical Mastitis').\n"
+        "4. Also screen for Lumpy Skin Disease (nodules), Foot & Mouth Disease, and external parasite ticks.\n"
+        "5. Return strictly the requested JSON object."
+    )
+    raw = await _generate_openai_vision(frame_paths, DISEASE_SYSTEM_PROMPT, user_prompt=user_prompt)
     logger.debug(f"OpenAI Disease raw response: {raw}")
-    data = json.loads(raw)
-    data["confidence"] = float(data.get("confidence", 0.85))
+    data = parse_json_from_response(raw)
+
+    cond = str(data.get("possible_condition") or "No visible health abnormalities detected").strip()
+    data["possible_condition"] = cond
+    data["confidence"] = float(data.get("confidence", 0.90))
+    data["severity"] = str(data.get("severity") or "None").strip()
+    data["affected_area"] = str(data.get("affected_area") or "N/A").strip()
+    data["urgency"] = str(data.get("urgency") or "Routine Monitoring").strip()
+    data["visible_signs"] = list(data.get("visible_signs") or [])
+    data["next_steps"] = list(data.get("next_steps") or [])
+
+    # If visible_signs or observations mention mastitis or udder swelling, ensure possible_condition is set to Mastitis
+    signs_text = " ".join([str(s) for s in data["visible_signs"]]).lower()
+    cond_text = cond.lower()
+    if any(k in signs_text or k in cond_text for k in ["mastitis", "udder swelling", "quarter asymmetry", "inflamed udder", "teat swelling", "swollen quarter"]):
+        if "no visible" in cond_text or cond_text in ["none", "healthy", "unknown"]:
+            data["possible_condition"] = "Mastitis (Clinical Mastitis)"
+            if data["severity"] in ["None", "none"]:
+                data["severity"] = "Moderate"
+            if data["affected_area"] in ["N/A", "none"]:
+                data["affected_area"] = "Udder & Teats"
+            if "monitoring" in data["urgency"].lower():
+                data["urgency"] = "Veterinary Consultation Recommended"
+
     return DiseaseResult(**data)
 
 
@@ -418,12 +607,24 @@ ANALYZE ALL FRAMES CAREFULLY AT 1 FPS AND RETURN A STRICT, EMPIRICAL ASSESSMENT:
    - FOCUS EVALUATION: If multiple cattle are visible in the background or surrounding area, IGNORE background cattle for primary scoring. Calculate all stats (weight, height, BCS, breed) exclusively for the single cattle that has maximum focus and camera visibility.
    - ACCURATE COUNT PROTOCOL: Count the exact number of cattle visible across frames (`total_cattle_count`: 1 if only one animal is present, 2 if a second animal is visible).
 
-2. GENDER & UDDER PROTOCOL (STRICT CONSTRAINTS):
+2. GENDER, UDDER & MASTITIS PROTOCOL (STRICT CONSTRAINTS):
    - DEFAULT GENDER IS FEMALE (COW / BUFFALO):
      * All cattle and water buffalo video analyses default automatically to "Female" (Cow / Buffalo).
-     * UDDER & TEAT DETECTION: Whenever the udder or teats are shown in frames (including close-up videos of udder/teats, rear views, or flank angles), set `gender: "Female"`, `udder_visible: true`, `teat_visible: true`, evaluate `udder_score` (1.0 - 5.0) and `teat_score` (1.0 - 5.0), and leave `missing_parts` EMPTY (`[]`).
-     * Udder score evaluation: 5.0 = Excellent dairy capacity & symmetrical quarter balance, 4.0 = Good attachment, 3.0 = Moderate capacity, 2.0 = Asymmetric, 1.0 = Severe atrophy/mastitis signs.
-     * Teat score evaluation: 5.0 = Ideal placement & cylindrical structure, 4.0 = Uniform structure, 3.0 = Average, 2.0 = Short/asymmetric, 1.0 = Deformed/damaged teats.
+     * UDDER & TEAT DETECTION: Whenever the udder or teats are shown in frames (including close-up videos of udder/teats, rear views, flank angles, or walking views), set `gender: "Female"`, `udder_visible: true`, `teat_visible: true`, and leave `missing_parts` EMPTY (`[]`).
+     * CRITICAL MASTITIS INSPECTION ACROSS VIDEO FRAMES:
+       - Meticulously inspect the udder quarters and all four teats for MASTITIS indicators:
+         * Udder quarter asymmetry: one quarter is noticeably larger, swollen, bloated, pendulous, or dropped compared to contralateral quarters.
+         * Udder swelling, inflammatory edema, taut shiny skin, or erythema (redness/purplish discoloration).
+         * Teat abnormalities: swollen teat barrel, enlarged teat base, thickened teat wall, teat erythema, or teat end lesions.
+         * Wide hind leg stance (abduction) or reluctance to walk due to udder pain.
+       - IF ANY SIGNS OF MASTITIS ARE PRESENT:
+         * YOU MUST SET `disease_status` to "Mastitis" (or "Clinical Mastitis" / "Subclinical Mastitis"). DO NOT SET "Healthy"!
+         * Set `udder_score` to reflect the inflamed state: 1.0 (severe mastitis/swelling) to 2.5 (moderate asymmetry/swelling).
+         * Set `teat_score` to reflect the condition: 1.0 to 2.5.
+         * In `observations`, explicitly highlight the mastitis indicators: "Udder & teat inspection reveals signs of Mastitis: [describe quarter swelling, asymmetry, teat thickening, or erythema]. Veterinary intervention recommended."
+     * IF UDDER IS HEALTHY & SYMMETRICAL:
+       - Udder score evaluation: 5.0 = Excellent dairy capacity & symmetrical quarter balance, 4.0 = Good attachment, 3.0 = Moderate capacity.
+       - Teat score evaluation: 5.0 = Ideal placement & cylindrical structure, 4.0 = Uniform structure, 3.0 = Average.
 
 3. EMPIRICAL DATA FOR PRIMARY CATTLE:
    - `bcs_score`: (1.00 - 5.00 scale based on Ferguson / Edmonson / Elanco / ICAR veterinary standards with 0.25 resolution):
@@ -495,6 +696,28 @@ ANALYZE ALL FRAMES CAREFULLY AT 1 FPS AND RETURN A STRICT, EMPIRICAL ASSESSMENT:
       * 5.0 = Extremely dry and segmented (stiff, hard balls like horse dung).
       * Default to 0.0 if not visible or not uploaded.
 
+6. CAMERA FRAMING PROTOCOL (FULL-BODY vs UDDER CLOSE-UP):
+    Carefully inspect what anatomical regions of the cattle are ACTUALLY captured in the video:
+
+    A. FULL-BODY VIDEO (PRIMARY / DEFAULT):
+       - If the cattle's body, torso, ribs, spine, hips/pins, flank, or head are captured in the video:
+       - You MUST perform full ICAR/USDA BCS evaluation across the entire 1.00 - 5.00 scale (in 0.25 steps) based on ribs, spine, and thurl cavity.
+       - Identify the exact Breed (e.g. "Gir Cattle", "Holstein Friesian", "Jersey", "Sahiwal", "Murrah Buffalo", "Crossbred Cattle").
+       - Calculate weight_range (e.g. "450 - 520 kg"), height_range (e.g. "130 - 140 cm"), weight_kg, and height_cm.
+       - Evaluate cleanliness_score (0 - 100).
+       - Evaluate udder & teat scores if female. If the cow is healthy, set `disease_status: "Healthy"`. Normal lactating dairy udders filled with milk are healthy—only diagnose Mastitis if there is real pathological quarter asymmetry, severe inflammation, or acute edema.
+       - Set `missing_parts: []`.
+
+    B. UDDER & TEATS CLOSE-UP ONLY (EXCEPTION):
+       - ONLY if the video is strictly an extreme close-up of the udder where the cow's torso, ribs, spine, and head are 100% absent across all frames:
+       - Set `bcs_score: 0.0`.
+       - In `observations`, state: "Video framing: Close-up focus on udder and teats. Key anatomical landmarks (short ribs, lumbar spine, hook & pin bones) are not captured in this video for full BCS evaluation. Please record a full-body side/rear profile video for official BCS scoring."
+       - Set `breed: "Unknown"`.
+       - Report visible coat color on udder skin.
+       - Set `weight_range`: "N/A (Full body video required)", `height_range`: "N/A (Full body video required)", `weight_kg`: 0.0, `height_cm`: 0.0, `estimated_value`: "N/A".
+       - Set `missing_parts`: `["Ribs & Spine", "Hook & Pin Bones", "Head / Face"]`.
+       - Evaluate `udder_score` and `teat_score`. If mastitis symptoms are observed, set `disease_status: "Mastitis"`; if healthy, set `disease_status: "Healthy"`.
+
 Return ONLY a raw JSON object (without markdown code blocks) matching this schema:
 {
   "is_cattle_detected": true,
@@ -537,16 +760,15 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
     total_frames = len(frame_paths)
     for i, path in enumerate(frame_paths):
         try:
-            with open(path, "rb") as f:
-                b64 = base64.b64encode(f.read()).decode("utf-8")
-                image_contents.append({
-                    "type": "text",
-                    "text": f"--- VIDEO FRAME AT SECOND {i + 1} (FRAME {i + 1} OF {total_frames}) ---"
-                })
-                image_contents.append({
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{b64}"}
-                })
+            b64 = encode_image_base64_optimized(path, max_dim=720)
+            image_contents.append({
+                "type": "text",
+                "text": f"--- VIDEO FRAME AT SECOND {i + 1} (FRAME {i + 1} OF {total_frames}) ---"
+            })
+            image_contents.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:image/jpeg;base64,{b64}"}
+            })
         except Exception as e:
             logger.warning(f"Failed to load frame {path}: {e}")
 
@@ -563,17 +785,19 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
                 {
                     "type": "text",
                     "text": (
-                        "Analyze these sequential 1 FPS video frames representing every second of the cattle video thoroughly. "
-                        "Evaluate the full temporal video sequence across all captured angles (head/face, lateral body, short ribs, spine, hooks & pins, rear tailhead, udder/teats, and legs):\n"
-                        "1. Identify the exact Breed accurately based on physical conformation (e.g. Gir Cattle, Sahiwal, Murrah Buffalo, Red Sindhi, Tharparkar, Kankrej, Ongole, Holstein Friesian, Jersey, Crossbred Cattle).\n"
-                        "2. Determine the exact Body Condition Score (bcs_score 1.0 - 5.0) using USDA/ICAR veterinary standards based on actual visual fat coverage over ribs, spine, hook/pin bones, and thurl cavity. Assign the true objective score (e.g. 2.75, 3.00, 3.25, 3.50) reflecting the animal's physical body condition without artificial bias.\n"
-                        "3. Compute accurate estimated body weight (weight_kg) and realistic range (weight_range, e.g. '450 - 510 kg') from visual mass, chest girth, and body length.\n"
-                        "4. Compute accurate withers height (height_cm) and realistic range (height_range, e.g. '132 - 140 cm').\n"
-                        "5. Estimate realistic age (age_estimate, e.g. '3 - 4 years', '4 - 5 years') based on horn growth rings, frame development, and physical maturity.\n"
-                        "6. Gender: Default to 'Female' (Cow / Buffalo) unless clear male genitalia are detected.\n"
-                        "7. Udder & Teats: Inspect all frames for udder/teats. If visible at any second, set udder_visible: true, teat_visible: true, and evaluate udder_score (1.0-5.0) and teat_score (1.0-5.0).\n"
-                        "8. Cleanliness score: 0 to 100 evaluating cattle body cleanliness and ground/floor hygiene.\n"
-                        "9. Screen for disease signs (LSD, Mastitis, Foot & Mouth, ticks, or Healthy).\n"
+                        "Analyze these sequential 1 FPS video frames representing every second of the cattle video thoroughly.\n"
+                        "PRIMARY CLINICAL LIVESTOCK EVALUATION INSTRUCTIONS:\n"
+                        "1. FOR FULL-BODY CATTLE VIDEOS (Head, body, torso, ribs, spine, hips, or legs are captured):\n"
+                        "   - OBJECTIVE BCS SCORE: Evaluate the cattle's true Body Condition Score on the clinical ICAR 1.00 - 5.00 scale (in 0.25 steps, e.g. 2.75, 3.00, 3.25, 3.50) based on visible ribs and spine.\n"
+                        "   - BREED IDENTIFICATION: Identify the specific breed (e.g. 'Gir Cattle', 'Holstein Friesian', 'Jersey', 'Sahiwal', 'Murrah Buffalo', 'Crossbred Cattle').\n"
+                        "   - BODY METRICS: Calculate weight_range (e.g. '460 - 520 kg'), height_range (e.g. '130 - 140 cm'), weight_kg, and height_cm.\n"
+                        "   - COAT COLOR: Report the true coat color (e.g. 'Light Brown / Tan', 'Black and White', 'Solid Red', 'Grey / White').\n"
+                        "   - UDDER & TEATS: Evaluate udder_score (1.0 - 5.0) and teat_score (1.0 - 5.0) if female.\n"
+                        "   - HEALTH STATUS: If the cow is healthy, set disease_status: 'Healthy'. Normal lactating dairy udders filled with milk are healthy—only diagnose Mastitis if there is real pathological quarter asymmetry, severe inflammation, or acute edema.\n"
+                        "   - Set missing_parts: [].\n"
+                        "2. EXCEPTION ONLY FOR UDDER-ONLY CLOSE-UPS (Zero ribs, zero spine, zero body visible across all frames):\n"
+                        "   - Set bcs_score: 0.0, breed: 'Unknown', weight_range: 'N/A (Full body video required)', height_range: 'N/A (Full body video required)'.\n"
+                        "   - Evaluate udder_score, teat_score, and check for Mastitis.\n"
                         f"{gender_instruction}\n"
                         "Return the strict JSON response matching the required schema."
                     )
@@ -653,40 +877,75 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
                     s = str(val).strip()
                     return s if s and s.lower() not in ["none", "null", "undefined", "n/a"] else default
 
+                obs_str = " ".join([str(o).lower() for o in data.get("observations", [])])
+                dis_str = str(data.get("disease_status") or "").lower()
+                missing_str = " ".join([str(m).lower() for m in data.get("missing_parts", [])])
+
+                # Check if this video is an udder close-up / regional video where ribs and spine are not visible
+                # Check if this video is strictly an udder close-up where full body is absent
+                raw_bcs = _safe_float(data.get("bcs_score"), 0.0)
+                # If model assigned a valid BCS score (> 0), it analyzed body condition—it is FULL BODY!
+                is_udder_closeup = (
+                    raw_bcs == 0.0
+                    and any(w in obs_str for w in [
+                        "close-up focus on udder", "close-up view of cattle udder", "only udder, teats",
+                        "focus on udder and teats", "udder close-up", "extreme close-up of udder"
+                    ])
+                    and not any(w in obs_str for w in ["ribs", "spine", "body condition score objectively", "full body"])
+                )
+
                 data["breed"] = _safe_str(data.get("breed"), "Crossbred Cattle")
                 data["coat_color"] = _safe_str(data.get("coat_color"), "Unknown / Multi-colored")
                 data["estimated_value"] = _safe_str(data.get("estimated_value"), "N/A")
                 data["disease_status"] = _safe_str(data.get("disease_status"), "Healthy")
 
-                data["bcs_score"] = _safe_float(data.get("bcs_score"), 3.0)
-                w_kg = _safe_float(data.get("weight_kg"), 450.0)
-                h_cm = _safe_float(data.get("height_cm"), 135.0)
+                if is_udder_closeup:
+                    # Empirically clamp attributes when full body is not captured in video
+                    data["bcs_score"] = 0.0
+                    data["weight_kg"] = 0.0
+                    data["height_cm"] = 0.0
+                    data["weight_range"] = "N/A (Full body video required)"
+                    data["height_range"] = "N/A (Full body video required)"
+                    data["estimated_value"] = "N/A (Full body video required)"
+                    data["breed"] = "Unknown"
+                    if "spot" in data["coat_color"].lower() and "udder" in obs_str:
+                        data["coat_color"] = "Pink / White (Udder Region)"
+                    if not data.get("missing_parts"):
+                        data["missing_parts"] = ["Ribs & Spine", "Hook & Pin Bones", "Head / Face"]
+                    if not any("full bcs" in o.lower() or "full-body" in o.lower() for o in data.get("observations", [])):
+                        data["observations"].append(
+                            "Video framing: Close-up view of cattle udder & teats. Full-body ICAR BCS scoring, weight, and breed confirmation require a full-body video showing ribs, lumbar spine, and head."
+                        )
+                else:
+                    data["bcs_score"] = _safe_float(data.get("bcs_score"), 3.0)
+                    w_kg = _safe_float(data.get("weight_kg"), 450.0)
+                    h_cm = _safe_float(data.get("height_cm"), 135.0)
 
-                # Compute dynamic age if not provided explicitly by vision model
-                raw_age = _safe_str(data.get("age_estimate"), "")
-                if not raw_age or raw_age.lower() in ["unknown", "n/a", "none"]:
-                    if w_kg < 260:
-                        raw_age = "1 - 2 years (Young Heifer)"
-                    elif w_kg < 380:
-                        raw_age = "2 - 3 years (Young Adult)"
-                    elif w_kg < 500:
-                        raw_age = "3 - 5 years (Prime Adult)"
-                    else:
-                        raw_age = "5 - 7 years (Mature Adult)"
-                data["age_estimate"] = raw_age
-                data["weight_kg"] = w_kg
-                data["height_cm"] = h_cm
+                    # Compute dynamic age if not provided explicitly by vision model
+                    raw_age = _safe_str(data.get("age_estimate"), "")
+                    if not raw_age or raw_age.lower() in ["unknown", "n/a", "none"]:
+                        if w_kg < 260:
+                            raw_age = "1 - 2 years (Young Heifer)"
+                        elif w_kg < 380:
+                            raw_age = "2 - 3 years (Young Adult)"
+                        elif w_kg < 500:
+                            raw_age = "3 - 5 years (Prime Adult)"
+                        else:
+                            raw_age = "5 - 7 years (Mature Adult)"
+                    data["age_estimate"] = raw_age
+                    data["weight_kg"] = w_kg
+                    data["height_cm"] = h_cm
 
-                # Format Weight and Height Ranges if missing
-                if not data.get("weight_range") or "-" not in str(data.get("weight_range")):
-                    w_low = int(round(w_kg * 0.93 / 5) * 5)
-                    w_high = int(round(w_kg * 1.07 / 5) * 5)
-                    data["weight_range"] = f"{w_low} - {w_high} kg"
+                    # Format Weight and Height Ranges if missing
+                    if not data.get("weight_range") or "-" not in str(data.get("weight_range")):
+                        w_low = int(round(w_kg * 0.93 / 5) * 5)
+                        w_high = int(round(w_kg * 1.07 / 5) * 5)
+                        data["weight_range"] = f"{w_low} - {w_high} kg"
 
-                if not data.get("height_range") or "-" not in str(data.get("height_range")):
-                    h_low = int(round(h_cm * 0.96))
-                    h_high = int(round(h_cm * 1.04))
-                    data["height_range"] = f"{h_low} - {h_high} cm"
+                    if not data.get("height_range") or "-" not in str(data.get("height_range")):
+                        h_low = int(round(h_cm * 0.96))
+                        h_high = int(round(h_cm * 1.04))
+                        data["height_range"] = f"{h_low} - {h_high} cm"
 
                 data["cleanliness_score"] = min(100, max(0, _safe_int(data.get("cleanliness_score"), 0)))
                 data["udder_score"] = _safe_float(data.get("udder_score"), 0.0)
@@ -806,7 +1065,31 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
                                 "Udder and teats were not clearly visible in the captured camera angles."
                             )
 
+                # MASTITIS RECOGNITION ENFORCEMENT:
+                # Only trigger if disease_status contains mastitis or observations explicitly report clinical mastitis pathology (avoiding negations like "no swelling", "no mastitis")
+                dis_has_mastitis = "mastitis" in dis_str and not any(neg in dis_str for neg in ["no mastitis", "not mastitis", "negative", "healthy", "no visible"])
 
+                obs_has_mastitis = False
+                for o in data.get("observations", []):
+                    o_lc = str(o).lower()
+                    if any(neg in o_lc for neg in ["no mastitis", "no swelling", "without swelling", "free from", "absence of", "normal udder", "healthy udder", "no acute"]):
+                        continue
+                    if any(w in o_lc for w in ["clinical mastitis", "affected with mastitis", "acute mastitis", "quarter asymmetry with swelling", "unilateral enlargement", "inflammatory edema", "erythema detected on udder"]):
+                        obs_has_mastitis = True
+                        break
+
+                raw_u = _safe_float(data.get("udder_score"), 0.0)
+                raw_t = _safe_float(data.get("teat_score"), 0.0)
+                low_udder_score = is_udder_closeup and (0.0 < raw_u <= 2.8 or 0.0 < raw_t <= 2.8)
+
+                if (dis_has_mastitis or obs_has_mastitis or low_udder_score) and data["is_cattle_detected"]:
+                    data["disease_status"] = "Mastitis"
+                    data["gender"] = "Female"
+                    data["udder_visible"] = True
+                    data["teat_visible"] = True
+                    data["udder_score"] = raw_u if 1.0 <= raw_u <= 2.5 else 2.0
+                    data["teat_score"] = raw_t if 1.0 <= raw_t <= 2.5 else 2.0
+                    data["missing_parts"] = [p for p in data.get("missing_parts", []) if p not in ["udder", "teats"]]
 
                 # Health status explanation if Unknown
                 dis_status = str(data.get("disease_status") or "Unknown").strip()
@@ -826,33 +1109,86 @@ async def analyse_video_stats(frame_paths: List[str], expected_gender: Optional[
             continue
 
     logger.warning(f"OpenAI Video Analysis failed across all models ({last_error}). Using fallback video stats.")
-    return _smart_fallback_video_stats(expected_gender)
+    return _smart_fallback_video_stats(expected_gender, frame_paths=frame_paths)
 
 
-def _smart_fallback_video_stats(expected_gender: Optional[str] = "Female") -> VideoAnalysisResult:
+def _smart_fallback_video_stats(expected_gender: Optional[str] = "Female", frame_paths: Optional[List[str]] = None) -> VideoAnalysisResult:
     """Generate realistic fallback cattle stats if OpenAI API encounters network error or invalid JSON output."""
     logger.warning("Generating intelligent fallback VideoAnalysisResult stats...")
     gen = "Male" if expected_gender and any(w in expected_gender.lower() for w in ["male", "bull", "ox"]) else "Female"
+    
+    disease = "Healthy"
+    obs = [
+        "Primary cattle captured in video focus.",
+        "Body Condition Score (BCS) evaluated at 3.0 / 5.0 (Ideal dairy condition).",
+        "Physical frame and spine structure indicate healthy adult dairy cattle.",
+        "No acute disease symptoms or skin lesions visible in video frames."
+    ]
+    u_score = 0.0
+    t_score = 0.0
+    u_vis = False
+    t_vis = False
+
+    # Check for udder mastitis signal via CV frames if available
+    if frame_paths:
+        try:
+            import cv2
+            import numpy as np
+            redness_vals = []
+            asym_vals = []
+            for fp in frame_paths[:6]:
+                if os.path.exists(fp):
+                    img = cv2.imread(fp)
+                    if img is not None and img.size > 0:
+                        h, w = img.shape[:2]
+                        roi = img[int(h * 0.35):int(h * 0.95), int(w * 0.20):int(w * 0.80)]
+                        if roi.size > 0:
+                            hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+                            m1 = cv2.inRange(hsv, np.array([0, 40, 40]), np.array([15, 255, 255]))
+                            m2 = cv2.inRange(hsv, np.array([165, 40, 40]), np.array([180, 255, 255]))
+                            red_ratio = float(np.count_nonzero(m1 | m2)) / float(roi.shape[0] * roi.shape[1])
+                            redness_vals.append(red_ratio)
+                            
+                            mid_w = roi.shape[1] // 2
+                            l_half = cv2.cvtColor(roi[:, :mid_w], cv2.COLOR_BGR2GRAY)
+                            r_half = cv2.cvtColor(roi[:, mid_w:], cv2.COLOR_BGR2GRAY)
+                            l_edges = cv2.Canny(l_half, 30, 100)
+                            r_edges = cv2.Canny(r_half, 30, 100)
+                            diff = abs(float(np.count_nonzero(l_edges)) - float(np.count_nonzero(r_edges)))
+                            tot = max(1.0, float(np.count_nonzero(l_edges) + np.count_nonzero(r_edges)))
+                            asym_vals.append(diff / tot)
+            avg_red = float(np.mean(redness_vals)) if redness_vals else 0.0
+            avg_asym = float(np.mean(asym_vals)) if asym_vals else 0.0
+            if avg_red > 0.07 or avg_asym > 0.30:
+                logger.info(f"Fallback CV detected Mastitis: red={avg_red:.3f}, asym={avg_asym:.3f}")
+                disease = "Mastitis"
+                gen = "Female"
+                u_score = 2.0
+                t_score = 2.0
+                u_vis = True
+                t_vis = True
+                obs = [
+                    "Computer vision frame analysis identified potential Mastitis (udder quarter asymmetry and localized redness detected).",
+                    "Immediate veterinary examination and California Mastitis Test (CMT) recommended."
+                ]
+        except Exception:
+            pass
+
     return VideoAnalysisResult(
-        bcs_score=3.0,
-        disease_status="Healthy",
-        breed="Crossbred Dairy (HF / Jersey / Gir mix)",
+        bcs_score=3.0 if disease == "Healthy" else 0.0,
+        disease_status=disease,
+        breed="Crossbred Dairy (HF / Jersey / Gir mix)" if disease == "Healthy" else "Unknown",
         weight_kg=465.0,
         height_cm=138.0,
         coat_color="Black & White Patch",
         gender=gen,
         estimated_value="$1,200 - $1,600",
-        observations=[
-            "Primary cattle captured in video focus.",
-            "Body Condition Score (BCS) evaluated at 3.0 / 5.0 (Ideal dairy condition).",
-            "Physical frame and spine structure indicate healthy adult dairy cattle.",
-            "No acute disease symptoms or skin lesions visible in video frames."
-        ],
-        udder_score=0.0,
-        teat_score=0.0,
-        udder_visible=False,
-        teat_visible=False,
-        missing_parts=[],
+        observations=obs,
+        udder_score=u_score,
+        teat_score=t_score,
+        udder_visible=u_vis,
+        teat_visible=t_vis,
+        missing_parts=[] if disease == "Healthy" else ["Ribs & Spine", "Hook & Pin Bones", "Head / Face"],
         age_estimate="4 - 5 years",
         cleanliness_score=88,
         total_cattle_count=1,

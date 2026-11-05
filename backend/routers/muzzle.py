@@ -12,9 +12,9 @@ import base64
 # In the future, we'll import the real model from a new services/muzzle_processor.py
 # from services.muzzle_processor import extract_muzzle_features
 import services.supabase_service as db
-from services.openai_service import validate_muzzle_image
+from services.openai_service import validate_muzzle_image, verify_same_cattle_photos
 from services.video_processor import process_video
-from services.image_analysis import analyse_video_stats
+from services.image_analysis import analyse_video_stats, analyse_disease
 import tempfile
 import os
 import shutil
@@ -44,10 +44,9 @@ preprocess = transforms.Compose([
 ])
 
 try:
-    # pyrefly: ignore [missing-import]
     from pillow_heif import register_heif_opener
     register_heif_opener()
-except ImportError:
+except Exception:
     pass
 
 def load_image_bytes(image_bytes: bytes) -> Optional[np.ndarray]:
@@ -419,6 +418,42 @@ async def register_cattle_muzzle(
             asyncio.to_thread(extract_muzzle_features, enh3)
         )
         
+        # Check intra-consistency across the 3 uploaded muzzle photos
+        def _cosine_sim(v1, v2):
+            a = np.array(v1, dtype=np.float32)
+            b = np.array(v2, dtype=np.float32)
+            return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-9))
+
+        sim_1_2 = _cosine_sim(emb1, emb2)
+        sim_1_3 = _cosine_sim(emb1, emb3)
+        sim_2_3 = _cosine_sim(emb2, emb3)
+        min_consistency = min(sim_1_2, sim_1_3, sim_2_3)
+        avg_consistency = (sim_1_2 + sim_1_3 + sim_2_3) / 3.0
+        
+        logger.info(f"Muzzle intra-consistency check: Slot1-2={sim_1_2:.3f}, Slot1-3={sim_1_3:.3f}, Slot2-3={sim_2_3:.3f}, avg={avg_consistency:.3f}")
+
+        # Multi-angle tolerance check:
+        # Multi-angle photos (Straight, Left, Right) inherently have perspective, zoom, and distance variance.
+        # Pass immediately if average similarity or anchor pairs show adequate consistency.
+        is_consistent = (
+            min_consistency >= 0.30
+            or avg_consistency >= 0.35
+            or (sim_1_2 >= 0.28 and sim_1_3 >= 0.28)
+        )
+
+        if not is_consistent:
+            logger.info("ResNet intra-consistency below multi-angle threshold. Running OpenAI Vision secondary verification...")
+            verify_res = await verify_same_cattle_photos(img1_bytes, img2_bytes, img3_bytes)
+            if verify_res.get("same_cattle", False):
+                logger.info(f"OpenAI Vision verified multi-angle photos belong to the same cattle: {verify_res.get('reason')}")
+                is_consistent = True
+            else:
+                logger.warning(f"Inconsistent muzzle photos rejected: ResNet min={min_consistency:.3f}, avg={avg_consistency:.3f}, OpenAI reason={verify_res.get('reason')}")
+                raise HTTPException(
+                    status_code=400,
+                    detail="INCONSISTENT MUZZLE PHOTOS: The 3 uploaded photos appear to belong to different cattle or do not match each other. Please upload 3 clear photos (Straight, Left, Right) of the same cattle."
+                )
+
         # Average the 3 embeddings to create a robust Master Pattern
         avg_emb = np.mean([emb1, emb2, emb3], axis=0)
         norm = np.linalg.norm(avg_emb)
@@ -430,44 +465,66 @@ async def register_cattle_muzzle(
         
         # 3. Check for global duplicates across ALL users in the system (biometric uniqueness)
         def _check_duplicate():
-            try:
-                return sb.rpc(
-                    "match_cattle_muzzle",
-                    {
-                        "query_embedding": master_embedding,
-                        "match_threshold": 0.94,
-                        "match_count": 1
-                    }
-                ).execute()
-            except Exception as rpc_err:
-                logger.warning(f"RPC match_cattle_muzzle failed during duplicate check: {rpc_err}")
+            check_vectors = [
+                ("Master Pattern", master_embedding, 0.82),
+                ("Slot 1 Photo", emb1, 0.84),
+                ("Slot 2 Photo", emb2, 0.84),
+                ("Slot 3 Photo", emb3, 0.84),
+            ]
+            
+            # Step A: RPC call to PostgreSQL/pgvector if available
+            for label, q_emb, thresh in check_vectors:
                 try:
-                    res = sb.table("cattle").select("id, name, muzzle_embedding").execute()
-                    if res.data:
-                        q_vec = np.array(master_embedding)
-                        for c in res.data:
-                            emb = c.get("muzzle_embedding")
-                            if emb and isinstance(emb, list):
-                                db_vec = np.array(emb)
-                                if len(db_vec) == len(q_vec):
-                                    sim = np.dot(q_vec, db_vec) / (np.linalg.norm(q_vec) * np.linalg.norm(db_vec) + 1e-9)
-                                    if sim >= 0.94:
-                                        class DummyResp:
-                                            data = [c]
-                                        return DummyResp()
-                except Exception as fb_err:
-                    logger.warning(f"Python fallback duplicate check failed: {fb_err}")
-                class EmptyResp:
-                    data = []
-                return EmptyResp()
-        duplicate_check = await asyncio.to_thread(_check_duplicate)
+                    rpc_res = sb.rpc(
+                        "match_cattle_muzzle",
+                        {
+                            "query_embedding": q_emb,
+                            "match_threshold": thresh,
+                            "match_count": 1
+                        }
+                    ).execute()
+                    if rpc_res.data and len(rpc_res.data) > 0:
+                        matched = rpc_res.data[0]
+                        matched["matched_label"] = label
+                        return matched
+                except Exception as rpc_err:
+                    logger.debug(f"RPC duplicate check note ({label}): {rpc_err}")
 
-        if duplicate_check.data and len(duplicate_check.data) > 0:
-            existing = duplicate_check.data[0]
-            existing_name = existing.get("name", "Existing Cattle")
+            # Step B: Python in-memory vector fallback (checks against all registered cattle)
+            try:
+                res = sb.table("cattle").select("id, name, muzzle_embedding").execute()
+                if res.data:
+                    for c in res.data:
+                        db_emb = c.get("muzzle_embedding")
+                        if db_emb and isinstance(db_emb, list) and len(db_emb) > 0:
+                            db_vec = np.array(db_emb, dtype=np.float32)
+                            db_norm = np.linalg.norm(db_vec) + 1e-9
+                            for label, q_emb, thresh in check_vectors:
+                                q_vec = np.array(q_emb, dtype=np.float32)
+                                q_norm = np.linalg.norm(q_vec) + 1e-9
+                                sim = float(np.dot(q_vec, db_vec) / (q_norm * db_norm))
+                                if sim >= thresh:
+                                    c["similarity"] = sim
+                                    c["matched_label"] = label
+                                    return c
+            except Exception as fb_err:
+                logger.warning(f"Python fallback duplicate check error: {fb_err}")
+
+            return None
+
+        duplicate_match = await asyncio.to_thread(_check_duplicate)
+
+        if duplicate_match:
+            existing_name = duplicate_match.get("name", "Existing Cattle")
+            matched_label = duplicate_match.get("matched_label", "Muzzle pattern")
+            matched_sim = duplicate_match.get("similarity")
+            sim_info = f" ({matched_sim * 100:.1f}% biometric similarity)" if matched_sim else ""
+            logger.warning(
+                f"Duplicate detected: {matched_label} matches registered cattle '{existing_name}'{sim_info}"
+            )
             raise HTTPException(
                 status_code=409,
-                detail=f"This cattle's muzzle pattern is already registered in the system as '{existing_name}'. Duplicate muzzle registrations are not allowed!"
+                detail=f"DUPLICATE DETECTED: This cattle muzzle pattern is already registered under '{existing_name}'{sim_info}. Each cattle must have unique muzzle biometrics."
             )
 
         # 4. Fetch user's existing cattle count for tag ID generation
@@ -563,11 +620,6 @@ async def analyze_cattle_video(
             try:
                 from PIL import Image, ImageOps
                 import io
-                try:
-                    from pillow_heif import register_heif_opener
-                    register_heif_opener()
-                except Exception:
-                    pass
                 pil_img = Image.open(io.BytesIO(video_content))
                 pil_img = ImageOps.exif_transpose(pil_img).convert("RGB")
                 ext = ".jpg"
@@ -601,26 +653,75 @@ async def analyze_cattle_video(
 
         # Fetch existing cattle record FIRST to lock immutable master traits (Breed, Gender, Coat Color)
         existing_cattle = None
-        def _get_existing_cattle():
-            return sb.table("cattle").select("*").eq("id", cattle_id).execute()
-        existing_res = await asyncio.to_thread(_get_existing_cattle)
-        if existing_res.data:
-            existing_cattle = existing_res.data[0]
+        try:
+            def _get_existing_cattle():
+                return sb.table("cattle").select("*").eq("id", cattle_id).execute()
+            existing_res = await asyncio.to_thread(_get_existing_cattle)
+            if existing_res and existing_res.data:
+                existing_cattle = existing_res.data[0]
+        except Exception as ex_err:
+            logger.warning(f"Could not fetch existing cattle record [{type(ex_err).__name__}] {ex_err}")
 
         reg_breed = existing_cattle.get("breed") if existing_cattle else None
         reg_gender = (existing_cattle.get("gender") or existing_cattle.get("sex")) if existing_cattle else None
         registered_color = (existing_cattle.get("color") or existing_cattle.get("coat_color")) if existing_cattle else None
 
-        # Call AI for video stats analysis, passing registered expected_gender if available
-        stats = await analyse_video_stats(frame_paths, expected_gender=reg_gender)
+        # Call AI for video stats analysis and deep clinical disease/mastitis screening in parallel
+        stats_task = analyse_video_stats(frame_paths, expected_gender=reg_gender)
+        disease_task = analyse_disease(frame_paths)
+        stats, disease_res = await asyncio.gather(stats_task, disease_task, return_exceptions=True)
+
+        if isinstance(stats, Exception):
+            logger.warning(f"analyse_video_stats failed: [{type(stats).__name__}] {stats}. Using smart fallback.")
+            from services.openai_service import _smart_fallback_video_stats
+            stats = _smart_fallback_video_stats(reg_gender, frame_paths=frame_paths)
+
+        # Integrate deep clinical disease screening (Mastitis, LSD, etc.)
+        if not isinstance(disease_res, Exception) and disease_res:
+            dis_cond = str(getattr(disease_res, "possible_condition", "") or "").strip()
+            dis_cond_lc = dis_cond.lower()
+            severity = str(getattr(disease_res, "severity", "None") or "None").lower()
+            confidence = float(getattr(disease_res, "confidence", 0.0) or 0.0)
+            logger.info(f"Clinical disease screening: condition='{dis_cond}', severity='{severity}', conf={confidence:.2f}")
+
+            # Check if this is a confirmed pathology (not healthy, not normal, not routine)
+            is_confirmed_pathology = (
+                any(w in dis_cond_lc for w in ["mastitis", "lumpy", "foot and mouth", "tick", "fever", "ringworm"])
+                and not any(neg in dis_cond_lc for neg in ["no visible", "healthy", "normal", "none", "negative", "no signs", "free from"])
+                and severity in ["mild", "moderate", "severe"]
+                and confidence >= 0.85
+            )
+
+            # Do NOT falsely flag mastitis if stats has full-body evaluation showing healthy cow with good udder (>= 3.5)
+            if is_confirmed_pathology:
+                if "mastitis" in dis_cond_lc and stats.bcs_score > 0.0 and getattr(stats, "udder_score", 0.0) >= 3.5 and stats.disease_status == "Healthy":
+                    logger.info("Ignoring weak udder mastitis signal: Full body evaluation confirms healthy cow with good udder.")
+                else:
+                    stats.disease_status = "Mastitis" if "mastitis" in dis_cond_lc else dis_cond
+                    if "mastitis" in dis_cond_lc:
+                        stats.gender = "Female"
+                        stats.udder_visible = True
+                        stats.teat_visible = True
+                        u_s = float(getattr(stats, "udder_score", 0.0) or 0.0)
+                        t_s = float(getattr(stats, "teat_score", 0.0) or 0.0)
+                        stats.udder_score = u_s if 1.0 <= u_s <= 2.5 else 2.0
+                        stats.teat_score = t_s if 1.0 <= t_s <= 2.5 else 2.0
+                    signs = getattr(disease_res, "visible_signs", []) or []
+                    for s in reversed(signs):
+                        if s and s not in stats.observations:
+                            stats.observations.insert(0, s)
 
         coat_mismatch = False
         mismatch_warning = None
 
         if existing_cattle:
-            # Lock breed permanently to registered master profile
-            if reg_breed and str(reg_breed).strip():
+            # If current video is udder-only / partial (bcs_score == 0.0) or breed mentions udder, set breed strictly to "Unknown"
+            if stats.bcs_score == 0.0 or "udder" in (stats.breed or "").lower():
+                stats.breed = "Unknown"
+            elif reg_breed and str(reg_breed).strip() and str(reg_breed).strip().lower() not in ["unknown", "unidentified subject", "udder", "dairy cattle (udder view)"]:
                 stats.breed = reg_breed.strip()
+            elif (stats.breed or "").lower() in ["udder", "dairy cattle (udder view)"]:
+                stats.breed = "Unknown"
 
             # For gender: Allow AI video detection (Female, Male, or Unknown) to update profile
             if stats.gender in ["Female", "Male", "Unknown"]:
@@ -649,10 +750,21 @@ async def analyze_cattle_video(
 
 
         # Build weight and height range strings
-        w_num = float(stats.weight_kg or 450.0)
-        h_num = float(stats.height_cm or 135.0)
-        w_range = getattr(stats, 'weight_range', None) or f"{int(round(w_num*0.93/5)*5)} - {int(round(w_num*1.07/5)*5)} kg"
-        h_range = getattr(stats, 'height_range', None) or f"{int(round(h_num*0.96))} - {int(round(h_num*1.04))} cm"
+        is_partial = (
+            stats.bcs_score == 0.0
+            or float(stats.weight_kg or 0.0) == 0.0
+            or "N/A" in str(getattr(stats, 'weight_range', ''))
+        )
+        if is_partial:
+            w_range = "N/A (Full body required)"
+            h_range = "N/A (Full body required)"
+            w_num = 0.0
+            h_num = 0.0
+        else:
+            w_num = float(stats.weight_kg or 450.0)
+            h_num = float(stats.height_cm or 135.0)
+            w_range = getattr(stats, 'weight_range', None) or f"{int(round(w_num*0.93/5)*5)} - {int(round(w_num*1.07/5)*5)} kg"
+            h_range = getattr(stats, 'height_range', None) or f"{int(round(h_num*0.96))} - {int(round(h_num*1.04))} cm"
 
         # Build test iteration record to persist test history in database
         existing_history = (existing_cattle.get("test_history") if existing_cattle else None) or []
@@ -771,7 +883,10 @@ async def analyze_cattle_video(
                         continue
                     raise update_err
 
-        await asyncio.to_thread(_do_update, update_data)
+        try:
+            await asyncio.to_thread(_do_update, update_data)
+        except Exception as db_err:
+            logger.warning(f"Failed to persist video test results to database: [{type(db_err).__name__}] {db_err}")
 
         # Build enriched response data including retake signals & coat color verification
         result_data = stats.dict()

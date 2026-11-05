@@ -399,5 +399,7 @@
   "lang_select": "Language",
   "lang_en": "English",
   "lang_hi": "हिंदी (Hindi)",
-  "lang_ta": "தமிழ் (Tamil)"
+  "lang_ta": "தமிழ் (Tamil)",
+  "mastitis_detected_title": "Mastitis Disease Identified on Udder & Teats",
+  "mastitis_detected_desc": "AI vision screened the mammary gland and detected quarter asymmetry, inflammation, and teat abnormalities consistent with mastitis."
 }

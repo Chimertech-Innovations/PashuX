@@ -1,3 +1,4 @@
+
 """
 Router: video upload
 POST /api/upload-video
@@ -86,7 +87,6 @@ async def upload_video(
                 register_heif_opener()
             except Exception:
                 pass
-
             pil_img = Image.open(io.BytesIO(content))
             pil_img = ImageOps.exif_transpose(pil_img).convert("RGB")
             

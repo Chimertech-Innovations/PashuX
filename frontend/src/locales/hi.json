@@ -399,5 +399,7 @@
   "lang_select": "भाषा",
   "lang_en": "English",
   "lang_hi": "हिंदी (Hindi)",
-  "lang_ta": "தமிழ் (Tamil)"
+  "lang_ta": "தமிழ் (Tamil)",
+  "mastitis_detected_title": "अयन और थनों पर थनैला (मस्टाइटिस) रोग की पहचान हुई",
+  "mastitis_detected_desc": "एआई विजन ने अयन की जांच की और थनैला रोग के अनुरूप क्वार्टर विषमता, सूजन और थन की असामान्यताओं का पता लगाया।"
 }

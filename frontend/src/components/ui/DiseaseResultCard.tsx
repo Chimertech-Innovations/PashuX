@@ -55,6 +55,11 @@ export default function DiseaseResultCard({ result }: Props) {
   ) || 'monitoring';
   const urgency = URGENCY_CONFIG[urgencyKey];
 
+  const isMastitis =
+    result.possible_condition.toLowerCase().includes('mastitis') ||
+    result.affected_area.toLowerCase().includes('udder') ||
+    (result.visible_signs || []).some(s => s.toLowerCase().includes('udder') || s.toLowerCase().includes('teat'));
+
   return (
     <div className="space-y-5 animate-fade-up">
       {/* Main result card */}
@@ -83,6 +88,43 @@ export default function DiseaseResultCard({ result }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Dedicated Mastitis Udder & Teat Pathology Card */}
+      {isMastitis && (
+        <div className="p-6 rounded-3xl bg-rose-50/90 border-2 border-rose-300 text-rose-950 shadow-sm space-y-4 animate-fade-in">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-rose-200 border border-rose-300 text-rose-900 flex items-center justify-center font-black text-xl flex-shrink-0 shadow-sm">
+              🩺
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-200 text-rose-950 font-black text-[10px] uppercase tracking-wider mb-0.5">
+                Udder & Teat Pathology
+              </div>
+              <h3 className="text-base font-black text-rose-950 tracking-tight">
+                {t('mastitis_detected_title', 'Mastitis Disease Identified on Udder & Teats')}
+              </h3>
+              <p className="text-xs text-rose-900 font-bold leading-relaxed">
+                {t('mastitis_detected_desc', 'AI vision screened the mammary gland and detected quarter asymmetry, inflammation, and teat abnormalities consistent with mastitis.')}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <div className="p-3.5 bg-white/95 border border-rose-200 rounded-2xl shadow-xs space-y-1">
+              <span className="text-[10px] uppercase font-black tracking-wider text-rose-700">Mammary Quarters</span>
+              <p className="text-xs font-black text-slate-900">Quarter Asymmetry / Swelling</p>
+            </div>
+            <div className="p-3.5 bg-white/95 border border-rose-200 rounded-2xl shadow-xs space-y-1">
+              <span className="text-[10px] uppercase font-black tracking-wider text-rose-700">Teat Morphology</span>
+              <p className="text-xs font-black text-slate-900">Inflammation / Edema</p>
+            </div>
+            <div className="p-3.5 bg-white/95 border border-rose-200 rounded-2xl shadow-xs space-y-1">
+              <span className="text-[10px] uppercase font-black tracking-wider text-rose-700">Milking Protocol</span>
+              <p className="text-xs font-black text-rose-700">Isolate & Discard Milk</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Urgency Alert */}
       <div className={`p-5 rounded-3xl border ${urgency.bg} shadow-sm`}>

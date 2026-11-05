@@ -947,7 +947,11 @@ export default function FarmManagement() {
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
                           <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">{t('cattle_breed', 'Breed')}</p>
-                          <p className="text-slate-900 font-black text-sm mt-0.5">{translateOutput(videoStats.breed || 'Unknown')}</p>
+                          <p className="text-slate-900 font-black text-sm mt-0.5">
+                            {(!videoStats.breed || videoStats.bcs_score === 0 || videoStats.breed.toLowerCase().includes('udder') || videoStats.breed.toLowerCase() === 'unknown')
+                              ? 'Unknown'
+                              : translateOutput(videoStats.breed)}
+                          </p>
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
                           <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">{t('cattle_age_estimate', 'Age Estimate')}</p>
@@ -962,8 +966,12 @@ export default function FarmManagement() {
                           <p className="text-slate-900 font-black text-sm mt-0.5">
                             {(() => {
                               const str = String(videoStats.weight_range || '');
+                              if (str.toLowerCase().includes('n/a') || videoStats.bcs_score === 0 || !videoStats.weight_kg) {
+                                return 'N/A (Full Body Required)';
+                              }
                               if (str.includes('-') || str.includes('–')) return str.includes('kg') ? str : `${str} kg`;
-                              const num = parseFloat(str.replace(/[^0-9.]/g, '')) || parseFloat(videoStats.weight_kg) || 480;
+                              const num = parseFloat(str.replace(/[^0-9.]/g, '')) || parseFloat(videoStats.weight_kg) || 0;
+                              if (!num) return 'N/A (Full Body Required)';
                               const low = Math.round((num * 0.93) / 5) * 5;
                               const high = Math.round((num * 1.07) / 5) * 5;
                               return `${low} – ${high} kg`;
@@ -975,8 +983,12 @@ export default function FarmManagement() {
                           <p className="text-slate-900 font-black text-sm mt-0.5">
                             {(() => {
                               const str = String(videoStats.height_range || '');
+                              if (str.toLowerCase().includes('n/a') || videoStats.bcs_score === 0 || !videoStats.height_cm) {
+                                return 'N/A (Full Body Required)';
+                              }
                               if (str.includes('-') || str.includes('–')) return str.includes('cm') ? str : `${str} cm`;
-                              const num = parseFloat(str.replace(/[^0-9.]/g, '')) || parseFloat(videoStats.height_cm) || 135;
+                              const num = parseFloat(str.replace(/[^0-9.]/g, '')) || parseFloat(videoStats.height_cm) || 0;
+                              if (!num) return 'N/A (Full Body Required)';
                               const low = Math.round(num * 0.96);
                               const high = Math.round(num * 1.04);
                               return `${low} – ${high} cm`;
@@ -985,13 +997,52 @@ export default function FarmManagement() {
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
                           <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">{t('cattle_est_value', 'Est. Value')}</p>
-                          <p className="text-slate-900 font-black text-sm mt-0.5">{videoStats.estimated_value || 'N/A'}</p>
+                          <p className="text-slate-900 font-black text-sm mt-0.5">
+                            {videoStats.bcs_score === 0 ? 'N/A (Full Body Required)' : (videoStats.estimated_value || 'N/A')}
+                          </p>
                         </div>
                         <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
                           <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">{t('cattle_cleanliness_score', 'Cleanliness Score')}</p>
                           <p className="text-emerald-700 font-black text-sm mt-0.5">{videoStats.cleanliness_score || 85}<span className="text-xs font-bold text-emerald-400">/100</span></p>
                         </div>
                       </div>
+
+                      {/* Regional / Udder Close-up Notice */}
+                      {videoStats.bcs_score === 0 && (
+                        <div className="bg-blue-50/90 border border-blue-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs">
+                          <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-black flex-shrink-0 text-sm">
+                            ℹ️
+                          </div>
+                          <div className="space-y-0.5">
+                            <h5 className="text-xs font-black text-blue-950 uppercase tracking-wider">Udder & Teats Close-Up Analysis</h5>
+                            <p className="text-xs font-bold text-blue-900 leading-relaxed">
+                              Uploaded video focuses on the udder and teats. Mastitis screening and udder/teat scoring have been evaluated from this video. To calculate full-body BCS (ribs & spine), body weight, and confirm breed, please record or upload a full-body side/rear profile video.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Mastitis Clinical Pathology Alert Banner */}
+                      {videoStats.disease_status && videoStats.disease_status.toLowerCase().includes('mastitis') && (
+                        <div className="bg-rose-50 border-2 border-rose-400 rounded-2xl p-4 sm:p-5 shadow-sm space-y-2">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 bg-rose-600 text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-black text-rose-950 text-base">⚠️ Mastitis Detected in Udder Scan</h4>
+                                <span className="px-2 py-0.5 bg-rose-200 text-rose-900 font-black text-[10px] uppercase tracking-wider rounded-md">Urgent Action</span>
+                              </div>
+                              <p className="text-rose-800 text-xs mt-1 font-medium leading-relaxed">
+                                Clinical signs of mastitis (quarter asymmetry, inflammatory edema/swelling, or teat abnormalities) were detected on the cattle's udder in the video frames. Prompt veterinary consultation, strip cup / CMT test, and intramammary therapy are advised.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Score Rows — BCS, Health, Udder, Teat */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1000,10 +1051,16 @@ export default function FarmManagement() {
                         <div className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
                           <div className="flex items-start justify-between mb-1">
                             <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">BCS Score</p>
-                            <span className="text-emerald-700 font-black text-lg leading-none">{videoStats.bcs_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-emerald-500">/5</span></span>
+                            {videoStats.bcs_score && videoStats.bcs_score > 0 ? (
+                              <span className="text-emerald-700 font-black text-lg leading-none">{videoStats.bcs_score?.toFixed(1) || '—'}<span className="text-xs font-bold text-emerald-500">/5</span></span>
+                            ) : (
+                              <span className="text-xs font-black text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">Pending Full Body Video</span>
+                            )}
                           </div>
-                          <p className="text-emerald-800 font-bold text-xs">{translateOutput(bcsLabel)}</p>
-                          <ScoreDots score={videoStats.bcs_score || 0} color="#10b981" />
+                          <p className="text-emerald-800 font-bold text-xs">
+                            {videoStats.bcs_score && videoStats.bcs_score > 0 ? translateOutput(bcsLabel) : 'Udder-only video — ribs & spine required for BCS'}
+                          </p>
+                          {videoStats.bcs_score && videoStats.bcs_score > 0 && <ScoreDots score={videoStats.bcs_score || 0} color="#10b981" />}
                         </div>
 
                         {/* Health Status */}

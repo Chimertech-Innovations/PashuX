@@ -12,7 +12,7 @@ import base64
 # In the future, we'll import the real model from a new services/muzzle_processor.py
 # from services.muzzle_processor import extract_muzzle_features
 import services.supabase_service as db
-from services.openai_service import validate_muzzle_image, verify_same_cattle_photos
+from services.openai_service import validate_muzzle_image, verify_same_cattle_photos, normalize_image_to_jpeg_bytes
 from services.video_processor import process_video
 from services.image_analysis import analyse_video_stats, analyse_disease
 import tempfile
@@ -377,9 +377,13 @@ async def register_cattle_muzzle(
     Validates with OpenAI, generates ID, checks duplicates.
     """
     try:
-        img1_bytes = await file1.read()
-        img2_bytes = await file2.read()
-        img3_bytes = await file3.read()
+        raw1 = await file1.read()
+        raw2 = await file2.read()
+        raw3 = await file3.read()
+
+        img1_bytes = normalize_image_to_jpeg_bytes(raw1)
+        img2_bytes = normalize_image_to_jpeg_bytes(raw2)
+        img3_bytes = normalize_image_to_jpeg_bytes(raw3)
         
         # 0. OpenAI Vision Muzzle Validation (using OpenAI API key)
         val1, val2, val3 = await asyncio.gather(
@@ -932,7 +936,8 @@ async def analyze_cattle_udder_photo(
     from services.openai_service import analyse_udder_image_bytes
 
     try:
-        img_bytes = await file.read()
+        raw_bytes = await file.read()
+        img_bytes = normalize_image_to_jpeg_bytes(raw_bytes)
         res = await analyse_udder_image_bytes(img_bytes)
 
         u_score = res.get("udder_score", 4.0)
@@ -1009,27 +1014,27 @@ async def analyze_cattle_multi_angle_photos(
     if right_img:
         content = await right_img.read()
         if content:
-            images_dict["right_side"] = content
+            images_dict["right_side"] = normalize_image_to_jpeg_bytes(content)
     if left_img:
         content = await left_img.read()
         if content:
-            images_dict["left_side"] = content
+            images_dict["left_side"] = normalize_image_to_jpeg_bytes(content)
     if back_img:
         content = await back_img.read()
         if content:
-            images_dict["back_side"] = content
+            images_dict["back_side"] = normalize_image_to_jpeg_bytes(content)
     if udder_img:
         content = await udder_img.read()
         if content:
-            images_dict["udder"] = content
+            images_dict["udder"] = normalize_image_to_jpeg_bytes(content)
     if front_img:
         content = await front_img.read()
         if content:
-            images_dict["front"] = content
+            images_dict["front"] = normalize_image_to_jpeg_bytes(content)
     if manure_img:
         content = await manure_img.read()
         if content:
-            images_dict["manure"] = content
+            images_dict["manure"] = normalize_image_to_jpeg_bytes(content)
 
     if not images_dict:
         raise HTTPException(status_code=400, detail="Please upload at least one cattle photo (Right, Left, Back, Udder, Front, or Manure).")
@@ -1226,7 +1231,8 @@ async def identify_cattle_muzzle(
     Identify a cattle from 1 muzzle image.
     """
     try:
-        original_image_bytes = await file.read()
+        raw_bytes = await file.read()
+        original_image_bytes = normalize_image_to_jpeg_bytes(raw_bytes)
         
         # 0. OpenAI Vision Muzzle Validation (using OpenAI API key)
         val = await validate_muzzle_image(original_image_bytes)

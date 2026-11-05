@@ -19,9 +19,52 @@ export async function compressImage(
   }
 
   const isHeic = file.type.includes('heic') || file.type.includes('heif') || fileName.endsWith('.heic') || fileName.endsWith('.heif');
+  
   // If already under 400KB and already standard JPEG/PNG/WebP, keep it
   if (!isHeic && file.size < 400 * 1024 && (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp')) {
     return file;
+  }
+
+  // Try createImageBitmap first if available (faster and handles EXIF on modern mobile browsers)
+  if (typeof window !== 'undefined' && 'createImageBitmap' in window && !isHeic) {
+    try {
+      const bitmap = await createImageBitmap(file);
+      let { width, height } = bitmap;
+
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(bitmap, 0, 0, width, height);
+        bitmap.close();
+
+        const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', quality));
+        if (blob && blob.size > 0) {
+          return new File(
+            [blob],
+            file.name.replace(/\.[^/.]+$/, '') + '.jpg',
+            {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            }
+          );
+        }
+      }
+    } catch {
+      // Fallback to FileReader + HTMLImageElement below
+    }
   }
 
   return new Promise((resolve) => {
@@ -55,7 +98,7 @@ export async function compressImage(
 
         canvas.toBlob(
           (blob) => {
-            if (!blob) {
+            if (!blob || blob.size === 0) {
               resolve(file);
               return;
             }

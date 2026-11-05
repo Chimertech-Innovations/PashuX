@@ -6,6 +6,7 @@ import CattleQRCodeCard from '@/components/cattle/CattleQRCodeCard';
 import AIDisclaimerFooter from '@/components/ui/AIDisclaimerFooter';
 import AngleCameraModal from '@/components/ui/AngleCameraModal';
 import LiveVideoRecorderModal from '@/components/ui/LiveVideoRecorderModal';
+import { BackendStatusModal } from '@/components/ui/BackendStatusModal';
 import { compressImage } from '@/utils/imageCompressor';
 import { useLanguage } from '@/contexts/LanguageContext';
 import muzzleWireframeBanner from '@/assets/muzzle_wireframe_banner.png';
@@ -44,6 +45,7 @@ export default function FarmManagement() {
     const saved = localStorage.getItem('muzzle_register_videoStats');
     return saved ? JSON.parse(saved) : null;
   });
+  const [isBackendModalOpen, setIsBackendModalOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('muzzle_register_step', step.toString());
@@ -316,20 +318,28 @@ export default function FarmManagement() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, slot: number) => {
     if (e.target.files && e.target.files[0]) {
       const rawFile = e.target.files[0];
-      const selectedFile = await compressImage(rawFile);
-      const previewUrl = URL.createObjectURL(selectedFile);
-      
-      if (slot === 1) {
-        setFile1(selectedFile);
-        setPreview1(previewUrl);
-      } else if (slot === 2) {
-        setFile2(selectedFile);
-        setPreview2(previewUrl);
-      } else if (slot === 3) {
-        setFile3(selectedFile);
-        setPreview3(previewUrl);
+      try {
+        const selectedFile = await compressImage(rawFile);
+        const previewUrl = URL.createObjectURL(selectedFile);
+        
+        if (slot === 1) {
+          setFile1(selectedFile);
+          setPreview1(previewUrl);
+        } else if (slot === 2) {
+          setFile2(selectedFile);
+          setPreview2(previewUrl);
+        } else if (slot === 3) {
+          setFile3(selectedFile);
+          setPreview3(previewUrl);
+        }
+        setMessage(null);
+      } catch (err) {
+        console.error("Error processing muzzle file:", err);
+        const previewUrl = URL.createObjectURL(rawFile);
+        if (slot === 1) { setFile1(rawFile); setPreview1(previewUrl); }
+        else if (slot === 2) { setFile2(rawFile); setPreview2(previewUrl); }
+        else if (slot === 3) { setFile3(rawFile); setPreview3(previewUrl); }
       }
-      setMessage(null);
     }
   };
 
@@ -375,6 +385,16 @@ export default function FarmManagement() {
         method: 'POST',
         body: formData,
       });
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const textResponse = await res.text();
+        console.error('Non-JSON response from backend:', textResponse.slice(0, 300));
+        throw new Error(
+          `API server returned non-JSON response (${res.status} ${res.statusText}). Is the backend server running at ${BASE_URL || window.location.origin}?`
+        );
+      }
+
       const data = await res.json();
 
       if (res.ok) {
@@ -392,8 +412,22 @@ export default function FarmManagement() {
       } else {
         setMessage({ type: 'error', text: data.detail || 'Registration failed' });
       }
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Network error connecting to backend.' });
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      const isMixedContent = typeof window !== 'undefined' && window.location.protocol === 'https:' && BASE_URL.startsWith('http:');
+      const isLocalhostOnMobile = typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname) && (BASE_URL.includes('localhost') || BASE_URL.includes('127.0.0.1'));
+      
+      let hint = '';
+      if (isMixedContent) {
+        hint = ' Browsers block HTTPS sites from calling HTTP backends. Configure an HTTPS backend or test over local HTTP.';
+      } else if (isLocalhostOnMobile) {
+        hint = ' You are accessing from mobile; localhost refers to your phone, not the laptop. Connect via Wi-Fi IP or set a backend URL.';
+      }
+      
+      setMessage({
+        type: 'error',
+        text: `Network error connecting to backend (${BASE_URL || window.location.origin}): ${err.message || 'Server unreachable'}.${hint}`
+      });
     } finally {
       setLoading(false);
     }
@@ -567,7 +601,12 @@ export default function FarmManagement() {
                       {preview1 ? (
                         <div className="flex flex-col items-center justify-between h-full w-full">
                           <div className="relative w-full h-44 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden shadow-md">
-                            <img src={preview1} alt="Preview 1" className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`} />
+                            <img
+                              src={preview1}
+                              alt="Preview 1"
+                              onError={(e) => { (e.target as HTMLImageElement).src = muzzleStraightGuide; }}
+                              className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`}
+                            />
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 flex items-end justify-center">
                                <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">{t('reg_slot1_overlay', '1. Straight-on Muzzle')}</span>
                             </div>
@@ -609,8 +648,8 @@ export default function FarmManagement() {
                               {t('reg_upload_btn', 'Upload')}
                             </button>
                           </div>
-                          <input type="file" accept="image/*,.heic,.heif" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefGallery1} />
-                          <input type="file" accept="image/*,.heic,.heif" capture="environment" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefCamera1} />
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/*" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefGallery1} />
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/*" capture="environment" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefCamera1} />
                         </div>
                       )}
                     </div>
@@ -622,7 +661,12 @@ export default function FarmManagement() {
                       {preview2 ? (
                         <div className="flex flex-col items-center justify-between h-full w-full">
                           <div className="relative w-full h-44 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden shadow-md">
-                            <img src={preview2} alt="Preview 2" className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`} />
+                            <img
+                              src={preview2}
+                              alt="Preview 2"
+                              onError={(e) => { (e.target as HTMLImageElement).src = muzzleLeftGuide; }}
+                              className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`}
+                            />
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 flex items-end justify-center">
                                <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">{t('reg_slot2_overlay', '2. Slight Left Muzzle')}</span>
                             </div>
@@ -664,8 +708,8 @@ export default function FarmManagement() {
                               {t('reg_upload_btn', 'Upload')}
                             </button>
                           </div>
-                          <input type="file" accept="image/*,.heic,.heif" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefGallery2} />
-                          <input type="file" accept="image/*,.heic,.heif" capture="environment" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefCamera2} />
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/*" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefGallery2} />
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/*" capture="environment" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefCamera2} />
                         </div>
                       )}
                     </div>
@@ -677,7 +721,12 @@ export default function FarmManagement() {
                       {preview3 ? (
                         <div className="flex flex-col items-center justify-between h-full w-full">
                           <div className="relative w-full h-44 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden shadow-md">
-                            <img src={preview3} alt="Preview 3" className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`} />
+                            <img
+                              src={preview3}
+                              alt="Preview 3"
+                              onError={(e) => { (e.target as HTMLImageElement).src = muzzleRightGuide; }}
+                              className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`}
+                            />
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 flex items-end justify-center">
                                <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">{t('reg_slot3_overlay', '3. Slight Right Muzzle')}</span>
                             </div>
@@ -719,8 +768,8 @@ export default function FarmManagement() {
                               {t('reg_upload_btn', 'Upload')}
                             </button>
                           </div>
-                          <input type="file" accept="image/*,.heic,.heif" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefGallery3} />
-                          <input type="file" accept="image/*,.heic,.heif" capture="environment" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefCamera3} />
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/*" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefGallery3} />
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/*" capture="environment" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefCamera3} />
                         </div>
                       )}
                     </div>
@@ -736,7 +785,20 @@ export default function FarmManagement() {
                     ) : (
                       <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     )}
-                    <span>{message.text}</span>
+                    <div className="flex-1">
+                      <span>{message.text}</span>
+                      {message.type === 'error' && (message.text.toLowerCase().includes('backend') || message.text.toLowerCase().includes('network')) && (
+                        <div className="mt-2.5">
+                          <button
+                            type="button"
+                            onClick={() => setIsBackendModalOpen(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-700 hover:bg-rose-800 text-white rounded-lg text-xs font-black shadow-sm transition-all"
+                          >
+                            <span>⚙️ Configure Backend Server</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -824,7 +886,20 @@ export default function FarmManagement() {
                     ) : (
                       <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     )}
-                    <span>{message.text}</span>
+                    <div className="flex-1">
+                      <span>{message.text}</span>
+                      {message.type === 'error' && (message.text.toLowerCase().includes('backend') || message.text.toLowerCase().includes('network')) && (
+                        <div className="mt-2.5">
+                          <button
+                            type="button"
+                            onClick={() => setIsBackendModalOpen(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-700 hover:bg-rose-800 text-white rounded-lg text-xs font-black shadow-sm transition-all"
+                          >
+                            <span>⚙️ Configure Backend Server</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -1288,7 +1363,7 @@ export default function FarmManagement() {
                           <span>📁 Choose File</span>
                           <input
                             type="file"
-                            accept="image/*,.heic,.heif"
+                            accept="image/jpeg,image/png,image/webp,image/*"
                             onChange={async (e) => {
                               const f = e.target.files?.[0];
                               if (f) {
@@ -1607,6 +1682,12 @@ export default function FarmManagement() {
             </div>
           </div>
         )}
+
+        {/* Backend Server Connection Settings Modal */}
+        <BackendStatusModal
+          isOpen={isBackendModalOpen}
+          onClose={() => setIsBackendModalOpen(false)}
+        />
 
       </div>
     </div>

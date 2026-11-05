@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useState } from 'react';
+import { BackendStatusModal } from '@/components/ui/BackendStatusModal';
 
 const IHERD_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.chimertech.iherd&hl=en_IN';
 
@@ -14,6 +15,7 @@ export default function Navbar() {
   const [submenuOpen, setSubmenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [backendModalOpen, setBackendModalOpen] = useState(false);
 
   const currentLangObj = languages.find(l => l.code === language) || languages[0];
 

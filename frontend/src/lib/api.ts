@@ -9,8 +9,55 @@ import type {
 } from '@/types';
 
 
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-export const BASE_URL = rawBaseUrl.replace(/\/+$/, '');
+/**
+ * Dynamic API Base URL resolver:
+ * Ensures the app connects reliably to the backend across all environments:
+ * 1. If VITE_API_BASE_URL is set and points to an external server (e.g. Railway/Render), use it.
+ * 2. If running on HTTPS (production Vercel, Netlify, custom domain, mobile browser),
+ *    never call http://localhost (which causes Mixed Content blocks and fails on mobile phones).
+ *    Instead, use the production backend URL: https://pashux-production.up.railway.app
+ * 3. If running on a local network IP (e.g. testing mobile phone over Wi-Fi on http://192.168.x.x:5173),
+ *    dynamically route to http://<current-ip>:8000 so the mobile phone talks to the host PC backend.
+ * 4. Only use http://localhost:8000 when literally running on desktop localhost.
+ */
+function resolveBaseUrl(): string {
+  const envUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
+
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isHttps = protocol === 'https:';
+    const isIPv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
+
+    // If site is served over HTTPS (production domain, mobile Safari/Chrome, Vercel):
+    if (isHttps) {
+      if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1') || envUrl.startsWith('http:')) {
+        return 'https://pashux-production.up.railway.app';
+      }
+      return envUrl.replace(/\/+$/, '');
+    }
+
+    // If accessing from mobile device over local Wi-Fi (e.g. http://192.168.1.5:5173):
+    if (isIPv4 && !isLocalhost) {
+      if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+        return `http://${hostname}:8000`;
+      }
+    }
+
+    // If on a remote non-localhost domain served over HTTP
+    if (!isLocalhost && (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+      return 'https://pashux-production.up.railway.app';
+    }
+  }
+
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, '');
+  }
+
+  return 'http://localhost:8000';
+}
+
+export const BASE_URL = resolveBaseUrl();
 
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

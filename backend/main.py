@@ -64,8 +64,8 @@ for o in default_origins:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_origin_regex=r"https://.*(\.vercel\.app|\.onrender\.com|\.up\.railway\.app)",
+    allow_origins=origins if origins else ["*"],
+    allow_origin_regex=r".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

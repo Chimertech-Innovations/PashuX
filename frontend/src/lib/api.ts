@@ -12,45 +12,47 @@ import type {
 /**
  * Dynamic API Base URL resolver:
  * Ensures the app connects reliably to the backend across all environments:
- * 1. If VITE_API_BASE_URL is set and points to an external server (e.g. Railway/Render), use it.
- * 2. If running on HTTPS (production Vercel, Netlify, custom domain, mobile browser),
- *    never call http://localhost (which causes Mixed Content blocks and fails on mobile phones).
- *    Instead, use the production backend URL: https://pashux-production.up.railway.app
- * 3. If running on a local network IP (e.g. testing mobile phone over Wi-Fi on http://192.168.x.x:5173),
- *    dynamically route to http://<current-ip>:8000 so the mobile phone talks to the host PC backend.
- * 4. Only use http://localhost:8000 when literally running on desktop localhost.
+ * 1. Checks localStorage('PASHU_BACKEND_URL') for custom backend address.
+ * 2. If running via Vite dev server (port 5173/3000), returns relative path ""
+ *    so Vite's proxy automatically routes /api requests to http://localhost:8000.
+ *    This allows mobile devices on the same Wi-Fi to work seamlessly.
+ * 3. In production HTTPS, respects VITE_API_BASE_URL if configured.
+ * 4. Falls back to http://localhost:8000 on desktop localhost.
  */
 function resolveBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const custom = localStorage.getItem('PASHU_BACKEND_URL');
+    if (custom && custom.trim()) return custom.trim().replace(/\/+$/, '');
+  }
+
   const envUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
 
   if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
+    const { protocol, hostname, port } = window.location;
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
     const isHttps = protocol === 'https:';
-    const isIPv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
 
-    // If site is served over HTTPS (production domain, mobile Safari/Chrome, Vercel):
+    // When accessing via Vite dev server (e.g. port 5173 / 3000) on laptop or mobile over Wi-Fi:
+    // Return relative path "" so Vite's proxy automatically routes /api requests to http://localhost:8000!
+    if (port === '5173' || port === '3000' || port === '5174') {
+      return '';
+    }
+
+    // In production on HTTPS (e.g. Vercel deployment):
     if (isHttps) {
-      if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1') || envUrl.startsWith('http:')) {
-        return 'https://pashux-production.up.railway.app';
+      if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1') && !envUrl.startsWith('http:')) {
+        return envUrl.replace(/\/+$/, '');
       }
-      return envUrl.replace(/\/+$/, '');
+      return '';
     }
 
-    // If accessing from mobile device over local Wi-Fi (e.g. http://192.168.1.5:5173):
-    if (isIPv4 && !isLocalhost) {
-      if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
-        return `http://${hostname}:8000`;
-      }
-    }
-
-    // If on a remote non-localhost domain served over HTTP
-    if (!isLocalhost && (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
-      return 'https://pashux-production.up.railway.app';
+    // If accessing via local IP over HTTP:
+    if (!isLocalhost) {
+      return `http://${hostname}:8000`;
     }
   }
 
-  if (envUrl) {
+  if (envUrl && !envUrl.includes('localhost')) {
     return envUrl.replace(/\/+$/, '');
   }
 

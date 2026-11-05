@@ -17,6 +17,7 @@ from models.schemas import UploadResponse
 import services.supabase_service as db
 
 router = APIRouter()
+
 logger = logging.getLogger(__name__)
 
 MAX_VIDEO_SIZE_MB = int(os.getenv("MAX_VIDEO_SIZE_MB", "50"))

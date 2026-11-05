@@ -13,7 +13,7 @@ import base64
 # from services.muzzle_processor import extract_muzzle_features
 import services.supabase_service as db
 from services.openai_service import validate_muzzle_image, verify_same_cattle_photos, normalize_image_to_jpeg_bytes
-from services.video_processor import process_video
+from services.video_processor import process_video, process_image
 from services.image_analysis import analyse_video_stats, analyse_disease
 import tempfile
 import os
@@ -619,11 +619,18 @@ async def analyze_cattle_video(
             ext = ".mp4"
 
         video_content = await video.read()
+        is_single_image = ext in [".heic", ".heif", ".jpg", ".jpeg", ".png", ".webp", ".bmp"]
+
         # If it's an image, normalize to JPEG with EXIF transpose so frame extraction and OpenAI work reliably
-        if ext in [".heic", ".heif", ".jpg", ".jpeg", ".png", ".webp"]:
+        if is_single_image:
             try:
                 from PIL import Image, ImageOps
                 import io
+                try:
+                    from pillow_heif import register_heif_opener
+                    register_heif_opener()
+                except Exception:
+                    pass
                 pil_img = Image.open(io.BytesIO(video_content))
                 pil_img = ImageOps.exif_transpose(pil_img).convert("RGB")
                 ext = ".jpg"
@@ -640,8 +647,11 @@ async def analyze_cattle_video(
             
         import asyncio
         
-        # Extract and filter frames
-        process_result = await asyncio.to_thread(process_video, video_path, temp_dir)
+        # Extract and filter frames (route photos to process_image, videos to process_video)
+        if is_single_image:
+            process_result = await asyncio.to_thread(process_image, video_path, temp_dir)
+        else:
+            process_result = await asyncio.to_thread(process_video, video_path, temp_dir)
         frame_data = process_result.get("frame_data", [])
         frame_paths = [f["path"] for f in frame_data if "path" in f]
         

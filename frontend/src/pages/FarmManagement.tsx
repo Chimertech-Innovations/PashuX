@@ -458,11 +458,23 @@ export default function FarmManagement() {
     setStep(2);
   };
 
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
           const file = e.target.files[0];
-          setVideoFile(file);
-          setVideoPreview(URL.createObjectURL(file));
+          const isImg = file.type.startsWith('image/') || /\.(jpe?g|png|webp|heic|heif|bmp)$/i.test(file.name);
+          if (isImg) {
+              try {
+                  const compressed = await compressImage(file);
+                  setVideoFile(compressed);
+                  setVideoPreview(URL.createObjectURL(compressed));
+              } catch {
+                  setVideoFile(file);
+                  setVideoPreview(URL.createObjectURL(file));
+              }
+          } else {
+              setVideoFile(file);
+              setVideoPreview(URL.createObjectURL(file));
+          }
       }
   };
 
@@ -481,9 +493,13 @@ export default function FarmManagement() {
               method: 'POST',
               body: formData
           });
+          const contentType = res.headers.get('content-type') || '';
+          if (!contentType.includes('application/json')) {
+              throw new Error(`Server returned non-JSON response (${res.status} ${res.statusText}).`);
+          }
           const data = await res.json();
           if (res.ok) {
-              setMessage({ type: 'success', text: 'Video analysis complete! Cattle profile updated.' });
+              setMessage({ type: 'success', text: 'Analysis complete! Cattle profile updated.' });
               setVideoStats(data.data);
               fetchCattle();
               setTimeout(() => {
@@ -491,10 +507,11 @@ export default function FarmManagement() {
                   setMessage(null);
               }, 1000);
           } else {
-              setMessage({ type: 'error', text: data.detail || 'Video analysis failed.' });
+              setMessage({ type: 'error', text: data.detail || 'Analysis failed.' });
           }
-      } catch (err) {
-          setMessage({ type: 'error', text: 'Network error connecting to backend.' });
+      } catch (err: any) {
+          console.error("Video/Photo analysis error:", err);
+          setMessage({ type: 'error', text: `Analysis error: ${err.message || 'Network error connecting to backend.'}` });
       } finally {
           setLoading(false);
       }
@@ -835,8 +852,12 @@ export default function FarmManagement() {
                     <div className={`relative border-2 ${videoPreview ? 'border-emerald-500 bg-emerald-50/30 border-solid' : 'border-slate-300 bg-slate-50 border-dashed'} rounded-xl p-8 text-center transition-all min-h-[250px] flex flex-col justify-center items-center`}>
                         {videoPreview ? (
                             <div className="flex flex-col items-center w-full">
-                                <video src={videoPreview} controls playsInline {...{ "webkit-playsinline": "true" }} className="max-h-48 w-full object-contain rounded-lg shadow-sm mb-4" />
-                                {!loading && <button type="button" onClick={() => { setVideoFile(null); setVideoPreview(null); }} className="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase bg-rose-50 px-4 py-2 rounded-lg">{t('video_change', 'Change Video')}</button>}
+                                {videoFile?.type.startsWith('image/') ? (
+                                    <img src={videoPreview} alt="Uploaded Cattle" className="max-h-48 w-full object-contain rounded-lg shadow-sm mb-4 bg-slate-900" />
+                                ) : (
+                                    <video src={videoPreview} controls playsInline {...{ "webkit-playsinline": "true" }} className="max-h-48 w-full object-contain rounded-lg shadow-sm mb-4" />
+                                )}
+                                {!loading && <button type="button" onClick={() => { setVideoFile(null); setVideoPreview(null); }} className="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase bg-rose-50 px-4 py-2 rounded-lg">{t('video_change', 'Change Video / Photo')}</button>}
                             </div>
                         ) : (
                             <div className="space-y-4 w-full flex flex-col items-center">
@@ -870,8 +891,8 @@ export default function FarmManagement() {
                                          {t('video_upload_btn', 'Upload Video')}
                                     </button>
                                 </div>
-                                <input type="file" accept="video/*,video/mp4,video/quicktime,video/webm" capture="environment" onChange={handleVideoChange} className="hidden" ref={videoInputRefCamera} />
-                                <input type="file" accept="video/*,video/mp4,video/quicktime,video/webm" onChange={handleVideoChange} className="hidden" ref={videoInputRefGallery} />
+                                <input type="file" accept="video/*,image/*,video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp" capture="environment" onChange={handleVideoChange} className="hidden" ref={videoInputRefCamera} />
+                                <input type="file" accept="video/*,image/*,video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp" onChange={handleVideoChange} className="hidden" ref={videoInputRefGallery} />
                             </div>
                         )}
                     </div>

@@ -35,7 +35,7 @@ async def process_video_route(body: ProcessRequest):
 
     work_dir = os.path.dirname(body.video_path)
     ext = os.path.splitext(body.video_path)[1].lower()
-    is_image = ext in [".jpg", ".jpeg", ".png", ".webp"]
+    is_image = ext in [".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif", ".bmp"]
 
     if not is_image:
         # Validate video duration with OpenCV

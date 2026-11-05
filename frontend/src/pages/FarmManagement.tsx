@@ -375,9 +375,9 @@ export default function FarmManagement() {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
-      if (res.ok) {
+      if (res.ok && data) {
         setMessage({ type: 'success', text: `Cattle registered successfully! Proceeding to Step 2...` });
         // data.cattle_id is now the real UUID from the database
         setCurrentCattleId(data.cattle_id);
@@ -390,10 +390,11 @@ export default function FarmManagement() {
             setMessage(null);
         }, 1500);
       } else {
-        setMessage({ type: 'error', text: data.detail || 'Registration failed' });
+        setMessage({ type: 'error', text: data?.detail || `Registration failed (HTTP ${res.status})` });
       }
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Network error connecting to backend.' });
+    } catch (err: any) {
+      console.error("Muzzle registration error:", err);
+      setMessage({ type: 'error', text: `Connection error: ${err.message || 'Network error connecting to backend.'}` });
     } finally {
       setLoading(false);
     }
@@ -424,11 +425,23 @@ export default function FarmManagement() {
     setStep(2);
   };
 
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
           const file = e.target.files[0];
-          setVideoFile(file);
-          setVideoPreview(URL.createObjectURL(file));
+          const isImg = file.type.startsWith('image/') || /\.(jpe?g|png|webp|heic|heif|bmp)$/i.test(file.name);
+          if (isImg) {
+              try {
+                  const compressed = await compressImage(file);
+                  setVideoFile(compressed);
+                  setVideoPreview(URL.createObjectURL(compressed));
+              } catch {
+                  setVideoFile(file);
+                  setVideoPreview(URL.createObjectURL(file));
+              }
+          } else {
+              setVideoFile(file);
+              setVideoPreview(URL.createObjectURL(file));
+          }
       }
   };
 
@@ -447,8 +460,8 @@ export default function FarmManagement() {
               method: 'POST',
               body: formData
           });
-          const data = await res.json();
-          if (res.ok) {
+          const data = await res.json().catch(() => null);
+          if (res.ok && data) {
               setMessage({ type: 'success', text: 'Video analysis complete! Cattle profile updated.' });
               setVideoStats(data.data);
               fetchCattle();
@@ -457,10 +470,10 @@ export default function FarmManagement() {
                   setMessage(null);
               }, 1000);
           } else {
-              setMessage({ type: 'error', text: data.detail || 'Video analysis failed.' });
+              setMessage({ type: 'error', text: data?.detail || `Analysis failed (HTTP ${res.status})` });
           }
-      } catch (err) {
-          setMessage({ type: 'error', text: 'Network error connecting to backend.' });
+      } catch (err: any) {
+          setMessage({ type: 'error', text: `Connection error: ${err.message || 'Network error connecting to backend.'}` });
       } finally {
           setLoading(false);
       }
@@ -567,7 +580,12 @@ export default function FarmManagement() {
                       {preview1 ? (
                         <div className="flex flex-col items-center justify-between h-full w-full">
                           <div className="relative w-full h-44 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden shadow-md">
-                            <img src={preview1} alt="Preview 1" className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`} />
+                            <img
+                              src={preview1}
+                              alt="Preview 1"
+                              onError={(e) => { (e.target as HTMLImageElement).src = muzzleStraightGuide; }}
+                              className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`}
+                            />
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 flex items-end justify-center">
                                <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">{t('reg_slot1_overlay', '1. Straight-on Muzzle')}</span>
                             </div>
@@ -609,8 +627,8 @@ export default function FarmManagement() {
                               {t('reg_upload_btn', 'Upload')}
                             </button>
                           </div>
-                          <input type="file" accept="image/*,.heic,.heif" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefGallery1} />
-                          <input type="file" accept="image/*,.heic,.heif" capture="environment" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefCamera1} />
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/*" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefGallery1} />
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/*" capture="environment" onChange={(e) => handleFileChange(e, 1)} className="sr-only" ref={fileInputRefCamera1} />
                         </div>
                       )}
                     </div>
@@ -622,7 +640,12 @@ export default function FarmManagement() {
                       {preview2 ? (
                         <div className="flex flex-col items-center justify-between h-full w-full">
                           <div className="relative w-full h-44 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden shadow-md">
-                            <img src={preview2} alt="Preview 2" className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`} />
+                            <img
+                              src={preview2}
+                              alt="Preview 2"
+                              onError={(e) => { (e.target as HTMLImageElement).src = muzzleLeftGuide; }}
+                              className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`}
+                            />
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 flex items-end justify-center">
                                <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">{t('reg_slot2_overlay', '2. Slight Left Muzzle')}</span>
                             </div>
@@ -664,8 +687,8 @@ export default function FarmManagement() {
                               {t('reg_upload_btn', 'Upload')}
                             </button>
                           </div>
-                          <input type="file" accept="image/*,.heic,.heif" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefGallery2} />
-                          <input type="file" accept="image/*,.heic,.heif" capture="environment" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefCamera2} />
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/*" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefGallery2} />
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/*" capture="environment" onChange={(e) => handleFileChange(e, 2)} className="sr-only" ref={fileInputRefCamera2} />
                         </div>
                       )}
                     </div>
@@ -677,7 +700,12 @@ export default function FarmManagement() {
                       {preview3 ? (
                         <div className="flex flex-col items-center justify-between h-full w-full">
                           <div className="relative w-full h-44 flex items-center justify-center bg-slate-900 rounded-xl overflow-hidden shadow-md">
-                            <img src={preview3} alt="Preview 3" className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`} />
+                            <img
+                              src={preview3}
+                              alt="Preview 3"
+                              onError={(e) => { (e.target as HTMLImageElement).src = muzzleRightGuide; }}
+                              className={`max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 ${loading ? 'opacity-50' : ''}`}
+                            />
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 flex items-end justify-center">
                                <span className="text-[9px] font-black tracking-widest text-emerald-300 uppercase">{t('reg_slot3_overlay', '3. Slight Right Muzzle')}</span>
                             </div>
@@ -719,8 +747,8 @@ export default function FarmManagement() {
                               {t('reg_upload_btn', 'Upload')}
                             </button>
                           </div>
-                          <input type="file" accept="image/*,.heic,.heif" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefGallery3} />
-                          <input type="file" accept="image/*,.heic,.heif" capture="environment" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefCamera3} />
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/*" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefGallery3} />
+                          <input type="file" accept="image/jpeg,image/png,image/webp,image/*" capture="environment" onChange={(e) => handleFileChange(e, 3)} className="sr-only" ref={fileInputRefCamera3} />
                         </div>
                       )}
                     </div>
@@ -773,8 +801,12 @@ export default function FarmManagement() {
                     <div className={`relative border-2 ${videoPreview ? 'border-emerald-500 bg-emerald-50/30 border-solid' : 'border-slate-300 bg-slate-50 border-dashed'} rounded-xl p-8 text-center transition-all min-h-[250px] flex flex-col justify-center items-center`}>
                         {videoPreview ? (
                             <div className="flex flex-col items-center w-full">
-                                <video src={videoPreview} controls playsInline {...{ "webkit-playsinline": "true" }} className="max-h-48 w-full object-contain rounded-lg shadow-sm mb-4" />
-                                {!loading && <button type="button" onClick={() => { setVideoFile(null); setVideoPreview(null); }} className="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase bg-rose-50 px-4 py-2 rounded-lg">{t('video_change', 'Change Video')}</button>}
+                                {videoFile?.type.startsWith('image/') ? (
+                                    <img src={videoPreview} alt="Uploaded Cattle" className="max-h-48 w-full object-contain rounded-lg shadow-sm mb-4 bg-slate-900" />
+                                ) : (
+                                    <video src={videoPreview} controls playsInline {...{ "webkit-playsinline": "true" }} className="max-h-48 w-full object-contain rounded-lg shadow-sm mb-4" />
+                                )}
+                                {!loading && <button type="button" onClick={() => { setVideoFile(null); setVideoPreview(null); }} className="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase bg-rose-50 px-4 py-2 rounded-lg">{t('video_change', 'Change Video / Photo')}</button>}
                             </div>
                         ) : (
                             <div className="space-y-4 w-full flex flex-col items-center">
@@ -808,8 +840,8 @@ export default function FarmManagement() {
                                          {t('video_upload_btn', 'Upload Video')}
                                     </button>
                                 </div>
-                                <input type="file" accept="video/*,video/mp4,video/quicktime,video/webm" capture="environment" onChange={handleVideoChange} className="hidden" ref={videoInputRefCamera} />
-                                <input type="file" accept="video/*,video/mp4,video/quicktime,video/webm" onChange={handleVideoChange} className="hidden" ref={videoInputRefGallery} />
+                                <input type="file" accept="video/*,image/*,video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp" capture="environment" onChange={handleVideoChange} className="hidden" ref={videoInputRefCamera} />
+                                <input type="file" accept="video/*,image/*,video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp" onChange={handleVideoChange} className="hidden" ref={videoInputRefGallery} />
                             </div>
                         )}
                     </div>

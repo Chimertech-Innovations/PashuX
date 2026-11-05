@@ -12,6 +12,12 @@ from typing import List, Optional, Any
 from openai import AsyncOpenAI
 from models.schemas import BCSResult, DiseaseResult, ChatMessage, VideoAnalysisResult
 
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except Exception:
+    pass
+
 logger = logging.getLogger(__name__)
 
 _client: Optional[AsyncOpenAI] = None
@@ -1286,19 +1292,51 @@ async def analyse_udder_image_bytes(image_bytes: bytes) -> dict:
 
 
 def normalize_image_to_jpeg_bytes(raw_bytes: bytes) -> bytes:
-    """Safely converts raw uploaded image bytes (PNG, WEBP, BMP, etc.) into clean RGB JPEG bytes for OpenAI Vision API."""
+    """
+    Universal mobile photo normalizer: converts any phone format
+    (Apple HEIC/HEIF, PNG, WEBP, BMP, and portrait photos with EXIF rotation)
+    into clean, properly-oriented RGB JPEG bytes for OpenAI Vision API and OpenCV.
+    Downsamples heavy smartphone photos to max 1920px.
+    """
     if not raw_bytes:
         return raw_bytes
     try:
-        from PIL import Image
+        from PIL import Image, ImageOps
         import io
+        
+        try:
+            from pillow_heif import register_heif_opener
+            register_heif_opener()
+        except Exception:
+            pass
+
         img = Image.open(io.BytesIO(raw_bytes))
+        try:
+            img = ImageOps.exif_transpose(img)
+        except Exception:
+            pass
+
         img = img.convert("RGB")
+
+        max_dim = 1920
+        if max(img.size) > max_dim:
+            img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+
         out_buf = io.BytesIO()
-        img.save(out_buf, format="JPEG", quality=85)
+        img.save(out_buf, format="JPEG", quality=90)
         return out_buf.getvalue()
     except Exception as e:
         logger.warning(f"PIL Image normalization fallback: {e}")
+        try:
+            import cv2
+            import numpy as np
+            np_arr = np.frombuffer(raw_bytes, np.uint8)
+            cv_img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+            if cv_img is not None:
+                _, enc = cv2.imencode('.jpg', cv_img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+                return enc.tobytes()
+        except Exception as cv_e:
+            logger.warning(f"OpenCV Image normalization fallback error: {cv_e}")
         return raw_bytes
 
 

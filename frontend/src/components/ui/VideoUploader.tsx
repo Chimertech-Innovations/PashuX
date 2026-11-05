@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { compressImage } from '@/utils/imageCompressor';
 
 interface VideoUploaderProps {
   onFile: (file: File) => void;
@@ -16,21 +17,29 @@ export default function VideoUploader({ onFile, disabled, maxDurationSeconds = 6
   const [isVideo, setIsVideo] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string | null>(null);
 
-  const validateAndAccept = useCallback((file: File) => {
+  const validateAndAccept = useCallback(async (file: File) => {
     setError(null);
 
-    const isImg = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(file.name);
-    const isVid = file.type.startsWith('video/') || /\.(mp4|mov|avi)$/i.test(file.name);
+    const isImg = file.type.startsWith('image/') || /\.(jpe?g|png|webp|heic|heif|bmp|gif)$/i.test(file.name);
+    const isVid = file.type.startsWith('video/') || /\.(mp4|mov|avi|webm|m4v|3gp|mkv)$/i.test(file.name);
 
     if (isImg) {
       if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
         setError(`Photo too large. Maximum size is ${MAX_IMAGE_SIZE_MB}MB.`);
         return;
       }
-      setIsVideo(false);
-      setPreview(URL.createObjectURL(file));
-      setFileName(file.name);
-      onFile(file);
+      try {
+        const compressed = await compressImage(file);
+        setIsVideo(false);
+        setPreview(URL.createObjectURL(compressed));
+        setFileName(compressed.name);
+        onFile(compressed);
+      } catch {
+        setIsVideo(false);
+        setPreview(URL.createObjectURL(file));
+        setFileName(file.name);
+        onFile(file);
+      }
       return;
     }
 
@@ -65,12 +74,12 @@ export default function VideoUploader({ onFile, disabled, maxDurationSeconds = 6
       return;
     }
 
-    setError('Unsupported file type. Please upload a photo (JPG/PNG) or video (MP4/MOV/AVI).');
+    setError('Unsupported file type. Please upload a photo (JPG/PNG/WEBP) or video (MP4/MOV/WebM).');
   }, [onFile, maxDurationSeconds]);
 
   const onDrop = useCallback((accepted: File[], rejected: any[]) => {
     if (rejected.length > 0) {
-      setError('Unsupported file format. Please upload MP4/MOV videos or JPG/PNG photos.');
+      setError('Unsupported file format. Please upload MP4/MOV/WebM videos or JPG/PNG/WEBP photos.');
       return;
     }
     if (accepted[0]) validateAndAccept(accepted[0]);
@@ -79,12 +88,8 @@ export default function VideoUploader({ onFile, disabled, maxDurationSeconds = 6
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'video/mp4': ['.mp4'],
-      'video/quicktime': ['.mov'],
-      'video/avi': ['.avi'],
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'image/png': ['.png'],
-      'image/webp': ['.webp'],
+      'video/*': ['.mp4', '.mov', '.avi', '.webm', '.m4v', '.3gp', '.mkv'],
+      'image/*': ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.bmp'],
     },
     maxFiles: 1,
     disabled,

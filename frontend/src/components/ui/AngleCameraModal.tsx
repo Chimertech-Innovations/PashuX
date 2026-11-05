@@ -191,11 +191,11 @@ export const AngleCameraModal: React.FC<AngleCameraModalProps> = ({ angleName, a
 
   return (
     <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[100] flex flex-col items-center justify-between p-4">
-      {/* Hidden file inputs for direct iOS camera and photo gallery fallback */}
+      {/* Hidden file inputs for direct camera and photo gallery fallback */}
       <input
         ref={nativeInputRef}
         type="file"
-        accept="image/*,.heic,.heif"
+        accept="image/jpeg,image/png,image/webp,image/*"
         capture="environment"
         className="hidden"
         onChange={handleNativeFileSelected}
@@ -203,7 +203,7 @@ export const AngleCameraModal: React.FC<AngleCameraModalProps> = ({ angleName, a
       <input
         ref={galleryInputRef}
         type="file"
-        accept="image/*,.heic,.heif"
+        accept="image/jpeg,image/png,image/webp,image/*"
         className="hidden"
         onChange={handleNativeFileSelected}
       />
